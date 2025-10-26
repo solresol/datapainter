@@ -41,8 +41,8 @@ set(DATAPAINTER_SOURCES
     src/main.cpp
     src/database.cpp
     src/argument_parser.cpp
+    src/metadata.cpp
     # More database layer files:
-    # src/metadata.cpp
     # src/unsaved_changes.cpp
     # UI layer will go here:
     # src/terminal.cpp
@@ -86,9 +86,11 @@ if(BUILD_TESTS)
         tests/test_unsaved_changes_table.cpp
         tests/test_table_validation.cpp
         tests/test_argument_parser.cpp
+        tests/test_metadata.cpp
         # Implementation files needed by tests
         src/database.cpp
         src/argument_parser.cpp
+        src/metadata.cpp
         # More test files will be added as we build
     )
 
