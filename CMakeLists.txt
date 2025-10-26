@@ -112,6 +112,7 @@ if(BUILD_TESTS)
         tests/test_table_view.cpp
         tests/test_table_manager.cpp
         tests/test_undo_log_manager.cpp
+        tests/test_integration.cpp
         # Implementation files needed by tests
         src/database.cpp
         src/argument_parser.cpp
