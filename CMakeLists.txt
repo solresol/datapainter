@@ -51,6 +51,7 @@ set(DATAPAINTER_SOURCES
     src/header_renderer.cpp
     src/footer_renderer.cpp
     src/input_handler.cpp
+    src/point_editor.cpp
     # More UI components will go here
 )
 
@@ -100,6 +101,7 @@ if(BUILD_TESTS)
         tests/test_header_renderer.cpp
         tests/test_footer_renderer.cpp
         tests/test_input_handler.cpp
+        tests/test_point_editor.cpp
         # Implementation files needed by tests
         src/database.cpp
         src/argument_parser.cpp
@@ -113,6 +115,7 @@ if(BUILD_TESTS)
         src/header_renderer.cpp
         src/footer_renderer.cpp
         src/input_handler.cpp
+        src/point_editor.cpp
         # More test files will be added as we build
     )
 
