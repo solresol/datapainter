@@ -50,6 +50,7 @@ set(DATAPAINTER_SOURCES
     src/edit_area_renderer.cpp
     src/header_renderer.cpp
     src/footer_renderer.cpp
+    src/input_handler.cpp
     # More UI components will go here
 )
 
@@ -98,6 +99,7 @@ if(BUILD_TESTS)
         tests/test_edit_area_renderer.cpp
         tests/test_header_renderer.cpp
         tests/test_footer_renderer.cpp
+        tests/test_input_handler.cpp
         # Implementation files needed by tests
         src/database.cpp
         src/argument_parser.cpp
@@ -110,6 +112,7 @@ if(BUILD_TESTS)
         src/edit_area_renderer.cpp
         src/header_renderer.cpp
         src/footer_renderer.cpp
+        src/input_handler.cpp
         # More test files will be added as we build
     )
 
