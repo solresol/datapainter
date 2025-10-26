@@ -381,16 +381,12 @@ int main(int argc, char** argv) {
         }
 
         std::cout << "Options:" << std::endl;
-        if (!tables.empty()) {
-            std::cout << "  • Open a table:  datapainter --database " << args.database.value() << " --table <tablename>" << std::endl;
-        }
+        std::cout << "  • Open a table:  datapainter --database " << args.database.value() << " --table <tablename>" << std::endl;
         std::cout << "  • Create table:  datapainter --database " << args.database.value() << " --create-table --table <name> \\" << std::endl;
         std::cout << "                     --target-column-name <label> --x-axis-name <x> --y-axis-name <y> \\" << std::endl;
         std::cout << "                     --x-meaning <char> --o-meaning <char>" << std::endl;
-        if (!tables.empty()) {
-            std::cout << "  • Delete table:  datapainter --database " << args.database.value() << " --delete-table --table <name>" << std::endl;
-            std::cout << "  • View metadata: datapainter --database " << args.database.value() << " --show-metadata --table <name>" << std::endl;
-        }
+        std::cout << "  • Delete table:  datapainter --database " << args.database.value() << " --delete-table --table <name>" << std::endl;
+        std::cout << "  • View metadata: datapainter --database " << args.database.value() << " --show-metadata --table <name>" << std::endl;
         std::cout << "\nFor full help: datapainter --help" << std::endl;
 
         return 0;
