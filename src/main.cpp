@@ -14,6 +14,7 @@
 #include <string>
 #include <thread>
 #include <chrono>
+#include <limits>
 
 using namespace datapainter;
 
@@ -359,7 +360,7 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    // If we got here with a database but no recognized command, show table selection menu
+    // If we got here with a database but no recognized command, show interactive table selection
     if (!args.table.has_value()) {
         // List available tables
         TableManager table_mgr(db);
@@ -380,16 +381,165 @@ int main(int argc, char** argv) {
             std::cout << std::endl;
         }
 
-        std::cout << "Options:" << std::endl;
-        std::cout << "  • Open a table:  datapainter --database " << args.database.value() << " --table <tablename>" << std::endl;
-        std::cout << "  • Create table:  datapainter --database " << args.database.value() << " --create-table --table <name> \\" << std::endl;
-        std::cout << "                     --target-column-name <label> --x-axis-name <x> --y-axis-name <y> \\" << std::endl;
-        std::cout << "                     --x-meaning <char> --o-meaning <char>" << std::endl;
-        std::cout << "  • Delete table:  datapainter --database " << args.database.value() << " --delete-table --table <name>" << std::endl;
-        std::cout << "  • View metadata: datapainter --database " << args.database.value() << " --show-metadata --table <name>" << std::endl;
-        std::cout << "\nFor full help: datapainter --help" << std::endl;
+        // Interactive menu
+        std::cout << "What would you like to do?" << std::endl;
+        if (!tables.empty()) {
+            std::cout << "  1. Open an existing table" << std::endl;
+            std::cout << "  2. Create a new table" << std::endl;
+            std::cout << "  3. Delete a table" << std::endl;
+            std::cout << "  4. View table metadata" << std::endl;
+            std::cout << "  0. Exit" << std::endl;
+        } else {
+            std::cout << "  1. Create a new table" << std::endl;
+            std::cout << "  0. Exit" << std::endl;
+        }
+        std::cout << "\nEnter choice: ";
 
-        return 0;
+        int choice;
+        std::cin >> choice;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Clear input buffer
+
+        if (choice == 0) {
+            return 0;
+        }
+
+        // Handle empty database case
+        if (tables.empty()) {
+            if (choice == 1) {
+                // Create new table - prompt for details
+                std::string table_name, target_col, x_axis, y_axis, x_meaning, o_meaning;
+                double min_x = -10.0, max_x = 10.0, min_y = -10.0, max_y = 10.0;
+
+                std::cout << "\nCreate New Table\n" << std::endl;
+                std::cout << "Table name: ";
+                std::getline(std::cin, table_name);
+                std::cout << "Target column name (e.g., 'label', 'class'): ";
+                std::getline(std::cin, target_col);
+                std::cout << "X-axis name (e.g., 'x', 'feature1'): ";
+                std::getline(std::cin, x_axis);
+                std::cout << "Y-axis name (e.g., 'y', 'feature2'): ";
+                std::getline(std::cin, y_axis);
+                std::cout << "X meaning (label for 'x' points): ";
+                std::getline(std::cin, x_meaning);
+                std::cout << "O meaning (label for 'o' points): ";
+                std::getline(std::cin, o_meaning);
+
+                std::cout << "Min X [" << min_x << "]: ";
+                std::string input;
+                std::getline(std::cin, input);
+                if (!input.empty()) min_x = std::stod(input);
+
+                std::cout << "Max X [" << max_x << "]: ";
+                std::getline(std::cin, input);
+                if (!input.empty()) max_x = std::stod(input);
+
+                std::cout << "Min Y [" << min_y << "]: ";
+                std::getline(std::cin, input);
+                if (!input.empty()) min_y = std::stod(input);
+
+                std::cout << "Max Y [" << max_y << "]: ";
+                std::getline(std::cin, input);
+                if (!input.empty()) max_y = std::stod(input);
+
+                // Create the table
+                if (table_mgr.create_table(table_name, target_col, x_axis, y_axis,
+                                          x_meaning, o_meaning, min_x, max_x, min_y, max_y, false)) {
+                    std::cout << "\nTable '" << table_name << "' created successfully!" << std::endl;
+                    std::cout << "Opening table in interactive mode...\n" << std::endl;
+
+                    // Set table name to open it
+                    args.table = table_name;
+                } else {
+                    std::cerr << "Error: Failed to create table" << std::endl;
+                    return 66;
+                }
+            } else {
+                std::cerr << "Invalid choice." << std::endl;
+                return 2;
+            }
+        } else {
+            // Handle non-empty database
+            if (choice == 1) {
+                // Open existing table
+                std::cout << "Enter table name: ";
+                std::string table_name;
+                std::getline(std::cin, table_name);
+                args.table = table_name;
+            } else if (choice == 2) {
+                // Create new table (same as above)
+                std::string table_name, target_col, x_axis, y_axis, x_meaning, o_meaning;
+                double min_x = -10.0, max_x = 10.0, min_y = -10.0, max_y = 10.0;
+
+                std::cout << "\nCreate New Table\n" << std::endl;
+                std::cout << "Table name: ";
+                std::getline(std::cin, table_name);
+                std::cout << "Target column name (e.g., 'label', 'class'): ";
+                std::getline(std::cin, target_col);
+                std::cout << "X-axis name (e.g., 'x', 'feature1'): ";
+                std::getline(std::cin, x_axis);
+                std::cout << "Y-axis name (e.g., 'y', 'feature2'): ";
+                std::getline(std::cin, y_axis);
+                std::cout << "X meaning (label for 'x' points): ";
+                std::getline(std::cin, x_meaning);
+                std::cout << "O meaning (label for 'o' points): ";
+                std::getline(std::cin, o_meaning);
+
+                std::cout << "Min X [" << min_x << "]: ";
+                std::string input;
+                std::getline(std::cin, input);
+                if (!input.empty()) min_x = std::stod(input);
+
+                std::cout << "Max X [" << max_x << "]: ";
+                std::getline(std::cin, input);
+                if (!input.empty()) max_x = std::stod(input);
+
+                std::cout << "Min Y [" << min_y << "]: ";
+                std::getline(std::cin, input);
+                if (!input.empty()) min_y = std::stod(input);
+
+                std::cout << "Max Y [" << max_y << "]: ";
+                std::getline(std::cin, input);
+                if (!input.empty()) max_y = std::stod(input);
+
+                if (table_mgr.create_table(table_name, target_col, x_axis, y_axis,
+                                          x_meaning, o_meaning, min_x, max_x, min_y, max_y, false)) {
+                    std::cout << "\nTable '" << table_name << "' created successfully!" << std::endl;
+                    std::cout << "Opening table in interactive mode...\n" << std::endl;
+                    args.table = table_name;
+                } else {
+                    std::cerr << "Error: Failed to create table" << std::endl;
+                    return 66;
+                }
+            } else if (choice == 3) {
+                // Delete table
+                std::cout << "Enter table name to delete: ";
+                std::string table_name;
+                std::getline(std::cin, table_name);
+                if (table_mgr.delete_table(table_name)) {
+                    std::cout << "Table '" << table_name << "' deleted successfully." << std::endl;
+                } else {
+                    std::cerr << "Error: Failed to delete table" << std::endl;
+                }
+                return 0;
+            } else if (choice == 4) {
+                // View metadata
+                std::cout << "Enter table name: ";
+                std::string table_name;
+                std::getline(std::cin, table_name);
+                if (!table_mgr.show_metadata(table_name, std::cout)) {
+                    std::cerr << "Error: Table not found" << std::endl;
+                }
+                return 0;
+            } else {
+                std::cerr << "Invalid choice." << std::endl;
+                return 2;
+            }
+        }
+
+        // If we don't have a table yet, exit
+        if (!args.table.has_value()) {
+            return 0;
+        }
     }
 
     // Start interactive TUI mode
