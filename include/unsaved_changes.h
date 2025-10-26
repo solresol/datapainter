@@ -22,6 +22,7 @@ struct ChangeRecord {
     std::optional<std::string> meta_field;
     std::optional<std::string> old_value;
     std::optional<std::string> new_value;
+    bool is_active;  // Whether this change is currently active (not undone)
 };
 
 // Unsaved changes tracking

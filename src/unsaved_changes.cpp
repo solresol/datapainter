@@ -128,7 +128,7 @@ std::vector<ChangeRecord> UnsavedChanges::get_changes(const std::string& table_n
     sqlite3_stmt* stmt = nullptr;
     const char* sql = R"(
         SELECT id, table_name, action, data_id, x, y, old_target, new_target,
-               meta_field, old_value, new_value
+               meta_field, old_value, new_value, is_active
         FROM unsaved_changes
         WHERE table_name = ?
         ORDER BY id
@@ -179,6 +179,8 @@ std::vector<ChangeRecord> UnsavedChanges::get_changes(const std::string& table_n
             rec.new_value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10));
         }
 
+        rec.is_active = sqlite3_column_int(stmt, 11) != 0;
+
         records.push_back(rec);
     }
 
@@ -192,7 +194,7 @@ std::vector<ChangeRecord> UnsavedChanges::get_all_changes() {
     sqlite3_stmt* stmt = nullptr;
     const char* sql = R"(
         SELECT id, table_name, action, data_id, x, y, old_target, new_target,
-               meta_field, old_value, new_value
+               meta_field, old_value, new_value, is_active
         FROM unsaved_changes
         ORDER BY id
     )";
@@ -239,6 +241,8 @@ std::vector<ChangeRecord> UnsavedChanges::get_all_changes() {
         if (sqlite3_column_type(stmt, 10) != SQLITE_NULL) {
             rec.new_value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10));
         }
+
+        rec.is_active = sqlite3_column_int(stmt, 11) != 0;
 
         records.push_back(rec);
     }

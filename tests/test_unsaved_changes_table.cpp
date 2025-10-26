@@ -38,7 +38,7 @@ TEST(UnsavedChangesTableTest, UnsavedChangesTableHasCorrectSchema) {
     // Expected columns
     std::vector<std::string> expected_cols = {
         "id", "table_name", "action", "data_id", "x", "y",
-        "old_target", "new_target", "meta_field", "old_value", "new_value"
+        "old_target", "new_target", "meta_field", "old_value", "new_value", "is_active"
     };
 
     std::vector<std::string> actual_cols;

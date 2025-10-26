@@ -123,7 +123,8 @@ bool Database::ensure_unsaved_changes_table() {
             new_target    TEXT,
             meta_field    TEXT,
             old_value     TEXT,
-            new_value     TEXT
+            new_value     TEXT,
+            is_active     INTEGER NOT NULL DEFAULT 1
         )
     )";
 
