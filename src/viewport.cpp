@@ -1,0 +1,112 @@
+#include "viewport.h"
+#include <algorithm>
+#include <cmath>
+
+namespace datapainter {
+
+Viewport::Viewport(double data_x_min, double data_x_max,
+                   double data_y_min, double data_y_max,
+                   int screen_height, int screen_width)
+    : data_x_min_(data_x_min)
+    , data_x_max_(data_x_max)
+    , data_y_min_(data_y_min)
+    , data_y_max_(data_y_max)
+    , screen_height_(screen_height)
+    , screen_width_(screen_width) {}
+
+DataCoord Viewport::screen_to_data(const ScreenCoord& screen) const {
+    // Calculate data per pixel
+    double data_width = data_x_max_ - data_x_min_;
+    double data_height = data_y_max_ - data_y_min_;
+
+    // Map screen col to data x (left to right)
+    double x = data_x_min_ + (screen.col * data_width) / (screen_width_ - 1);
+
+    // Map screen row to data y (top to bottom, but y increases upward in data)
+    double y = data_y_max_ - (screen.row * data_height) / (screen_height_ - 1);
+
+    return DataCoord{x, y};
+}
+
+std::optional<ScreenCoord> Viewport::data_to_screen(const DataCoord& data) const {
+    // Check if visible
+    if (!is_visible(data)) {
+        return std::nullopt;
+    }
+
+    // Calculate data per pixel
+    double data_width = data_x_max_ - data_x_min_;
+    double data_height = data_y_max_ - data_y_min_;
+
+    // Map data x to screen col
+    int col = static_cast<int>(std::round(
+        (data.x - data_x_min_) * (screen_width_ - 1) / data_width
+    ));
+
+    // Map data y to screen row (y decreases as row increases)
+    int row = static_cast<int>(std::round(
+        (data_y_max_ - data.y) * (screen_height_ - 1) / data_height
+    ));
+
+    // Clamp to screen bounds
+    col = std::max(0, std::min(col, screen_width_ - 1));
+    row = std::max(0, std::min(row, screen_height_ - 1));
+
+    return ScreenCoord{row, col};
+}
+
+bool Viewport::is_visible(const DataCoord& data) const {
+    return data.x >= data_x_min_ && data.x <= data_x_max_ &&
+           data.y >= data_y_min_ && data.y <= data_y_max_;
+}
+
+DataCoord Viewport::round_to_cell(const DataCoord& data) const {
+    // Convert to screen and back to get rounded data coordinates
+    auto screen = data_to_screen(data);
+    if (!screen.has_value()) {
+        // If outside viewport, just return original
+        return data;
+    }
+    return screen_to_data(*screen);
+}
+
+void Viewport::zoom_in(const DataCoord& center) {
+    // Halve the viewport size, centered on given point
+    double x_range = (data_x_max_ - data_x_min_) / 2.0;
+    double y_range = (data_y_max_ - data_y_min_) / 2.0;
+
+    double half_x_range = x_range / 2.0;
+    double half_y_range = y_range / 2.0;
+
+    data_x_min_ = center.x - half_x_range;
+    data_x_max_ = center.x + half_x_range;
+    data_y_min_ = center.y - half_y_range;
+    data_y_max_ = center.y + half_y_range;
+}
+
+void Viewport::zoom_out(const DataCoord& center) {
+    // Double the viewport size, centered on given point
+    double x_range = data_x_max_ - data_x_min_;
+    double y_range = data_y_max_ - data_y_min_;
+
+    data_x_min_ = center.x - x_range;
+    data_x_max_ = center.x + x_range;
+    data_y_min_ = center.y - y_range;
+    data_y_max_ = center.y + y_range;
+}
+
+void Viewport::zoom_to_fit_all() {
+    // Placeholder implementation: just ensure viewport is valid
+    // Real implementation would need actual data bounds passed in
+    // For now, reset to a reasonable default if needed
+    if (data_x_min_ >= data_x_max_) {
+        data_x_min_ = -1.0;
+        data_x_max_ = 1.0;
+    }
+    if (data_y_min_ >= data_y_max_) {
+        data_y_min_ = -1.0;
+        data_y_max_ = 1.0;
+    }
+}
+
+} // namespace datapainter
