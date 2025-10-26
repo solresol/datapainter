@@ -1,7 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cmake:*)"
+      "Bash(datapainter_tests:*)"
     ],
     "deny": [],
     "ask": []
