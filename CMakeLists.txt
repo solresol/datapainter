@@ -53,6 +53,7 @@ set(DATAPAINTER_SOURCES
     src/input_handler.cpp
     src/point_editor.cpp
     src/undo_manager.cpp
+    src/save_manager.cpp
     # More UI components will go here
 )
 
@@ -104,6 +105,7 @@ if(BUILD_TESTS)
         tests/test_input_handler.cpp
         tests/test_point_editor.cpp
         tests/test_undo_manager.cpp
+        tests/test_save_manager.cpp
         # Implementation files needed by tests
         src/database.cpp
         src/argument_parser.cpp
@@ -119,6 +121,7 @@ if(BUILD_TESTS)
         src/input_handler.cpp
         src/point_editor.cpp
         src/undo_manager.cpp
+        src/save_manager.cpp
         # More test files will be added as we build
     )
 
