@@ -37,6 +37,18 @@ public:
     // Execute a SQL statement (for DDL like CREATE TABLE)
     bool execute(const std::string& sql);
 
+    // Create the metadata table if it doesn't exist
+    bool ensure_metadata_table();
+
+    // Create the unsaved_changes table if it doesn't exist
+    bool ensure_unsaved_changes_table();
+
+    // Check if a table exists
+    bool table_exists(const std::string& table_name);
+
+    // Validate table name (must match [A-Za-z0-9_]+)
+    static bool is_valid_table_name(const std::string& name);
+
     // Access to raw connection (for advanced operations)
     sqlite3* connection();
 

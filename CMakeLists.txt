@@ -81,6 +81,9 @@ if(BUILD_TESTS)
     set(TEST_SOURCES
         tests/test_main.cpp
         tests/test_database.cpp
+        tests/test_metadata_table.cpp
+        tests/test_unsaved_changes_table.cpp
+        tests/test_table_validation.cpp
         # Implementation files needed by tests
         src/database.cpp
         # More test files will be added as we build
