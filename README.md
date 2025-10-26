@@ -430,6 +430,53 @@ Enter key activates focused button or confirms edited field.
 ## Test Coverage Notes
 Acceptance test scenarios are implementation details and not specified as requirements. Developers should design appropriate tests during development following TDD practices as specified in CLAUDE.md.
 
+# Future Features & Optional Implementation Details
+
+This section documents potential future enhancements and optional implementation details that are not currently specified as requirements.
+
+## Table View Sort Functionality
+
+Table view is described above. Optional enhancement:
+
+* **Sort:** default by `id` (insertion order); toggle sort by any column.
+
+## Undo/Redo Granularity & Crash Recovery
+
+Undo/redo is described above. Optional enhancements:
+
+* **Undo/redo granularity:** one key action = one event (or batch when holding a key repeats; batch by 50ms coalescing).
+* **Crash recovery:** on startup, detect unapplied events for this table; prompt: "Commit, discard, or review."
+
+## Multi-Process Concurrency
+
+README.md currently specifies simple single-process mode only. Future multi-process support could include:
+
+* **WAL mode ON** per database; **busy_timeout** ≥ 5s.
+* **Multiple processes:** support read-share, single writer. If two TUIs open the same table, only the process that "Saves" first succeeds; the other must rebase (replay) its local `unsaved_changes` against the new table state.
+
+## CSV Export Enhancements
+
+README.md currently specifies basic CSV export. Future enhancements could include:
+
+* **RFC 4180 compliance:** full adherence to CSV specification
+* **Optional BOM support:** allow UTF-8 BOM when needed
+* **Filter support:** optional `--filter "x>=… AND …"` for selective export
+
+## Test Hook Details
+
+Non-interactive mode test hooks are described above. Optional enhancement:
+
+* **`--dump-screen` / `--dump-edit-area-contents`:** could include a first line comment with viewport bounds and cursor pos for regression testing.
+
+## Performance Baseline Targets
+
+README.md currently specifies "best effort, no specific targets." Future performance targets could include:
+
+* 1M rows table: pan/zoom keeps UI > 30 FPS for viewport rendering (because rendering is density-based, not point-based).
+* Inserts/deletes in the viewport: amortised < 20 ms per action; Save (100k unapplied events): < 2 s with WAL.
+
+(These are reasonable baselines; tune after profiling.)
+
 # Documentation
 
 This README.md, CLAUDE.md talks about coding standards and styles.
