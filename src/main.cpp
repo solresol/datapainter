@@ -64,10 +64,13 @@ int main(int argc, char** argv) {
 
     // Open database if needed
     if (!args.database.has_value()) {
-        // No database operations requested, just show version
-        std::cout << "DataPainter v0.1.0" << std::endl;
-        std::cout << "TUI not yet implemented. See TODO.md for development roadmap." << std::endl;
-        std::cout << "Run with --list-tables, --create-table, etc. for non-interactive operations." << std::endl;
+        // No database specified - show help
+        std::cout << "DataPainter v0.1.0 - TUI for editing 2D labeled datasets\n" << std::endl;
+        std::cout << "No database specified. Use --database <path> to open a database." << std::endl;
+        std::cout << "For full help, run: datapainter --help\n" << std::endl;
+        std::cout << "Quick start:" << std::endl;
+        std::cout << "  datapainter --database data.db --list-tables" << std::endl;
+        std::cout << "  datapainter --database data.db --table mytable  (interactive mode)" << std::endl;
         return 0;
     }
 
@@ -358,9 +361,27 @@ int main(int argc, char** argv) {
 
     // If we got here with a database but no recognized command, start interactive mode
     if (!args.table.has_value()) {
+        // List available tables
+        TableManager table_mgr(db);
+        auto tables = table_mgr.list_tables();
+
         std::cout << "DataPainter v0.1.0" << std::endl;
-        std::cout << "Interactive mode requires --table argument." << std::endl;
-        std::cout << "Use --list-tables to see available tables." << std::endl;
+        std::cout << "Database: " << args.database.value() << "\n" << std::endl;
+
+        if (tables.empty()) {
+            std::cout << "No tables found in database." << std::endl;
+            std::cout << "\nCreate a table with:" << std::endl;
+            std::cout << "  datapainter --database " << args.database.value() << " --create-table --table <name> \\" << std::endl;
+            std::cout << "    --target-column-name <label> --x-axis-name <x> --y-axis-name <y> \\" << std::endl;
+            std::cout << "    --x-meaning <char> --o-meaning <char>" << std::endl;
+        } else {
+            std::cout << "Available tables:" << std::endl;
+            for (const auto& table : tables) {
+                std::cout << "  " << table << std::endl;
+            }
+            std::cout << "\nTo open a table in interactive mode:" << std::endl;
+            std::cout << "  datapainter --database " << args.database.value() << " --table <tablename>" << std::endl;
+        }
         return 0;
     }
 
@@ -371,7 +392,20 @@ int main(int argc, char** argv) {
     MetadataManager metadata_mgr(db);
     auto meta_opt = metadata_mgr.read(table_name);
     if (!meta_opt.has_value()) {
+        // Table not found - show available tables
+        TableManager table_mgr(db);
+        auto tables = table_mgr.list_tables();
+
         std::cerr << "Error: Table not found: " << table_name << std::endl;
+        if (!tables.empty()) {
+            std::cerr << "\nAvailable tables:" << std::endl;
+            for (const auto& table : tables) {
+                std::cerr << "  " << table << std::endl;
+            }
+        } else {
+            std::cerr << "\nNo tables exist in this database." << std::endl;
+            std::cerr << "Use --create-table to create one." << std::endl;
+        }
         return 66;
     }
     Metadata meta = meta_opt.value();
