@@ -55,6 +55,7 @@ set(DATAPAINTER_SOURCES
     src/undo_manager.cpp
     src/save_manager.cpp
     src/table_view.cpp
+    src/table_manager.cpp
     # More UI components will go here
 )
 
@@ -108,6 +109,7 @@ if(BUILD_TESTS)
         tests/test_undo_manager.cpp
         tests/test_save_manager.cpp
         tests/test_table_view.cpp
+        tests/test_table_manager.cpp
         # Implementation files needed by tests
         src/database.cpp
         src/argument_parser.cpp
@@ -125,6 +127,7 @@ if(BUILD_TESTS)
         src/undo_manager.cpp
         src/save_manager.cpp
         src/table_view.cpp
+        src/table_manager.cpp
         # More test files will be added as we build
     )
 
