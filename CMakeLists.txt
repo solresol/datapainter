@@ -39,11 +39,11 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # Source files
 set(DATAPAINTER_SOURCES
     src/main.cpp
-    # Database layer will go here
-    # src/database.cpp
+    src/database.cpp
+    # More database layer files:
     # src/metadata.cpp
     # src/unsaved_changes.cpp
-    # UI layer will go here
+    # UI layer will go here:
     # src/terminal.cpp
     # src/viewport.cpp
     # etc.
@@ -81,6 +81,8 @@ if(BUILD_TESTS)
     set(TEST_SOURCES
         tests/test_main.cpp
         tests/test_database.cpp
+        # Implementation files needed by tests
+        src/database.cpp
         # More test files will be added as we build
     )
 
@@ -91,6 +93,7 @@ if(BUILD_TESTS)
         gmock
         SQLite::SQLite3
     )
+    target_include_directories(datapainter_tests PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
     # Discover tests
     include(GoogleTest)
