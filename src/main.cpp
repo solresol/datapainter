@@ -359,7 +359,7 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    // If we got here with a database but no recognized command, start interactive mode
+    // If we got here with a database but no recognized command, show table selection menu
     if (!args.table.has_value()) {
         // List available tables
         TableManager table_mgr(db);
@@ -369,19 +369,30 @@ int main(int argc, char** argv) {
         std::cout << "Database: " << args.database.value() << "\n" << std::endl;
 
         if (tables.empty()) {
-            std::cout << "No tables found in database." << std::endl;
-            std::cout << "\nCreate a table with:" << std::endl;
-            std::cout << "  datapainter --database " << args.database.value() << " --create-table --table <name> \\" << std::endl;
-            std::cout << "    --target-column-name <label> --x-axis-name <x> --y-axis-name <y> \\" << std::endl;
-            std::cout << "    --x-meaning <char> --o-meaning <char>" << std::endl;
+            std::cout << "No tables found in database.\n" << std::endl;
         } else {
-            std::cout << "Available tables:" << std::endl;
+            std::cout << "Available tables:\n" << std::endl;
+            int i = 1;
             for (const auto& table : tables) {
-                std::cout << "  " << table << std::endl;
+                std::cout << "  " << i << ". " << table << std::endl;
+                i++;
             }
-            std::cout << "\nTo open a table in interactive mode:" << std::endl;
-            std::cout << "  datapainter --database " << args.database.value() << " --table <tablename>" << std::endl;
+            std::cout << std::endl;
         }
+
+        std::cout << "Options:" << std::endl;
+        if (!tables.empty()) {
+            std::cout << "  • Open a table:  datapainter --database " << args.database.value() << " --table <tablename>" << std::endl;
+        }
+        std::cout << "  • Create table:  datapainter --database " << args.database.value() << " --create-table --table <name> \\" << std::endl;
+        std::cout << "                     --target-column-name <label> --x-axis-name <x> --y-axis-name <y> \\" << std::endl;
+        std::cout << "                     --x-meaning <char> --o-meaning <char>" << std::endl;
+        if (!tables.empty()) {
+            std::cout << "  • Delete table:  datapainter --database " << args.database.value() << " --delete-table --table <name>" << std::endl;
+            std::cout << "  • View metadata: datapainter --database " << args.database.value() << " --show-metadata --table <name>" << std::endl;
+        }
+        std::cout << "\nFor full help: datapainter --help" << std::endl;
+
         return 0;
     }
 
