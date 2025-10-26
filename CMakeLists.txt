@@ -40,6 +40,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 set(DATAPAINTER_SOURCES
     src/main.cpp
     src/database.cpp
+    src/argument_parser.cpp
     # More database layer files:
     # src/metadata.cpp
     # src/unsaved_changes.cpp
@@ -84,8 +85,10 @@ if(BUILD_TESTS)
         tests/test_metadata_table.cpp
         tests/test_unsaved_changes_table.cpp
         tests/test_table_validation.cpp
+        tests/test_argument_parser.cpp
         # Implementation files needed by tests
         src/database.cpp
+        src/argument_parser.cpp
         # More test files will be added as we build
     )
 
