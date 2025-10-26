@@ -605,14 +605,21 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    // Calculate screen layout
+    const int HEADER_ROWS = 3;  // Header takes 3 rows
+    const int FOOTER_ROWS = 1;  // Footer takes 1 row
+    const int edit_area_height = screen_height - HEADER_ROWS - FOOTER_ROWS;
+    const int edit_area_start_row = HEADER_ROWS;
+
     // Main TUI loop
     bool running = true;
     bool needs_redraw = true;
-    int cursor_row = screen_height / 2;
+    // Cursor is within edit area only
+    int cursor_row = edit_area_start_row + edit_area_height / 2;
     int cursor_col = screen_width / 2;
 
     std::cout << "Starting DataPainter TUI..." << std::endl;
-    std::cout << "Press 'q' to quit, '+'/'-' to zoom, WASD to pan" << std::endl;
+    std::cout << "Press 'q' to quit, '+'/'-' to zoom, arrow keys to move cursor" << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
     while (running) {
@@ -661,8 +668,8 @@ int main(int argc, char** argv) {
             footer_renderer.render(terminal, cursor_data.x, cursor_data.y,
                                   x_min, x_max, y_min, y_max, 0);
 
-            // Display to screen
-            terminal.render();
+            // Display to screen with cursor
+            terminal.render_with_cursor(cursor_row, cursor_col);
             needs_redraw = false;
         }
 
@@ -679,14 +686,15 @@ int main(int argc, char** argv) {
                     // This is an escape sequence, read the command character
                     int next2 = terminal.read_key();
                     if (next2 == 'A') {
-                        // Up arrow - move cursor up
-                        if (cursor_row > 0) {
+                        // Up arrow - move cursor up (within edit area)
+                        if (cursor_row > edit_area_start_row) {
                             cursor_row--;
                             needs_redraw = true;
                         }
                     } else if (next2 == 'B') {
-                        // Down arrow - move cursor down
-                        if (cursor_row < screen_height - 1) {
+                        // Down arrow - move cursor down (within edit area)
+                        int edit_area_end_row = edit_area_start_row + edit_area_height - 1;
+                        if (cursor_row < edit_area_end_row) {
                             cursor_row++;
                             needs_redraw = true;
                         }

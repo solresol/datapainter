@@ -87,12 +87,41 @@ std::string Terminal::get_row(int row) const {
 }
 
 void Terminal::render() {
-    // Clear screen (ANSI escape code)
+    // Clear screen and move to home (ANSI escape codes)
     std::cout << "\033[2J\033[H";
 
     // Output each row
     for (int row = 0; row < rows_; ++row) {
         std::cout << get_row(row);
+        if (row < rows_ - 1) {
+            std::cout << '\n';
+        }
+    }
+    std::cout << std::flush;
+}
+
+void Terminal::render_with_cursor(int cursor_row, int cursor_col) {
+    // Clear screen and move to home
+    std::cout << "\033[2J\033[H";
+
+    // Output each row
+    for (int row = 0; row < rows_; ++row) {
+        std::string line = get_row(row);
+
+        // If this is the cursor row, add inverse video for cursor position
+        if (row == cursor_row && cursor_col >= 0 && cursor_col < cols_) {
+            // Output up to cursor
+            std::cout << line.substr(0, cursor_col);
+            // Output cursor character with inverse video
+            std::cout << "\033[7m" << line[cursor_col] << "\033[27m";
+            // Output rest of line
+            if (cursor_col + 1 < cols_) {
+                std::cout << line.substr(cursor_col + 1);
+            }
+        } else {
+            std::cout << line;
+        }
+
         if (row < rows_ - 1) {
             std::cout << '\n';
         }

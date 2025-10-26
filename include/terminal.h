@@ -32,6 +32,7 @@ public:
 
     // Rendering
     void render();  // Output buffer to stdout
+    void render_with_cursor(int cursor_row, int cursor_col);  // Render with visible cursor
 
     // Input handling
     // Enable raw mode (disable line buffering, echo)
