@@ -49,6 +49,7 @@ set(DATAPAINTER_SOURCES
     src/axis_renderer.cpp
     src/edit_area_renderer.cpp
     src/header_renderer.cpp
+    src/footer_renderer.cpp
     # More UI components will go here
 )
 
@@ -96,6 +97,7 @@ if(BUILD_TESTS)
         tests/test_axis_renderer.cpp
         tests/test_edit_area_renderer.cpp
         tests/test_header_renderer.cpp
+        tests/test_footer_renderer.cpp
         # Implementation files needed by tests
         src/database.cpp
         src/argument_parser.cpp
@@ -107,6 +109,7 @@ if(BUILD_TESTS)
         src/axis_renderer.cpp
         src/edit_area_renderer.cpp
         src/header_renderer.cpp
+        src/footer_renderer.cpp
         # More test files will be added as we build
     )
 
