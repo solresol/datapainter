@@ -294,6 +294,142 @@ Options for random init:
 
 Note that you would normally run random init twice, once for the "x" and once for the "o" outputs.
 
+# Implementation Details & Clarifications
+
+## Concurrency & SQLite Configuration
+**Decision:** Simple single-process mode only
+- No SQLite WAL mode required
+- No busy_timeout configuration needed
+- Assume single process access to each database
+- No multi-process conflict detection or handling
+- Simpler implementation without concurrency complexity
+
+## Color & Accessibility
+**Decision:** Monochrome mode only (no colors)
+- No color support in initial version
+- Use only ASCII characters for rendering
+- No --no-colour flag needed
+- No NO_COLOR environment variable support
+- Keep implementation simple with monochrome output
+
+## Security & File Permissions
+**Decision:** Warn but allow world-writable files
+- Check file permissions on database open
+- If database file is world-writable, display a warning message
+- Allow operation to proceed despite warning
+- No --i-know-what-i-am-doing flag required
+- User is responsible for file security management
+
+## Performance Requirements
+**Decision:** Best effort, no specific targets
+- Optimize as needed during development
+- No hard performance requirements (FPS, latency, save time)
+- Profile and improve performance issues as they arise
+- No baseline targets for 1M row tables
+
+## Help System
+**Decision:** '?' key shows keyboard shortcuts and current state
+- Pressing '?' brings up an in-app help cheatsheet overlay
+- Display all keyboard shortcuts
+- Show current zoom level
+- Show pan step percentage
+- Show current hit-test behavior
+- Dismiss help overlay to return to normal operation
+
+## Exit Codes
+**Decision:** Detailed exit codes for different error conditions
+
+Standard exit codes:
+- **0** - Success
+- **2** - Invalid command-line arguments
+- **64** - Screen too small (when --override-screen-height/width exceeds terminal size)
+- **65** - Database I/O error
+- **66** - Database lock timeout
+- **67** - CSV write error
+
+Non-interactive commands return machine-readable messages on stdout; errors on stderr.
+
+## CSV Export Format (--to-csv)
+**Decision:** Basic CSV output, no special options
+- Simple CSV format: headers + data rows
+- Rows ordered by id (insertion order)
+- UTF-8 encoding
+- No optional BOM support
+- No --filter support for selective export
+- Format: three columns (x, y, target) with header row
+
+## Terminal Resize Handling (SIGWINCH)
+**Decision:** Handle SIGWINCH with small-screen fallback
+- Detect terminal resize events (SIGWINCH)
+- Re-render UI at new terminal size
+- If screen becomes too small to render header + 3 rows:
+  - Pause canvas rendering
+  - Show a status line prompting user to enlarge terminal
+- Resume normal rendering when adequate size restored
+
+## Table Name Validation
+**Decision:** Restrict to [A-Za-z0-9_]+ only
+- Table names must match regex: `[A-Za-z0-9_]+`
+- Alphanumeric characters and underscores only
+- Reject table names with spaces, special characters, or other symbols
+- Display clear error message for invalid table names
+- Non-interactive mode: exit with code 2
+- Interactive mode: show inline error and prompt again
+
+## Decimal Point Display (Locale)
+**Decision:** Use default C++ formatting (printf/iostream)
+- Let standard library decide decimal separator
+- Use standard printf or iostream formatting for axis labels
+- No explicit locale override
+- No forced '.' period regardless of locale
+
+## Wide Character Handling
+**Decision:** Block wide characters entirely
+- Do not support emoji or multi-byte wide characters
+- Strip or reject wide characters from input
+- Ensure terminal alignment with fixed-width ASCII only
+- Prevents rendering issues with variable-width characters
+
+## Validation Rules Summary
+
+### Range Validation
+- Valid ranges: `min <= max` required
+- Invalid ranges:
+  - Non-interactive: exit with code 2
+  - Interactive: show inline error message
+
+### CLI Conflict Resolution
+Already specified above in CLI arguments section.
+
+## Implementation Notes
+
+### Tick Algorithm
+- Let `range = x_high - x_low`
+- Choose `step = 10^k * {1,2,5}` to prevent label collision
+- Minor ticks appear if ≥ 3 characters between majors
+- Tenth ticks if ≥ 6 characters between majors
+- Scientific notation for `|k| ≥ 4`
+
+### Focus Order (Tab key)
+Tab cycles through header fields left-to-right:
+1. Database name
+2. Table name
+3. Target name
+4. X/O meanings
+5. Valid ranges
+6. Action buttons (Tabular view, Undo, Quit, Save)
+7. Then into viewport
+
+Enter key activates focused button or confirms edited field.
+
+### Parameterized SQL
+- Always use parameterized queries for dynamic values
+- For table names: whitelist against metadata.table_name
+- Prevents SQL injection vulnerabilities
+
+## Test Coverage Notes
+Acceptance test scenarios are implementation details and not specified as requirements. Developers should design appropriate tests during development following TDD practices as specified in CLAUDE.md.
+
 # Documentation
 
 This README.md, CLAUDE.md talks about coding standards and styles.
