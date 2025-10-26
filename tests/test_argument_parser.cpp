@@ -32,6 +32,30 @@ private:
     char** argv_;
 };
 
+// Test parsing --help flag
+TEST(ArgumentParserTest, ParseHelpFlag) {
+    ArgvHelper args({"datapainter", "--help"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.show_help);
+}
+
+// Test parsing -h shorthand
+TEST(ArgumentParserTest, ParseHelpShorthand) {
+    ArgvHelper args({"datapainter", "-h"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.show_help);
+}
+
+// Test parsing --version flag
+TEST(ArgumentParserTest, ParseVersionFlag) {
+    ArgvHelper args({"datapainter", "--version"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.show_version);
+}
+
 // Test parsing --database argument
 TEST(ArgumentParserTest, ParseDatabaseArgument) {
     ArgvHelper args({"datapainter", "--database", "test.db"});

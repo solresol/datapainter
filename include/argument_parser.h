@@ -82,6 +82,10 @@ struct Arguments {
     bool commit_unsaved_changes = false;
     bool list_unsaved_changes = false;
 
+    // Help and version
+    bool show_help = false;
+    bool show_version = false;
+
     // Validation
     bool has_errors() const { return !error_messages.empty(); }
     std::vector<std::string> error_messages;
@@ -96,6 +100,9 @@ public:
     // Validate that parsed arguments are consistent
     // Returns error messages if validation fails
     static std::vector<std::string> validate(const Arguments& args);
+
+    // Print help message to the given output stream
+    static void print_help(std::ostream& out);
 
 private:
     // Helper to check if a flag is present

@@ -13,6 +13,18 @@ int main(int argc, char** argv) {
     // Parse arguments
     Arguments args = ArgumentParser::parse(argc, argv);
 
+    // Handle --help flag
+    if (args.show_help) {
+        ArgumentParser::print_help(std::cout);
+        return 0;
+    }
+
+    // Handle --version flag
+    if (args.show_version) {
+        std::cout << "DataPainter v0.1.0" << std::endl;
+        return 0;
+    }
+
     // Check for parsing errors
     if (args.has_errors()) {
         for (const auto& error : args.error_messages) {

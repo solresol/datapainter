@@ -1,11 +1,17 @@
 #include "argument_parser.h"
 #include <algorithm>
+#include <iomanip>
+#include <iostream>
 #include <sstream>
 
 namespace datapainter {
 
 Arguments ArgumentParser::parse(int argc, char** argv) {
     Arguments args;
+
+    // Check for help and version flags first
+    args.show_help = has_flag(argc, argv, "--help") || has_flag(argc, argv, "-h");
+    args.show_version = has_flag(argc, argv, "--version");
 
     // Database and table
     args.database = get_value(argc, argv, "--database");
@@ -262,6 +268,87 @@ std::optional<int> ArgumentParser::parse_int(const std::string& str) {
         // Parsing failed
     }
     return std::nullopt;
+}
+
+void ArgumentParser::print_help(std::ostream& out) {
+    out << "DataPainter v0.1.0 - TUI for editing 2D labeled datasets\n\n";
+
+    out << "USAGE:\n";
+    out << "  datapainter [OPTIONS]\n\n";
+
+    out << "GENERAL OPTIONS:\n";
+    out << "  --help, -h              Show this help message\n";
+    out << "  --version               Show version information\n";
+    out << "  --database <path>       Path to SQLite database file\n";
+    out << "  --table <name>          Table name to work with\n\n";
+
+    out << "TABLE MANAGEMENT:\n";
+    out << "  --list-tables           List all tables in the database\n";
+    out << "  --create-table          Create a new table (requires additional options)\n";
+    out << "  --delete-table          Delete a table\n";
+    out << "  --rename-table          Rename a table (not yet implemented)\n";
+    out << "  --copy-table            Copy a table (not yet implemented)\n";
+    out << "  --show-metadata         Show metadata for a table\n\n";
+
+    out << "CREATE TABLE OPTIONS:\n";
+    out << "  --target-column-name <name>  Name for target/label column\n";
+    out << "  --x-axis-name <name>         Name for X axis\n";
+    out << "  --y-axis-name <name>         Name for Y axis\n";
+    out << "  --x-meaning <char>           Character representing X axis targets\n";
+    out << "  --o-meaning <char>           Character representing O/other targets\n";
+    out << "  --min-x <value>              Minimum X value (default: -10.0)\n";
+    out << "  --max-x <value>              Maximum X value (default: 10.0)\n";
+    out << "  --min-y <value>              Minimum Y value (default: -10.0)\n";
+    out << "  --max-y <value>              Maximum Y value (default: 10.0)\n";
+    out << "  --show-zero-bars             Show zero axis bars\n\n";
+
+    out << "POINT OPERATIONS:\n";
+    out << "  --add-point             Add a point (requires --x, --y, --target)\n";
+    out << "  --delete-point          Delete a point (requires --point-id)\n";
+    out << "  --x <value>             X coordinate for point\n";
+    out << "  --y <value>             Y coordinate for point\n";
+    out << "  --target <label>        Target/label for point\n";
+    out << "  --point-id <id>         ID of point to delete\n\n";
+
+    out << "DATA EXPORT:\n";
+    out << "  --to-csv                Export table data to CSV format\n\n";
+
+    out << "UNDO LOG MANAGEMENT:\n";
+    out << "  --list-unsaved-changes  List all unsaved changes for a table\n";
+    out << "  --commit-unsaved-changes Commit unsaved changes for a table\n";
+    out << "  --clear-undo-log        Clear undo log for a table\n";
+    out << "  --clear-all-undo-log    Clear undo logs for all tables\n\n";
+
+    out << "UI OPTIONS (for interactive mode):\n";
+    out << "  --start-tabular         Start in tabular view mode\n";
+    out << "  --override-screen-width <cols>   Override detected screen width\n";
+    out << "  --override-screen-height <rows>  Override detected screen height\n\n";
+
+    out << "DEBUG OPTIONS:\n";
+    out << "  --dump-screen           Dump screen buffer contents\n";
+    out << "  --dump-edit-area-contents  Dump edit area contents\n";
+    out << "  --list-x-axis-marks     List X axis tick marks\n";
+    out << "  --list-y-axis-marks     List Y axis tick marks\n";
+    out << "  --zoom-in               Zoom in\n";
+    out << "  --zoom-out              Zoom out\n\n";
+
+    out << "EXAMPLES:\n";
+    out << "  # Create a new table\n";
+    out << "  datapainter --database data.db --create-table --table mytable \\\n";
+    out << "    --target-column-name label --x-axis-name x --y-axis-name y \\\n";
+    out << "    --x-meaning X --o-meaning O\n\n";
+
+    out << "  # Add a point\n";
+    out << "  datapainter --database data.db --table mytable --add-point \\\n";
+    out << "    --x 1.5 --y 2.3 --target positive\n\n";
+
+    out << "  # Export to CSV\n";
+    out << "  datapainter --database data.db --table mytable --to-csv > output.csv\n\n";
+
+    out << "  # List all tables\n";
+    out << "  datapainter --database data.db --list-tables\n\n";
+
+    out << "For more information, see README.md\n";
 }
 
 } // namespace datapainter
