@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-linux:
+    name: Build on Linux
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake g++ libsqlite3-dev libncurses-dev
+
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: datapainter-linux
+        path: build/datapainter
+
+  build-macos:
+    name: Build on macOS
+    runs-on: macos-latest
+    # Only run on releases to save CI time per README.md
+    if: github.event_name == 'release'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        brew install cmake sqlite3
+
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: datapainter-macos
+        path: build/datapainter
+
+  build-windows:
+    name: Build on Windows
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies with vcpkg
+      run: |
+        vcpkg install sqlite3:x64-windows
+
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Run tests
+      run: |
+        cd build
+        ctest -C Release --output-on-failure
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: datapainter-windows
+        path: build/Release/datapainter.exe
+
+  # Note: Haiku build will need a custom runner or cross-compilation setup
+  # This is a placeholder for future implementation
+  # build-haiku:
+  #   name: Build on Haiku
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: Cross-compile for Haiku
+  #     run: echo "Haiku cross-compilation not yet implemented"
