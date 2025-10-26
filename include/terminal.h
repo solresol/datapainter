@@ -33,6 +33,14 @@ public:
     // Rendering
     void render();  // Output buffer to stdout
 
+    // Input handling
+    // Enable raw mode (disable line buffering, echo)
+    bool enter_raw_mode();
+    // Restore normal terminal mode
+    bool exit_raw_mode();
+    // Read a single character (non-blocking if possible)
+    int read_key();
+
 private:
     int rows_;
     int cols_;

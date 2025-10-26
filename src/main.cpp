@@ -3,9 +3,17 @@
 #include "table_manager.h"
 #include "undo_log_manager.h"
 #include "data_table.h"
+#include "terminal.h"
+#include "viewport.h"
+#include "metadata.h"
+#include "header_renderer.h"
+#include "footer_renderer.h"
+#include "edit_area_renderer.h"
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <thread>
+#include <chrono>
 
 using namespace datapainter;
 
@@ -348,9 +356,157 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    // If we got here with a database but no recognized command, show message
-    std::cout << "DataPainter v0.1.0" << std::endl;
-    std::cout << "TUI not yet implemented. See TODO.md for development roadmap." << std::endl;
+    // If we got here with a database but no recognized command, start interactive mode
+    if (!args.table.has_value()) {
+        std::cout << "DataPainter v0.1.0" << std::endl;
+        std::cout << "Interactive mode requires --table argument." << std::endl;
+        std::cout << "Use --list-tables to see available tables." << std::endl;
+        return 0;
+    }
+
+    // Start interactive TUI mode
+    std::string table_name = args.table.value();
+
+    // Load metadata
+    MetadataManager metadata_mgr(db);
+    auto meta_opt = metadata_mgr.read(table_name);
+    if (!meta_opt.has_value()) {
+        std::cerr << "Error: Table not found: " << table_name << std::endl;
+        return 66;
+    }
+    Metadata meta = meta_opt.value();
+
+    // Initialize terminal
+    Terminal terminal;
+    if (!terminal.detect_size()) {
+        std::cerr << "Warning: Could not detect terminal size, using defaults" << std::endl;
+    }
+    if (!terminal.is_size_adequate()) {
+        std::cerr << "Error: Terminal too small (need at least 5 rows x 40 cols)" << std::endl;
+        return 1;
+    }
+
+    // Apply overrides if specified
+    if (args.override_screen_height.has_value() && args.override_screen_width.has_value()) {
+        terminal.set_dimensions(args.override_screen_height.value(),
+                               args.override_screen_width.value());
+    }
+
+    // Initialize viewport
+    int screen_height = terminal.rows();
+    int screen_width = terminal.cols();
+
+    // Unwrap optional values (they should exist for valid metadata)
+    double x_min = meta.valid_x_min.value_or(-10.0);
+    double x_max = meta.valid_x_max.value_or(10.0);
+    double y_min = meta.valid_y_min.value_or(-10.0);
+    double y_max = meta.valid_y_max.value_or(10.0);
+
+    Viewport viewport(x_min, x_max, y_min, y_max,
+                     screen_height, screen_width);
+
+    // Create data table
+    DataTable data_table(db, table_name);
+
+    // Enter raw mode
+    if (!terminal.enter_raw_mode()) {
+        std::cerr << "Error: Could not enter raw terminal mode" << std::endl;
+        return 1;
+    }
+
+    // Main TUI loop
+    bool running = true;
+    bool needs_redraw = true;
+    int cursor_row = screen_height / 2;
+    int cursor_col = screen_width / 2;
+
+    std::cout << "Starting DataPainter TUI..." << std::endl;
+    std::cout << "Press 'q' to quit, '+'/'-' to zoom, WASD to pan" << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+
+    while (running) {
+        if (needs_redraw) {
+            // Clear buffer
+            terminal.clear_buffer();
+
+            // Query all data points
+            auto all_points = data_table.query_viewport(
+                viewport.data_x_min(), viewport.data_x_max(),
+                viewport.data_y_min(), viewport.data_y_max()
+            );
+
+            // Count points
+            int total_count = all_points.size();
+            int x_count = 0;
+            int o_count = 0;
+            for (const auto& pt : all_points) {
+                if (pt.target == meta.x_meaning) {
+                    x_count++;
+                } else if (pt.target == meta.o_meaning) {
+                    o_count++;
+                }
+            }
+
+            // Create renderers
+            HeaderRenderer header_renderer;
+            FooterRenderer footer_renderer;
+            EditAreaRenderer edit_area_renderer;
+
+            // Get current cursor position in data coordinates
+            DataCoord cursor_data = viewport.screen_to_data({cursor_row, cursor_col});
+
+            // Render header
+            header_renderer.render(terminal, args.database.value(), meta.table_name,
+                                  meta.target_col_name, meta.x_meaning, meta.o_meaning,
+                                  total_count, x_count, o_count,
+                                  x_min, x_max, y_min, y_max, 0);
+
+            // Render edit area
+            std::vector<ChangeRecord> unsaved_changes;  // Empty for now
+            edit_area_renderer.render(terminal, viewport, data_table, unsaved_changes,
+                                     cursor_row, cursor_col, meta.x_meaning, meta.o_meaning);
+
+            // Render footer
+            footer_renderer.render(terminal, cursor_data.x, cursor_data.y,
+                                  x_min, x_max, y_min, y_max, 0);
+
+            // Display to screen
+            terminal.render();
+            needs_redraw = false;
+        }
+
+        // Read keyboard input
+        int key = terminal.read_key();
+        if (key >= 0) {
+            char ch = static_cast<char>(key);
+
+            // Handle quit
+            if (ch == 'q' || ch == 'Q' || ch == 27) {  // 'q' or ESC
+                running = false;
+            }
+            // Handle zoom
+            else if (ch == '+' || ch == '=') {
+                DataCoord center = viewport.screen_to_data({cursor_row, cursor_col});
+                viewport.zoom_in(center);
+                needs_redraw = true;
+            }
+            else if (ch == '-' || ch == '_') {
+                DataCoord center = viewport.screen_to_data({cursor_row, cursor_col});
+                viewport.zoom_out(center);
+                needs_redraw = true;
+            }
+        }
+
+        // Small delay to prevent busy-waiting
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+
+    // Exit raw mode
+    terminal.exit_raw_mode();
+
+    // Clear screen and show exit message
+    std::cout << "\033[2J\033[H";  // Clear screen
+    std::cout << "DataPainter exited successfully." << std::endl;
 
     return 0;
 }

@@ -4,12 +4,21 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <conio.h>
 #else
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <termios.h>
+#include <fcntl.h>
 #endif
 
 namespace datapainter {
+
+// Store original terminal settings for restoration
+#ifndef _WIN32
+static struct termios orig_termios;
+static bool raw_mode_enabled = false;
+#endif
 
 Terminal::Terminal() : rows_(24), cols_(80) {
     resize_buffer();
@@ -112,6 +121,79 @@ void Terminal::resize_buffer() {
             buffer_[r][c] = old_buffer[r][c];
         }
     }
+}
+
+bool Terminal::enter_raw_mode() {
+#ifdef _WIN32
+    // Windows: set console mode
+    HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
+    DWORD mode;
+    if (!GetConsoleMode(hStdin, &mode)) {
+        return false;
+    }
+    // Disable line input and echo
+    SetConsoleMode(hStdin, mode & ~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT));
+    return true;
+#else
+    // Unix: use termios
+    if (tcgetattr(STDIN_FILENO, &orig_termios) == -1) {
+        return false;
+    }
+
+    struct termios raw = orig_termios;
+    // Disable canonical mode and echo
+    raw.c_lflag &= ~(ICANON | ECHO);
+    // Set minimum characters and timeout for read
+    raw.c_cc[VMIN] = 0;   // Non-blocking read
+    raw.c_cc[VTIME] = 1;  // 100ms timeout
+
+    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) {
+        return false;
+    }
+
+    raw_mode_enabled = true;
+    return true;
+#endif
+}
+
+bool Terminal::exit_raw_mode() {
+#ifdef _WIN32
+    // Windows: restore original console mode
+    HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
+    DWORD mode;
+    if (!GetConsoleMode(hStdin, &mode)) {
+        return false;
+    }
+    SetConsoleMode(hStdin, mode | ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT);
+    return true;
+#else
+    // Unix: restore original termios
+    if (raw_mode_enabled) {
+        if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios) == -1) {
+            return false;
+        }
+        raw_mode_enabled = false;
+    }
+    return true;
+#endif
+}
+
+int Terminal::read_key() {
+#ifdef _WIN32
+    // Windows: use _kbhit() and _getch()
+    if (_kbhit()) {
+        return _getch();
+    }
+    return -1;  // No key available
+#else
+    // Unix: read from stdin
+    unsigned char c;
+    ssize_t nread = read(STDIN_FILENO, &c, 1);
+    if (nread == 1) {
+        return static_cast<int>(c);
+    }
+    return -1;  // No key available or error
+#endif
 }
 
 } // namespace datapainter
