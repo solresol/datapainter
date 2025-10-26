@@ -671,8 +671,46 @@ int main(int argc, char** argv) {
         if (key >= 0) {
             char ch = static_cast<char>(key);
 
+            // Handle escape sequences (arrow keys, etc.)
+            if (ch == 27) {  // ESC
+                // Check if this is an escape sequence or just ESC key
+                int next1 = terminal.read_key();
+                if (next1 == '[') {
+                    // This is an escape sequence, read the command character
+                    int next2 = terminal.read_key();
+                    if (next2 == 'A') {
+                        // Up arrow - move cursor up
+                        if (cursor_row > 0) {
+                            cursor_row--;
+                            needs_redraw = true;
+                        }
+                    } else if (next2 == 'B') {
+                        // Down arrow - move cursor down
+                        if (cursor_row < screen_height - 1) {
+                            cursor_row++;
+                            needs_redraw = true;
+                        }
+                    } else if (next2 == 'C') {
+                        // Right arrow - move cursor right
+                        if (cursor_col < screen_width - 1) {
+                            cursor_col++;
+                            needs_redraw = true;
+                        }
+                    } else if (next2 == 'D') {
+                        // Left arrow - move cursor left
+                        if (cursor_col > 0) {
+                            cursor_col--;
+                            needs_redraw = true;
+                        }
+                    }
+                } else if (next1 < 0) {
+                    // No follow-up character, this is just ESC key press - quit
+                    running = false;
+                }
+                // Otherwise ignore unknown escape sequence
+            }
             // Handle quit
-            if (ch == 'q' || ch == 'Q' || ch == 27) {  // 'q' or ESC
+            else if (ch == 'q' || ch == 'Q') {
                 running = false;
             }
             // Handle zoom
