@@ -84,6 +84,33 @@ Arguments ArgumentParser::parse(int argc, char** argv) {
     args.delete_point = has_flag(argc, argv, "--delete-point");
     args.to_csv = has_flag(argc, argv, "--to-csv");
 
+    // Point operation arguments
+    if (auto val = get_value(argc, argv, "--x")) {
+        if (auto parsed = parse_double(*val)) {
+            args.point_x = *parsed;
+        } else {
+            args.error_messages.push_back("Invalid value for --x: " + *val);
+        }
+    }
+
+    if (auto val = get_value(argc, argv, "--y")) {
+        if (auto parsed = parse_double(*val)) {
+            args.point_y = *parsed;
+        } else {
+            args.error_messages.push_back("Invalid value for --y: " + *val);
+        }
+    }
+
+    args.point_target = get_value(argc, argv, "--target");
+
+    if (auto val = get_value(argc, argv, "--point-id")) {
+        if (auto parsed = parse_int(*val)) {
+            args.point_id = *parsed;
+        } else {
+            args.error_messages.push_back("Invalid value for --point-id: " + *val);
+        }
+    }
+
     // Testing/debug options
     args.dump_screen = has_flag(argc, argv, "--dump-screen");
     args.dump_edit_area_contents = has_flag(argc, argv, "--dump-edit-area-contents");

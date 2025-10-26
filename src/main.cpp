@@ -2,6 +2,8 @@
 #include "database.h"
 #include "table_manager.h"
 #include "undo_log_manager.h"
+#include "data_table.h"
+#include <algorithm>
 #include <iostream>
 #include <string>
 
@@ -191,16 +193,54 @@ int main(int argc, char** argv) {
 
     // --add-point
     if (args.add_point) {
-        // TODO: Need to parse x, y, target from additional arguments
-        std::cerr << "Error: --add-point not yet implemented" << std::endl;
-        return 2;
+        if (!args.table.has_value()) {
+            std::cerr << "Error: --table is required for --add-point" << std::endl;
+            return 2;
+        }
+        if (!args.point_x.has_value()) {
+            std::cerr << "Error: --x is required for --add-point" << std::endl;
+            return 2;
+        }
+        if (!args.point_y.has_value()) {
+            std::cerr << "Error: --y is required for --add-point" << std::endl;
+            return 2;
+        }
+        if (!args.point_target.has_value()) {
+            std::cerr << "Error: --target is required for --add-point" << std::endl;
+            return 2;
+        }
+
+        DataTable dt(db, args.table.value());
+        auto id = dt.insert_point(args.point_x.value(), args.point_y.value(), args.point_target.value());
+
+        if (!id.has_value()) {
+            std::cerr << "Error: Failed to add point" << std::endl;
+            return 66;
+        }
+
+        std::cout << "Point added with ID " << id.value() << std::endl;
+        return 0;
     }
 
     // --delete-point
     if (args.delete_point) {
-        // TODO: Need to parse point ID from additional arguments
-        std::cerr << "Error: --delete-point not yet implemented" << std::endl;
-        return 2;
+        if (!args.table.has_value()) {
+            std::cerr << "Error: --table is required for --delete-point" << std::endl;
+            return 2;
+        }
+        if (!args.point_id.has_value()) {
+            std::cerr << "Error: --point-id is required for --delete-point" << std::endl;
+            return 2;
+        }
+
+        DataTable dt(db, args.table.value());
+        if (!dt.delete_point(args.point_id.value())) {
+            std::cerr << "Error: Point not found: " << args.point_id.value() << std::endl;
+            return 66;
+        }
+
+        std::cout << "Point " << args.point_id.value() << " deleted successfully" << std::endl;
+        return 0;
     }
 
     // --clear-undo-log
@@ -248,9 +288,52 @@ int main(int argc, char** argv) {
 
     // --to-csv
     if (args.to_csv) {
-        // TODO: Implement CSV export
-        std::cerr << "Error: --to-csv not yet implemented" << std::endl;
-        return 2;
+        if (!args.table.has_value()) {
+            std::cerr << "Error: --table is required for --to-csv" << std::endl;
+            return 2;
+        }
+
+        // Query all points from the table
+        DataTable dt(db, args.table.value());
+        // Use a very large viewport to get all points
+        auto points = dt.query_viewport(-1e308, 1e308, -1e308, 1e308);
+
+        // Sort by id to ensure consistent order
+        std::sort(points.begin(), points.end(), [](const DataPoint& a, const DataPoint& b) {
+            return a.id < b.id;
+        });
+
+        // Output CSV header
+        std::cout << "x,y,target\n";
+
+        // Output data rows
+        for (const auto& point : points) {
+            std::cout << point.x << "," << point.y << ",";
+
+            // Escape target value if it contains special characters
+            std::string target = point.target;
+            bool needs_quotes = target.find(',') != std::string::npos ||
+                                target.find('"') != std::string::npos ||
+                                target.find('\n') != std::string::npos;
+
+            if (needs_quotes) {
+                std::cout << "\"";
+                for (char c : target) {
+                    if (c == '"') {
+                        std::cout << "\"\"";  // Escape quotes by doubling them
+                    } else {
+                        std::cout << c;
+                    }
+                }
+                std::cout << "\"";
+            } else {
+                std::cout << target;
+            }
+
+            std::cout << "\n";
+        }
+
+        return 0;
     }
 
     // If we got here with a database but no recognized command, show message

@@ -146,9 +146,69 @@ TEST_F(IntegrationTest, AddPoint) {
                              " --min-y -10.0 --max-y 10.0";
     exec_command(create_cmd);
 
-    // Add a point - we need to parse this properly in main
-    // For now, we'll need to think about how to pass x, y, target
-    // This test will guide the implementation
+    // Add a point
+    std::string add_cmd = exe_ + " --database " + test_db_ +
+                          " --add-point --table test_table" +
+                          " --x 1.5 --y 2.5 --target x_val";
+    std::string output = exec_command(add_cmd);
+
+    // Should indicate success
+    EXPECT_NE(output.find("Point added"), std::string::npos);
+    EXPECT_NE(output.find("ID 1"), std::string::npos);
+}
+
+// Test: --delete-point
+TEST_F(IntegrationTest, DeletePoint) {
+    // First create a table
+    std::string create_cmd = exe_ + " --database " + test_db_ +
+                             " --create-table --table test_table" +
+                             " --target-column-name target" +
+                             " --x-axis-name x --y-axis-name y" +
+                             " --x-meaning x_val --o-meaning o_val" +
+                             " --min-x -10.0 --max-x 10.0" +
+                             " --min-y -10.0 --max-y 10.0";
+    exec_command(create_cmd);
+
+    // Add a point
+    std::string add_cmd = exe_ + " --database " + test_db_ +
+                          " --add-point --table test_table" +
+                          " --x 1.5 --y 2.5 --target x_val";
+    exec_command(add_cmd);
+
+    // Delete the point
+    std::string delete_cmd = exe_ + " --database " + test_db_ +
+                             " --delete-point --table test_table --point-id 1";
+    std::string output = exec_command(delete_cmd);
+
+    // Should indicate success
+    EXPECT_NE(output.find("deleted successfully"), std::string::npos);
+}
+
+// Test: Add multiple points and verify they exist
+TEST_F(IntegrationTest, AddMultiplePoints) {
+    // First create a table
+    std::string create_cmd = exe_ + " --database " + test_db_ +
+                             " --create-table --table test_table" +
+                             " --target-column-name target" +
+                             " --x-axis-name x --y-axis-name y" +
+                             " --x-meaning x_val --o-meaning o_val" +
+                             " --min-x -10.0 --max-x 10.0" +
+                             " --min-y -10.0 --max-y 10.0";
+    exec_command(create_cmd);
+
+    // Add three points
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --add-point --table test_table" +
+                 " --x 1.0 --y 2.0 --target x_val");
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --add-point --table test_table" +
+                 " --x 3.0 --y 4.0 --target o_val");
+    std::string output = exec_command(exe_ + " --database " + test_db_ +
+                                      " --add-point --table test_table" +
+                                      " --x 5.0 --y 6.0 --target x_val");
+
+    // Last point should be ID 3
+    EXPECT_NE(output.find("ID 3"), std::string::npos);
 }
 
 // Test: Missing required arguments
@@ -158,4 +218,124 @@ TEST_F(IntegrationTest, MissingDatabaseArgument) {
 
     // Should indicate error about missing database
     EXPECT_NE(output.find("database"), std::string::npos);
+}
+
+// Test: --add-point missing required arguments
+TEST_F(IntegrationTest, AddPointMissingArguments) {
+    // Create table first
+    std::string create_cmd = exe_ + " --database " + test_db_ +
+                             " --create-table --table test_table" +
+                             " --target-column-name target" +
+                             " --x-axis-name x --y-axis-name y" +
+                             " --x-meaning x_val --o-meaning o_val" +
+                             " --min-x -10.0 --max-x 10.0" +
+                             " --min-y -10.0 --max-y 10.0";
+    exec_command(create_cmd);
+
+    // Try to add point without --x
+    std::string cmd = exe_ + " --database " + test_db_ +
+                      " --add-point --table test_table" +
+                      " --y 2.0 --target x_val";
+    std::string output = exec_command(cmd);
+
+    EXPECT_NE(output.find("--x is required"), std::string::npos);
+}
+
+// Test: --delete-point with non-existent ID
+TEST_F(IntegrationTest, DeleteNonExistentPoint) {
+    // Create table first
+    std::string create_cmd = exe_ + " --database " + test_db_ +
+                             " --create-table --table test_table" +
+                             " --target-column-name target" +
+                             " --x-axis-name x --y-axis-name y" +
+                             " --x-meaning x_val --o-meaning o_val" +
+                             " --min-x -10.0 --max-x 10.0" +
+                             " --min-y -10.0 --max-y 10.0";
+    exec_command(create_cmd);
+
+    // Try to delete non-existent point
+    std::string cmd = exe_ + " --database " + test_db_ +
+                      " --delete-point --table test_table --point-id 999";
+    std::string output = exec_command(cmd);
+
+    EXPECT_NE(output.find("Point not found"), std::string::npos);
+}
+
+// Test: --to-csv exports empty table
+TEST_F(IntegrationTest, ToCsvEmpty) {
+    // Create table
+    std::string create_cmd = exe_ + " --database " + test_db_ +
+                             " --create-table --table test_table" +
+                             " --target-column-name target" +
+                             " --x-axis-name x --y-axis-name y" +
+                             " --x-meaning x_val --o-meaning o_val" +
+                             " --min-x -10.0 --max-x 10.0" +
+                             " --min-y -10.0 --max-y 10.0";
+    exec_command(create_cmd);
+
+    // Export to CSV
+    std::string cmd = exe_ + " --database " + test_db_ + " --to-csv --table test_table";
+    std::string output = exec_command(cmd);
+
+    // Should have header but no data rows
+    EXPECT_NE(output.find("x,y,target"), std::string::npos);
+    // Count lines (header only = 1 line)
+    int line_count = std::count(output.begin(), output.end(), '\n');
+    EXPECT_EQ(line_count, 1);
+}
+
+// Test: --to-csv exports data
+TEST_F(IntegrationTest, ToCsvWithData) {
+    // Create table
+    std::string create_cmd = exe_ + " --database " + test_db_ +
+                             " --create-table --table test_table" +
+                             " --target-column-name target" +
+                             " --x-axis-name x --y-axis-name y" +
+                             " --x-meaning x_val --o-meaning o_val" +
+                             " --min-x -10.0 --max-x 10.0" +
+                             " --min-y -10.0 --max-y 10.0";
+    exec_command(create_cmd);
+
+    // Add points
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --add-point --table test_table --x 1.5 --y 2.5 --target x_val");
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --add-point --table test_table --x 3.5 --y 4.5 --target o_val");
+
+    // Export to CSV
+    std::string cmd = exe_ + " --database " + test_db_ + " --to-csv --table test_table";
+    std::string output = exec_command(cmd);
+
+    // Should have header and two data rows
+    EXPECT_NE(output.find("x,y,target"), std::string::npos);
+    EXPECT_NE(output.find("1.5,2.5,x_val"), std::string::npos);
+    EXPECT_NE(output.find("3.5,4.5,o_val"), std::string::npos);
+
+    // Count lines (header + 2 data = 3 lines)
+    int line_count = std::count(output.begin(), output.end(), '\n');
+    EXPECT_EQ(line_count, 3);
+}
+
+// Test: --to-csv with special characters in target
+TEST_F(IntegrationTest, ToCsvWithQuotes) {
+    // Create table
+    std::string create_cmd = exe_ + " --database " + test_db_ +
+                             " --create-table --table test_table" +
+                             " --target-column-name target" +
+                             " --x-axis-name x --y-axis-name y" +
+                             " --x-meaning x_val --o-meaning o_val" +
+                             " --min-x -10.0 --max-x 10.0" +
+                             " --min-y -10.0 --max-y 10.0";
+    exec_command(create_cmd);
+
+    // Add point with comma in target value
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --add-point --table test_table --x 1.0 --y 2.0 --target \"has,comma\"");
+
+    // Export to CSV
+    std::string cmd = exe_ + " --database " + test_db_ + " --to-csv --table test_table";
+    std::string output = exec_command(cmd);
+
+    // Target value should be quoted
+    EXPECT_NE(output.find("\"has,comma\""), std::string::npos);
 }

@@ -44,6 +44,12 @@ struct Arguments {
     bool delete_point = false;
     bool to_csv = false;
 
+    // Point operation arguments
+    std::optional<double> point_x;
+    std::optional<double> point_y;
+    std::optional<std::string> point_target;
+    std::optional<int> point_id;
+
     // Testing/debug options
     bool dump_screen = false;
     bool dump_edit_area_contents = false;
