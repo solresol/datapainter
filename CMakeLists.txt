@@ -45,9 +45,8 @@ set(DATAPAINTER_SOURCES
     src/data_table.cpp
     src/unsaved_changes.cpp
     src/viewport.cpp
-    # UI layer will go here:
-    # src/terminal.cpp
-    # etc.
+    src/terminal.cpp
+    # More UI components will go here
 )
 
 # Main executable
@@ -90,6 +89,7 @@ if(BUILD_TESTS)
         tests/test_data_table.cpp
         tests/test_unsaved_changes.cpp
         tests/test_viewport.cpp
+        tests/test_terminal.cpp
         # Implementation files needed by tests
         src/database.cpp
         src/argument_parser.cpp
@@ -97,6 +97,7 @@ if(BUILD_TESTS)
         src/data_table.cpp
         src/unsaved_changes.cpp
         src/viewport.cpp
+        src/terminal.cpp
         # More test files will be added as we build
     )
 
