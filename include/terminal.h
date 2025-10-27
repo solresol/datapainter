@@ -40,7 +40,16 @@ public:
     // Restore normal terminal mode
     bool exit_raw_mode();
     // Read a single character (non-blocking if possible)
+    // Returns: character code, or special values for arrow keys:
+    //   KEY_UP_ARROW = 1000, KEY_DOWN_ARROW = 1001,
+    //   KEY_LEFT_ARROW = 1002, KEY_RIGHT_ARROW = 1003
     int read_key();
+
+    // Special key codes (to avoid conflicts with regular ASCII)
+    static constexpr int KEY_UP_ARROW = 1000;
+    static constexpr int KEY_DOWN_ARROW = 1001;
+    static constexpr int KEY_LEFT_ARROW = 1002;
+    static constexpr int KEY_RIGHT_ARROW = 1003;
 
 private:
     int rows_;

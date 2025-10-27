@@ -676,60 +676,55 @@ int main(int argc, char** argv) {
         // Read keyboard input
         int key = terminal.read_key();
         if (key >= 0) {
-            char ch = static_cast<char>(key);
-
-            // Handle escape sequences (arrow keys, etc.)
-            if (ch == 27) {  // ESC
-                // Check if this is an escape sequence or just ESC key
-                int next1 = terminal.read_key();
-                if (next1 == '[') {
-                    // This is an escape sequence, read the command character
-                    int next2 = terminal.read_key();
-                    if (next2 == 'A') {
-                        // Up arrow - move cursor up (within edit area)
-                        if (cursor_row > edit_area_start_row) {
-                            cursor_row--;
-                            needs_redraw = true;
-                        }
-                    } else if (next2 == 'B') {
-                        // Down arrow - move cursor down (within edit area)
-                        int edit_area_end_row = edit_area_start_row + edit_area_height - 1;
-                        if (cursor_row < edit_area_end_row) {
-                            cursor_row++;
-                            needs_redraw = true;
-                        }
-                    } else if (next2 == 'C') {
-                        // Right arrow - move cursor right
-                        if (cursor_col < screen_width - 1) {
-                            cursor_col++;
-                            needs_redraw = true;
-                        }
-                    } else if (next2 == 'D') {
-                        // Left arrow - move cursor left
-                        if (cursor_col > 0) {
-                            cursor_col--;
-                            needs_redraw = true;
-                        }
-                    }
-                } else if (next1 < 0) {
-                    // No follow-up character, this is just ESC key press - quit
-                    running = false;
+            // Handle arrow keys (from ncurses or our own codes)
+            if (key == Terminal::KEY_UP_ARROW) {
+                // Up arrow - move cursor up (within edit area)
+                if (cursor_row > edit_area_start_row) {
+                    cursor_row--;
+                    needs_redraw = true;
                 }
-                // Otherwise ignore unknown escape sequence
             }
-            // Handle quit
-            else if (ch == 'q' || ch == 'Q') {
+            else if (key == Terminal::KEY_DOWN_ARROW) {
+                // Down arrow - move cursor down (within edit area)
+                int edit_area_end_row = edit_area_start_row + edit_area_height - 1;
+                if (cursor_row < edit_area_end_row) {
+                    cursor_row++;
+                    needs_redraw = true;
+                }
+            }
+            else if (key == Terminal::KEY_LEFT_ARROW) {
+                // Left arrow - move cursor left
+                if (cursor_col > 0) {
+                    cursor_col--;
+                    needs_redraw = true;
+                }
+            }
+            else if (key == Terminal::KEY_RIGHT_ARROW) {
+                // Right arrow - move cursor right
+                if (cursor_col < screen_width - 1) {
+                    cursor_col++;
+                    needs_redraw = true;
+                }
+            }
+            // Handle quit (q, Q, or ESC)
+            else if (key == 'q' || key == 'Q' || key == 27) {
                 running = false;
             }
             // Handle zoom
-            else if (ch == '+' || ch == '=') {
+            else if (key == '+' || key == '=') {
                 DataCoord center = viewport.screen_to_data({cursor_row, cursor_col});
                 viewport.zoom_in(center);
                 needs_redraw = true;
             }
-            else if (ch == '-' || ch == '_') {
+            else if (key == '-' || key == '_') {
                 DataCoord center = viewport.screen_to_data({cursor_row, cursor_col});
                 viewport.zoom_out(center);
+                needs_redraw = true;
+            }
+            // Handle point creation/editing (x, o, #)
+            else if (key == 'x' || key == 'X' || key == 'o' || key == 'O' || key == '#') {
+                // TODO: Implement point editing
+                // For now, just acknowledge the keypress
                 needs_redraw = true;
             }
         }

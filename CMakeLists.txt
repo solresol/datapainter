@@ -26,10 +26,23 @@ find_package(SQLite3 REQUIRED)
 
 # Platform-specific terminal handling
 if(UNIX)
-    # ncurses or direct termios on Unix-like systems
-    find_package(Curses)
-    if(NOT CURSES_FOUND)
-        message(STATUS "ncurses not found, will use termios directly")
+    # ncurses on Unix-like systems
+    if(APPLE)
+        # On macOS, use system ncurses to avoid ABI issues with MacPorts version
+        # Explicitly use SDK headers and library
+        set(CURSES_LIBRARIES "-lncurses")
+        # Force use of SDK ncurses headers, not MacPorts
+        include_directories(BEFORE SYSTEM /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include)
+        message(STATUS "Using system ncurses on macOS")
+    else()
+        find_package(Curses REQUIRED)
+        if(CURSES_FOUND)
+            message(STATUS "Found ncurses: ${CURSES_NCURSES_LIBRARY}")
+            # Prefer ncurses over plain curses
+            set(CURSES_LIBRARIES ${CURSES_NCURSES_LIBRARY})
+        else()
+            message(FATAL_ERROR "ncurses not found - required for TUI")
+        endif()
     endif()
 endif()
 
@@ -65,7 +78,7 @@ add_executable(datapainter ${DATAPAINTER_SOURCES})
 
 # Link libraries
 target_link_libraries(datapainter PRIVATE SQLite::SQLite3)
-if(CURSES_FOUND)
+if(UNIX)
     target_link_libraries(datapainter PRIVATE ${CURSES_LIBRARIES})
 endif()
 
@@ -142,6 +155,9 @@ if(BUILD_TESTS)
         gmock
         SQLite::SQLite3
     )
+    if(UNIX)
+        target_link_libraries(datapainter_tests PRIVATE ${CURSES_LIBRARIES})
+    endif()
     target_include_directories(datapainter_tests PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
     # Discover tests

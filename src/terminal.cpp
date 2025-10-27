@@ -6,25 +6,27 @@
 #include <windows.h>
 #include <conio.h>
 #else
+#include <ncurses.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <termios.h>
-#include <fcntl.h>
 #endif
 
 namespace datapainter {
 
-// Store original terminal settings for restoration
-#ifndef _WIN32
-static struct termios orig_termios;
-static bool raw_mode_enabled = false;
-#endif
+// Track whether ncurses is initialized
+static bool ncurses_initialized = false;
 
 Terminal::Terminal() : rows_(24), cols_(80) {
     resize_buffer();
 }
 
-Terminal::~Terminal() = default;
+Terminal::~Terminal() {
+    // Clean up ncurses if we initialized it
+    if (ncurses_initialized) {
+        endwin();
+        ncurses_initialized = false;
+    }
+}
 
 void Terminal::set_dimensions(int rows, int cols) {
     rows_ = rows;
@@ -43,6 +45,14 @@ bool Terminal::detect_size() {
     }
     return false;
 #else
+    // If ncurses is initialized, use its size detection
+    if (ncurses_initialized) {
+        getmaxyx(stdscr, rows_, cols_);
+        resize_buffer();
+        return true;
+    }
+
+    // Otherwise use ioctl
     struct winsize w;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0) {
         rows_ = w.ws_row;
@@ -87,10 +97,21 @@ std::string Terminal::get_row(int row) const {
 }
 
 void Terminal::render() {
-    // Clear screen and move to home (ANSI escape codes)
-    std::cout << "\033[2J\033[H";
+#ifndef _WIN32
+    if (ncurses_initialized) {
+        // Use ncurses for rendering
+        clear();
+        for (int row = 0; row < rows_ && row < LINES; ++row) {
+            std::string line = get_row(row);
+            mvaddnstr(row, 0, line.c_str(), std::min(cols_, COLS));
+        }
+        refresh();
+        return;
+    }
+#endif
 
-    // Output each row
+    // Fallback: use ANSI escape codes
+    std::cout << "\033[2J\033[H";
     for (int row = 0; row < rows_; ++row) {
         std::cout << get_row(row);
         if (row < rows_ - 1) {
@@ -101,27 +122,49 @@ void Terminal::render() {
 }
 
 void Terminal::render_with_cursor(int cursor_row, int cursor_col) {
-    // Clear screen and move to home
-    std::cout << "\033[2J\033[H";
+#ifndef _WIN32
+    if (ncurses_initialized) {
+        // Use ncurses for rendering with cursor
+        clear();
+        for (int row = 0; row < rows_ && row < LINES; ++row) {
+            std::string line = get_row(row);
 
-    // Output each row
+            if (row == cursor_row && cursor_col >= 0 && cursor_col < cols_) {
+                // Render line up to cursor
+                if (cursor_col > 0) {
+                    mvaddnstr(row, 0, line.c_str(), cursor_col);
+                }
+                // Render cursor with reverse video
+                attron(A_REVERSE);
+                mvaddch(row, cursor_col, line[cursor_col]);
+                attroff(A_REVERSE);
+                // Render rest of line
+                if (cursor_col + 1 < cols_) {
+                    mvaddnstr(row, cursor_col + 1, line.c_str() + cursor_col + 1,
+                             std::min(cols_ - cursor_col - 1, COLS - cursor_col - 1));
+                }
+            } else {
+                mvaddnstr(row, 0, line.c_str(), std::min(cols_, COLS));
+            }
+        }
+        refresh();
+        return;
+    }
+#endif
+
+    // Fallback: use ANSI escape codes
+    std::cout << "\033[2J\033[H";
     for (int row = 0; row < rows_; ++row) {
         std::string line = get_row(row);
-
-        // If this is the cursor row, add inverse video for cursor position
         if (row == cursor_row && cursor_col >= 0 && cursor_col < cols_) {
-            // Output up to cursor
             std::cout << line.substr(0, cursor_col);
-            // Output cursor character with inverse video
             std::cout << "\033[7m" << line[cursor_col] << "\033[27m";
-            // Output rest of line
             if (cursor_col + 1 < cols_) {
                 std::cout << line.substr(cursor_col + 1);
             }
         } else {
             std::cout << line;
         }
-
         if (row < rows_ - 1) {
             std::cout << '\n';
         }
@@ -164,23 +207,20 @@ bool Terminal::enter_raw_mode() {
     SetConsoleMode(hStdin, mode & ~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT));
     return true;
 #else
-    // Unix: use termios
-    if (tcgetattr(STDIN_FILENO, &orig_termios) == -1) {
-        return false;
+    // Unix: use ncurses
+    if (!ncurses_initialized) {
+        initscr();              // Initialize ncurses
+        raw();                  // Disable line buffering
+        noecho();               // Don't echo typed characters
+        keypad(stdscr, TRUE);   // Enable function keys, arrow keys, etc.
+        timeout(50);            // 50ms timeout for getch() (non-blocking with timeout)
+        curs_set(0);            // Hide the default cursor (we'll draw our own)
+
+        ncurses_initialized = true;
+
+        // Update dimensions from ncurses
+        detect_size();
     }
-
-    struct termios raw = orig_termios;
-    // Disable canonical mode and echo
-    raw.c_lflag &= ~(ICANON | ECHO);
-    // Set minimum characters and timeout for read
-    raw.c_cc[VMIN] = 0;   // Non-blocking read
-    raw.c_cc[VTIME] = 1;  // 100ms timeout
-
-    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) {
-        return false;
-    }
-
-    raw_mode_enabled = true;
     return true;
 #endif
 }
@@ -196,12 +236,10 @@ bool Terminal::exit_raw_mode() {
     SetConsoleMode(hStdin, mode | ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT);
     return true;
 #else
-    // Unix: restore original termios
-    if (raw_mode_enabled) {
-        if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios) == -1) {
-            return false;
-        }
-        raw_mode_enabled = false;
+    // Unix: cleanup ncurses
+    if (ncurses_initialized) {
+        endwin();
+        ncurses_initialized = false;
     }
     return true;
 #endif
@@ -215,13 +253,25 @@ int Terminal::read_key() {
     }
     return -1;  // No key available
 #else
-    // Unix: read from stdin
-    unsigned char c;
-    ssize_t nread = read(STDIN_FILENO, &c, 1);
-    if (nread == 1) {
-        return static_cast<int>(c);
+    // Unix: use ncurses getch()
+    if (ncurses_initialized) {
+        int ch = getch();
+        // getch() returns ERR if no key (due to timeout)
+        if (ch == ERR) {
+            return -1;
+        }
+
+        // ncurses translates arrow keys to special codes
+        // Map them to our public key codes
+        switch (ch) {
+            case KEY_UP:    return KEY_UP_ARROW;
+            case KEY_DOWN:  return KEY_DOWN_ARROW;
+            case KEY_LEFT:  return KEY_LEFT_ARROW;
+            case KEY_RIGHT: return KEY_RIGHT_ARROW;
+            default:        return ch;
+        }
     }
-    return -1;  // No key available or error
+    return -1;
 #endif
 }
 
