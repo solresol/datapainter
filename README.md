@@ -60,6 +60,9 @@ cursor into os.
 Pressing g flips all points individually under the cursor: if it was an o, it's now an x and
 vice versa. Each point flips independently to its opposite type.
 
+Pressing k dumps the entire screen to stdout (useful for debugging and testing).
+Pressing K (shift-K) dumps only the edit area contents to stdout.
+
 Pressing the # key switches the system into tabular view mode, which is a three
 column TUI. (The x column, the y column and the target column). The table view is fully
 editable - users can add, edit, and delete rows directly. All changes are recorded in the
@@ -191,7 +194,7 @@ For integration and end-to-end testing of the TUI, datapainter supports automate
   - Each time the TUI is ready for input, processes the next keystroke from the file
   - Useful for scripted testing of interactive workflows
 
-**Special test keystrokes (only available when --keystroke-file is active):**
+**Screen dump keystrokes (available in both interactive and automated modes):**
   - `k` - Dump the entire screen to stdout
   - `K` - Dump only the edit area contents to stdout
 

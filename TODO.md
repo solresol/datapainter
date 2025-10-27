@@ -491,12 +491,13 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ### Screen Dump Commands
 - [ ] Add 'k' keystroke handler (dump full screen)
 - [ ] Add 'K' keystroke handler (dump edit area only)
-- [ ] Test: 'k' only active when --keystroke-file is specified
-- [ ] Test: 'K' only active when --keystroke-file is specified
 - [ ] Test: 'k' outputs full screen buffer to stdout
 - [ ] Test: 'K' outputs only edit area to stdout
 - [ ] Test: Screen dumps include current cursor position
-- [ ] Test: 'k' and 'K' are ignored in normal interactive mode
+- [ ] Test: 'k' works in normal interactive mode
+- [ ] Test: 'K' works in normal interactive mode
+- [ ] Test: 'k' works in automated mode (--keystroke-file)
+- [ ] Test: 'K' works in automated mode (--keystroke-file)
 
 ### Argument Parser Integration
 - [ ] Add --keystroke-file argument to ArgumentParser
