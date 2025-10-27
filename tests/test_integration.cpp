@@ -43,7 +43,7 @@ protected:
     }
 
     std::string test_db_;
-    std::string exe_ = "./datapainter";
+    std::string exe_ = "build/datapainter";
 };
 
 // Test: --list-tables on empty database
