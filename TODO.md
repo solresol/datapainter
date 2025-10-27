@@ -462,6 +462,59 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 
 ---
 
+## Phase 17.5: Keystroke Playback for Automated TUI Testing
+
+### Keystroke File Parser
+- [ ] Create KeystrokeFileParser class
+- [ ] Test: Read keystroke file and parse each line
+- [ ] Test: Parse regular character keystrokes (x, o, +, -, etc.)
+- [ ] Test: Parse special key names (<up>, <down>, <left>, <right>)
+- [ ] Test: Parse <space>, <tab>, <enter>, <esc> special keys
+- [ ] Test: Parse test command keystrokes (k, K)
+- [ ] Test: Ignore comment lines starting with #
+- [ ] Test: Ignore empty lines
+- [ ] Test: Handle file not found error
+- [ ] Test: Handle invalid keystroke format errors
+- [ ] Test: Return ordered sequence of keystrokes
+
+### Input Source Abstraction
+- [ ] Create InputSource interface/abstract class
+- [ ] Implement TerminalInputSource (reads from keyboard)
+- [ ] Implement FileInputSource (reads from keystroke file)
+- [ ] Test: TerminalInputSource returns keystroke from terminal
+- [ ] Test: FileInputSource returns next keystroke from sequence
+- [ ] Test: FileInputSource returns EOF when sequence exhausted
+- [ ] Modify InputHandler to accept InputSource
+- [ ] Test: InputHandler works with TerminalInputSource
+- [ ] Test: InputHandler works with FileInputSource
+
+### Screen Dump Commands
+- [ ] Add 'k' keystroke handler (dump full screen)
+- [ ] Add 'K' keystroke handler (dump edit area only)
+- [ ] Test: 'k' only active when --keystroke-file is specified
+- [ ] Test: 'K' only active when --keystroke-file is specified
+- [ ] Test: 'k' outputs full screen buffer to stdout
+- [ ] Test: 'K' outputs only edit area to stdout
+- [ ] Test: Screen dumps include current cursor position
+- [ ] Test: 'k' and 'K' are ignored in normal interactive mode
+
+### Argument Parser Integration
+- [ ] Add --keystroke-file argument to ArgumentParser
+- [ ] Test: Parse --keystroke-file with valid filename
+- [ ] Test: Validate file exists before starting TUI
+- [ ] Test: Error if --keystroke-file combined with non-interactive flags
+- [ ] Test: Store keystroke file path in Arguments struct
+
+### Main Loop Integration
+- [ ] Modify main loop to use InputSource abstraction
+- [ ] Test: TUI runs normally with TerminalInputSource (no --keystroke-file)
+- [ ] Test: TUI uses FileInputSource when --keystroke-file provided
+- [ ] Test: TUI exits gracefully when keystroke file exhausted
+- [ ] Test: Screen dumps output correctly during playback
+- [ ] Test: TUI processes all keystrokes from file in order
+
+---
+
 ## Phase 18: Integration & Polish
 
 ### Full Integration Tests
@@ -471,6 +524,24 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [ ] Test: Complete workflow: zoom/pan with many points
 - [ ] Test: Handle 1M row dataset (performance check)
 - [ ] Test: Multiple table workflow in same database
+
+### Automated TUI Tests Using Keystroke Playback
+- [ ] Test: Basic point creation workflow (move cursor, add x, add o, verify screen)
+- [ ] Test: Point deletion workflow (create points, delete with space, verify)
+- [ ] Test: Point conversion workflow (create x, convert to o with Shift-O, verify)
+- [ ] Test: Point flipping workflow (create mixed points, flip with g, verify)
+- [ ] Test: Zoom workflow (create points, zoom in with +, zoom out with -, full with =)
+- [ ] Test: Pan workflow (move cursor to edges, verify viewport shifts)
+- [ ] Test: Undo/redo workflow (create point, undo with u, redo, verify)
+- [ ] Test: Save workflow (create points, save with s, verify database)
+- [ ] Test: Table view switching (viewport → # → table → # → viewport)
+- [ ] Test: Multiple points at same coordinates (create X and O at same position, verify #)
+- [ ] Test: Valid range enforcement (try to move beyond valid ranges, verify walls)
+- [ ] Test: Help overlay (press ?, verify help shown, dismiss)
+- [ ] Test: Tab navigation (tab through header fields, verify focus)
+- [ ] Test: Complex workflow: create 10 points, zoom, pan, undo 3, redo 1, save
+- [ ] Test: Screen dump accuracy (k command produces correct output)
+- [ ] Test: Edit area dump accuracy (K command produces correct output)
 
 ### Error Handling & Edge Cases
 - [ ] Test: Database lock timeout (exit code 66)

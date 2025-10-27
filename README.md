@@ -181,6 +181,71 @@ Then there are some args which will be useful for testing. They start the TUI
   - --dump-screen = non-interactive mode, usually paired with an action like key-stroke-at-point
   - --dump-edit-area-contents  = ditto, but just show the edit area, not the whole screen
 
+# Automated TUI Testing with Keystroke Playback
+
+For integration and end-to-end testing of the TUI, datapainter supports automated keystroke playback:
+
+**--keystroke-file <filename>**
+  - Starts the TUI in automated test mode
+  - Reads a sequence of keystrokes from the specified file
+  - Each time the TUI is ready for input, processes the next keystroke from the file
+  - Useful for scripted testing of interactive workflows
+
+**Special test keystrokes (only available when --keystroke-file is active):**
+  - `k` - Dump the entire screen to stdout
+  - `K` - Dump only the edit area contents to stdout
+
+**Keystroke file format:**
+  - One keystroke per line
+  - Special keys represented as text:
+    - `<up>`, `<down>`, `<left>`, `<right>` - Arrow keys
+    - `<space>` - Space bar
+    - `<tab>` - Tab key
+    - `<enter>` - Enter/Return key
+    - `<esc>` - Escape key
+  - Regular keys: just the character (e.g., `x`, `o`, `+`, `-`, `=`)
+  - Test commands: `k` for screen dump, `K` for edit area dump
+  - Comments: lines starting with `#` are ignored
+  - Empty lines are ignored
+
+**Example keystroke file:**
+```
+# Move cursor and add a point
+<right>
+<right>
+<down>
+x
+# Dump the screen to verify
+k
+# Save and quit
+s
+q
+```
+
+**Usage example:**
+```bash
+# Create test keystroke sequence
+cat > test_keystrokes.txt <<EOF
+x
+<right>
+o
+k
+s
+q
+EOF
+
+# Run automated test
+datapainter --database test.db --table data \
+  --keystroke-file test_keystrokes.txt > test_output.txt
+
+# Verify output
+grep "x" test_output.txt
+grep "o" test_output.txt
+```
+
+This enables comprehensive automated testing of TUI workflows including navigation,
+point editing, zoom/pan operations, view switching, and save operations.
+
 
 # User interface options
 
