@@ -19,6 +19,21 @@ struct PipeCloser {
 
 namespace fs = std::filesystem;
 
+// Helper to safely quote shell arguments so spaces do not break commands
+std::string shell_quote(const std::string& arg) {
+    std::string quoted = "'";
+    quoted.reserve(arg.size() + 2);
+    for (const char c : arg) {
+        if (c == '\'') {
+            quoted += "'\\''";
+        } else {
+            quoted += c;
+        }
+    }
+    quoted += "'";
+    return quoted;
+}
+
 // Helper to run a command and capture output (both stdout and stderr)
 std::string exec_command(const std::string& cmd) {
     std::array<char, 128> buffer;
@@ -66,7 +81,7 @@ protected:
 
         for (const auto& candidate : candidates) {
             if (!candidate.empty() && fs::exists(candidate)) {
-                return candidate.string();
+                return shell_quote(candidate.string());
             }
         }
 
