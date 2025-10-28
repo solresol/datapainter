@@ -5,6 +5,17 @@
 #include <filesystem>
 #include <array>
 #include <memory>
+#include <vector>
+
+namespace {
+struct PipeCloser {
+    void operator()(FILE* pipe) const {
+        if (pipe != nullptr) {
+            pclose(pipe);
+        }
+    }
+};
+} // namespace
 
 namespace fs = std::filesystem;
 
@@ -14,7 +25,7 @@ std::string exec_command(const std::string& cmd) {
     std::string result;
     // Redirect stderr to stdout so we capture all output
     std::string full_cmd = cmd + " 2>&1";
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(full_cmd.c_str(), "r"), pclose);
+    std::unique_ptr<FILE, PipeCloser> pipe(popen(full_cmd.c_str(), "r"), PipeCloser{});
     if (!pipe) {
         throw std::runtime_error("popen() failed!");
     }
@@ -33,6 +44,8 @@ protected:
         if (fs::exists(test_db_)) {
             fs::remove(test_db_);
         }
+
+        exe_ = resolve_executable_path();
     }
 
     void TearDown() override {
@@ -42,8 +55,26 @@ protected:
         }
     }
 
+    static std::string resolve_executable_path() {
+        const fs::path cwd = fs::current_path();
+        const std::vector<fs::path> candidates = {
+            cwd / "datapainter",
+            cwd / "build" / "datapainter",
+            cwd.parent_path() / "build" / "datapainter",
+            cwd.parent_path() / "datapainter"
+        };
+
+        for (const auto& candidate : candidates) {
+            if (!candidate.empty() && fs::exists(candidate)) {
+                return candidate.string();
+            }
+        }
+
+        throw std::runtime_error("Could not locate datapainter executable");
+    }
+
     std::string test_db_;
-    std::string exe_ = "build/datapainter";
+    std::string exe_;
 };
 
 // Test: --list-tables on empty database

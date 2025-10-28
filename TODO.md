@@ -519,12 +519,12 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ## Phase 18: Integration & Polish
 
 ### Full Integration Tests
-- [ ] Test: Complete workflow: create → edit → save → quit
+- [x] Test: Complete workflow: create → edit → save → quit
 - [ ] Test: Complete workflow: load → edit → undo → redo → save
 - [ ] Test: Complete workflow: viewport ↔ table view switching
 - [ ] Test: Complete workflow: zoom/pan with many points
 - [ ] Test: Handle 1M row dataset (performance check)
-- [ ] Test: Multiple table workflow in same database
+- [x] Test: Multiple table workflow in same database
 
 ### Automated TUI Tests Using Keystroke Playback
 - [ ] Test: Basic point creation workflow (move cursor, add x, add o, verify screen)
