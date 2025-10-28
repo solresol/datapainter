@@ -7,6 +7,11 @@
 #include <memory>
 #include <vector>
 
+#include "database.h"
+#include "data_table.h"
+#include "unsaved_changes.h"
+#include "undo_manager.h"
+
 namespace {
 struct PipeCloser {
     void operator()(FILE* pipe) const {
@@ -592,4 +597,78 @@ TEST_F(IntegrationTest, MultipleTablesWorkflow) {
                                         " --to-csv --table test");
     EXPECT_NE(test_csv.find("3,4,negative"), std::string::npos);
     EXPECT_EQ(test_csv.find("1,2,positive"), std::string::npos);
+}
+
+// Test: Complete workflow: load -> edit -> undo -> redo -> save
+TEST_F(IntegrationTest, CompleteWorkflowLoadEditUndoRedoSave) {
+    // Create a table and seed it with an initial point
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --create-table --table workflow" +
+                 " --target-column-name target" +
+                 " --x-axis-name x --y-axis-name y" +
+                 " --x-meaning x_val --o-meaning o_val");
+
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --add-point --table workflow" +
+                 " --x 2.0 --y 3.0 --target x_val");
+
+    int data_id = -1;
+    {
+        datapainter::Database db(test_db_);
+        ASSERT_TRUE(db.is_open());
+        ASSERT_TRUE(db.ensure_metadata_table());
+        ASSERT_TRUE(db.ensure_unsaved_changes_table());
+
+        datapainter::DataTable table(db, "workflow");
+        auto points = table.query_viewport(-100.0, 100.0, -100.0, 100.0);
+        ASSERT_EQ(points.size(), 1u);
+        data_id = points[0].id;
+        EXPECT_EQ(points[0].target, "x_val");
+
+        datapainter::UnsavedChanges changes(db);
+        auto change_id = changes.record_update("workflow", data_id, "x_val", "o_val");
+        ASSERT_TRUE(change_id.has_value());
+
+        datapainter::UndoManager undo_mgr(db, "workflow");
+        EXPECT_TRUE(undo_mgr.can_undo());
+
+        // Undo the edit and verify the change is inactive
+        EXPECT_TRUE(undo_mgr.undo());
+        auto after_undo = changes.get_changes("workflow");
+        ASSERT_EQ(after_undo.size(), 1u);
+        EXPECT_FALSE(after_undo[0].is_active);
+        EXPECT_TRUE(undo_mgr.can_redo());
+
+        // Redo the edit to reactivate it prior to saving
+        EXPECT_TRUE(undo_mgr.redo());
+        auto after_redo = changes.get_changes("workflow");
+        ASSERT_EQ(after_redo.size(), 1u);
+        EXPECT_TRUE(after_redo[0].is_active);
+    }
+
+    // Save the active change via the CLI helper
+    std::string commit_output = exec_command(
+        exe_ + " --database " + test_db_ +
+        " --commit-unsaved-changes --table workflow");
+    EXPECT_NE(commit_output.find("Unsaved changes committed for table 'workflow'"), std::string::npos);
+
+    {
+        datapainter::Database db(test_db_);
+        ASSERT_TRUE(db.is_open());
+
+        datapainter::UnsavedChanges changes(db);
+        auto remaining = changes.get_changes("workflow");
+        EXPECT_TRUE(remaining.empty());
+
+        datapainter::DataTable table(db, "workflow");
+        auto points = table.query_viewport(-100.0, 100.0, -100.0, 100.0);
+        ASSERT_EQ(points.size(), 1u);
+        EXPECT_EQ(points[0].id, data_id);
+        EXPECT_EQ(points[0].target, "o_val");
+    }
+
+    std::string list_output = exec_command(
+        exe_ + " --database " + test_db_ +
+        " --list-unsaved-changes --table workflow");
+    EXPECT_NE(list_output.find("No unsaved changes"), std::string::npos);
 }

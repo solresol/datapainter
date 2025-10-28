@@ -520,7 +520,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 
 ### Full Integration Tests
 - [x] Test: Complete workflow: create → edit → save → quit
-- [ ] Test: Complete workflow: load → edit → undo → redo → save
+- [x] Test: Complete workflow: load → edit → undo → redo → save
 - [ ] Test: Complete workflow: viewport ↔ table view switching
 - [ ] Test: Complete workflow: zoom/pan with many points
 - [ ] Test: Handle 1M row dataset (performance check)
