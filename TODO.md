@@ -7,7 +7,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ## Phase 0: Project Setup
 
 ### Build System & Infrastructure
-- [ ] Create CMakeLists.txt with C++17/20 standard
+- [x] Create CMakeLists.txt with C++17/20 standard
 - [ ] Set up project directory structure (src/, include/, tests/)
 - [ ] Configure SQLite3 dependency
 - [ ] Set up testing framework (Google Test or Catch2)

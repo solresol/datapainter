@@ -1,8 +1,15 @@
 cmake_minimum_required(VERSION 3.14)
 project(datapainter VERSION 0.1.0 LANGUAGES CXX)
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
+# Set C++ standard (allow opting into C++20 while defaulting to C++17)
+set(DATAPAINTER_CXX_STANDARD "17" CACHE STRING "C++ standard to use (17 or 20)")
+set_property(CACHE DATAPAINTER_CXX_STANDARD PROPERTY STRINGS 17 20)
+
+if(NOT DATAPAINTER_CXX_STANDARD MATCHES "^(17|20)$")
+    message(FATAL_ERROR "Unsupported C++ standard '${DATAPAINTER_CXX_STANDARD}'. Choose 17 or 20.")
+endif()
+
+set(CMAKE_CXX_STANDARD ${DATAPAINTER_CXX_STANDARD})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
