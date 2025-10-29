@@ -78,45 +78,45 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Parse --start-tabular flag
 
 ### Conflict Detection
-- [ ] Test: Detect CLI vs metadata conflicts
-- [ ] Test: Generate clear error message showing conflicts
-- [ ] Test: Suggest resolution (remove flag or use different table)
-- [ ] Test: Exit with code 2 on conflict
+- [x] Test: Detect CLI vs metadata conflicts
+- [x] Test: Generate clear error message showing conflicts
+- [x] Test: Suggest resolution (remove flag or use different table)
+- [x] Test: Exit with code 2 on conflict
 
 ### Non-Interactive Mode Arguments
 - [x] Test: Parse --create-table
-- [ ] Test: Parse --rename-table
-- [ ] Test: Parse --copy-table
-- [ ] Test: Parse --delete-table
+- [x] Test: Parse --rename-table
+- [x] Test: Parse --copy-table
+- [x] Test: Parse --delete-table
 - [x] Test: Parse --list-tables
-- [ ] Test: Parse --show-metadata
-- [ ] Test: Parse --add-point
-- [ ] Test: Parse --delete-point
+- [x] Test: Parse --show-metadata
+- [x] Test: Parse --add-point
+- [x] Test: Parse --delete-point
 - [x] Test: Parse --to-csv
-- [ ] Test: Parse --key-stroke-at-point with x,y,key
+- [x] Test: Parse --key-stroke-at-point with x,y,key
 
 ### Testing & Debug Arguments
-- [ ] Test: Parse --dump-screen
-- [ ] Test: Parse --dump-edit-area-contents
-- [ ] Test: Parse --zoom-in / --zoom-out
-- [ ] Test: Parse --list-x-axis-marks / --list-y-axis-marks
+- [x] Test: Parse --dump-screen
+- [x] Test: Parse --dump-edit-area-contents
+- [x] Test: Parse --zoom-in / --zoom-out
+- [x] Test: Parse --list-x-axis-marks / --list-y-axis-marks
 
 ### Study Mode Arguments
 - [x] Test: Parse --study flag
-- [ ] Validate requires both --database and --table
+- [x] Validate requires both --database and --table
 
 ### Random Init Arguments
 - [x] Test: Parse --random-count
-- [ ] Test: Parse --random-target
-- [ ] Test: Parse --mean-x, --mean-y
-- [ ] Test: Parse --normal-x, --normal-y, --std-x, --std-y
-- [ ] Test: Parse --uniform-x, --uniform-y, --range-x, --range-y
+- [x] Test: Parse --random-target
+- [x] Test: Parse --mean-x, --mean-y
+- [x] Test: Parse --normal-x, --normal-y, --std-x, --std-y
+- [x] Test: Parse --uniform-x, --uniform-y, --range-x, --range-y
 
 ### Undo Log Arguments
-- [ ] Test: Parse --clear-undo-log
-- [ ] Test: Parse --clear-all-undo-log
-- [ ] Test: Parse --commit-unsaved-changes
-- [ ] Test: Parse --list-unsaved-changes
+- [x] Test: Parse --clear-undo-log
+- [x] Test: Parse --clear-all-undo-log
+- [x] Test: Parse --commit-unsaved-changes
+- [x] Test: Parse --list-unsaved-changes
 
 ---
 
