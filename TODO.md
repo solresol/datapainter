@@ -9,73 +9,73 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ### Build System & Infrastructure
 - [x] Create CMakeLists.txt with C++17/20 standard
 - [x] Set up project directory structure (src/, include/, tests/)
-- [ ] Configure SQLite3 dependency
-- [ ] Set up testing framework (Google Test or Catch2)
-- [ ] Create main.cpp entry point
-- [ ] Set up continuous integration (GitHub Actions)
-- [ ] Create .gitignore for build artifacts
+- [x] Configure SQLite3 dependency
+- [x] Set up testing framework (Google Test or Catch2)
+- [x] Create main.cpp entry point
+- [x] Set up continuous integration (GitHub Actions)
+- [x] Create .gitignore for build artifacts
 
 ---
 
 ## Phase 1: Database Layer (Foundation)
 
 ### Core Schema & Connection
-- [ ] Create Database class with SQLite connection management
-- [ ] Test: Open/close database file
-- [ ] Test: Create metadata table with correct schema
-- [ ] Test: Create unsaved_changes table with correct schema
-- [ ] Test: Detect if database file is world-writable and warn
-- [ ] Implement table name validation (regex: `[A-Za-z0-9_]+`)
-- [ ] Test: Reject invalid table names
+- [x] Create Database class with SQLite connection management
+- [x] Test: Open/close database file
+- [x] Test: Create metadata table with correct schema
+- [x] Test: Create unsaved_changes table with correct schema
+- [x] Test: Detect if database file is world-writable and warn
+- [x] Implement table name validation (regex: `[A-Za-z0-9_]+`)
+- [x] Test: Reject invalid table names
 
 ### Data Table Operations
-- [ ] Create DataTable class for managing data tables
-- [ ] Test: Create data table with indexes (id, x, y, target)
-- [ ] Test: Insert point with (x, y, target) values
-- [ ] Test: Delete point by id
-- [ ] Test: Update point target value
-- [ ] Test: Query points within viewport bounds
-- [ ] Test: Get distinct target values from table
-- [ ] Test: Count points by target value
+- [x] Create DataTable class for managing data tables
+- [x] Test: Create data table with indexes (id, x, y, target)
+- [x] Test: Insert point with (x, y, target) values
+- [x] Test: Delete point by id
+- [x] Test: Update point target value
+- [x] Test: Query points within viewport bounds
+- [x] Test: Get distinct target values from table
+- [x] Test: Count points by target value
 
 ### Metadata Operations
-- [ ] Create Metadata class/struct
-- [ ] Test: Insert metadata row for new table
-- [ ] Test: Read metadata for existing table
-- [ ] Test: Update metadata fields
-- [ ] Test: List all tables from metadata
-- [ ] Test: Delete metadata entry
-- [ ] Test: Rename table in metadata and data table
-- [ ] Test: Copy table (data + metadata)
+- [x] Create Metadata class/struct
+- [x] Test: Insert metadata row for new table
+- [x] Test: Read metadata for existing table
+- [x] Test: Update metadata fields
+- [x] Test: List all tables from metadata
+- [x] Test: Delete metadata entry
+- [x] Test: Rename table in metadata and data table
+- [x] Test: Copy table (data + metadata)
 
 ### Unsaved Changes Tracking
-- [ ] Create UnsavedChanges class
-- [ ] Test: Record insert action
-- [ ] Test: Record delete action
-- [ ] Test: Record update action
-- [ ] Test: Record metadata change action
-- [ ] Test: Retrieve unsaved changes for a table
-- [ ] Test: Apply unsaved changes to data table (commit)
-- [ ] Test: Clear unsaved changes for a table
-- [ ] Test: Support undo (mark change as undone)
-- [ ] Test: Support redo (re-apply undone change)
+- [x] Create UnsavedChanges class
+- [x] Test: Record insert action
+- [x] Test: Record delete action
+- [x] Test: Record update action
+- [x] Test: Record metadata change action
+- [x] Test: Retrieve unsaved changes for a table
+- [x] Test: Apply unsaved changes to data table (commit)
+- [x] Test: Clear unsaved changes for a table
+- [x] Test: Support undo (mark change as undone)
+- [x] Test: Support redo (re-apply undone change)
 
 ---
 
 ## Phase 2: CLI Argument Parsing
 
 ### Argument Parser
-- [ ] Create ArgumentParser class
-- [ ] Test: Parse --database argument
-- [ ] Test: Parse --table argument
-- [ ] Test: Parse axis names (--x-axis-name, --y-axis-name)
-- [ ] Test: Parse --target-column-name
-- [ ] Test: Parse meanings (--x-meaning, --o-meaning)
-- [ ] Test: Parse valid ranges (--min-x, --max-x, --min-y, --max-y)
-- [ ] Test: Validate min <= max for ranges (exit code 2 if invalid)
-- [ ] Test: Parse --show-zero-bars flag
-- [ ] Test: Parse screen overrides (--override-screen-height/width)
-- [ ] Test: Parse --start-tabular flag
+- [x] Create ArgumentParser class
+- [x] Test: Parse --database argument
+- [x] Test: Parse --table argument
+- [x] Test: Parse axis names (--x-axis-name, --y-axis-name)
+- [x] Test: Parse --target-column-name
+- [x] Test: Parse meanings (--x-meaning, --o-meaning)
+- [x] Test: Parse valid ranges (--min-x, --max-x, --min-y, --max-y)
+- [x] Test: Validate min <= max for ranges (exit code 2 if invalid)
+- [x] Test: Parse --show-zero-bars flag
+- [x] Test: Parse screen overrides (--override-screen-height/width)
+- [x] Test: Parse --start-tabular flag
 
 ### Conflict Detection
 - [ ] Test: Detect CLI vs metadata conflicts
@@ -84,15 +84,15 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [ ] Test: Exit with code 2 on conflict
 
 ### Non-Interactive Mode Arguments
-- [ ] Test: Parse --create-table
+- [x] Test: Parse --create-table
 - [ ] Test: Parse --rename-table
 - [ ] Test: Parse --copy-table
 - [ ] Test: Parse --delete-table
-- [ ] Test: Parse --list-tables
+- [x] Test: Parse --list-tables
 - [ ] Test: Parse --show-metadata
 - [ ] Test: Parse --add-point
 - [ ] Test: Parse --delete-point
-- [ ] Test: Parse --to-csv
+- [x] Test: Parse --to-csv
 - [ ] Test: Parse --key-stroke-at-point with x,y,key
 
 ### Testing & Debug Arguments
@@ -102,11 +102,11 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [ ] Test: Parse --list-x-axis-marks / --list-y-axis-marks
 
 ### Study Mode Arguments
-- [ ] Test: Parse --study flag
+- [x] Test: Parse --study flag
 - [ ] Validate requires both --database and --table
 
 ### Random Init Arguments
-- [ ] Test: Parse --random-count
+- [x] Test: Parse --random-count
 - [ ] Test: Parse --random-target
 - [ ] Test: Parse --mean-x, --mean-y
 - [ ] Test: Parse --normal-x, --normal-y, --std-x, --std-y
@@ -123,19 +123,19 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ## Phase 3: Viewport Math & Coordinate System
 
 ### Coordinate System
-- [ ] Create Viewport class
-- [ ] Test: Initialize viewport with (x_min, x_max, y_min, y_max)
-- [ ] Test: Calculate default viewport for empty table (use valid ranges or [-1,1,-1,1])
-- [ ] Test: Calculate auto-fit viewport with 10% padding
-- [ ] Test: Convert screen coordinates to data coordinates
-- [ ] Test: Convert data coordinates to screen coordinates
-- [ ] Test: Determine if data point is visible in viewport
-- [ ] Test: Round data coordinates to screen cell
+- [x] Create Viewport class
+- [x] Test: Initialize viewport with (x_min, x_max, y_min, y_max)
+- [x] Test: Calculate default viewport for empty table (use valid ranges or [-1,1,-1,1])
+- [x] Test: Calculate auto-fit viewport with 10% padding
+- [x] Test: Convert screen coordinates to data coordinates
+- [x] Test: Convert data coordinates to screen coordinates
+- [x] Test: Determine if data point is visible in viewport
+- [x] Test: Round data coordinates to screen cell
 
 ### Zoom Operations
-- [ ] Test: Zoom in (halve data-per-screen-space, centered on cursor)
-- [ ] Test: Zoom out (double data-per-screen-space, centered on cursor)
-- [ ] Test: Full viewport zoom (= key, fit all data)
+- [x] Test: Zoom in (halve data-per-screen-space, centered on cursor)
+- [x] Test: Zoom out (double data-per-screen-space, centered on cursor)
+- [x] Test: Full viewport zoom (= key, fit all data)
 - [ ] Test: Respect valid range constraints during zoom
 - [ ] Test: Calculate decimal place for major tick marks (log10 of range)
 
@@ -152,21 +152,21 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ## Phase 4: Terminal/Screen Management
 
 ### Terminal Detection
-- [ ] Create Terminal class
-- [ ] Test: Detect terminal dimensions (rows, cols)
-- [ ] Test: Override dimensions with CLI args
+- [x] Create Terminal class
+- [x] Test: Detect terminal dimensions (rows, cols)
+- [x] Test: Override dimensions with CLI args
 - [ ] Test: Exit code 64 if override exceeds actual terminal size
 - [ ] Test: Handle SIGWINCH (terminal resize)
-- [ ] Test: Pause rendering if screen too small (< header + 3 rows)
+- [x] Test: Pause rendering if screen too small (< header + 3 rows)
 - [ ] Test: Show "enlarge terminal" message when too small
 - [ ] Test: Resume rendering when size adequate
 
 ### Screen Buffer
-- [ ] Create ScreenBuffer class
-- [ ] Test: Allocate 2D character buffer (rows x cols)
-- [ ] Test: Write character at (row, col)
-- [ ] Test: Clear screen buffer
-- [ ] Test: Render buffer to stdout
+- [x] Create ScreenBuffer class
+- [x] Test: Allocate 2D character buffer (rows x cols)
+- [x] Test: Write character at (row, col)
+- [x] Test: Clear screen buffer
+- [x] Test: Render buffer to stdout
 - [ ] Test: Block wide characters (emoji, multi-byte)
 
 ---
@@ -174,13 +174,13 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ## Phase 5: Axis Rendering & Labels
 
 ### Tick Mark Algorithm
-- [ ] Create AxisRenderer class
-- [ ] Test: Calculate tick step (10^k × {1,2,5}) to prevent label collision
-- [ ] Test: Generate major tick positions
-- [ ] Test: Generate minor tick positions (if >= 3 chars between majors)
+- [x] Create AxisRenderer class
+- [x] Test: Calculate tick step (10^k × {1,2,5}) to prevent label collision
+- [x] Test: Generate major tick positions
+- [x] Test: Generate minor tick positions (if >= 3 chars between majors)
 - [ ] Test: Generate tenth tick positions (if >= 6 chars between majors)
-- [ ] Test: Format tick labels (standard printf/iostream)
-- [ ] Test: Use scientific notation for |k| >= 4
+- [x] Test: Format tick labels (standard printf/iostream)
+- [x] Test: Use scientific notation for |k| >= 4
 
 ### Axis Drawing
 - [ ] Test: Draw x-axis with tick marks and labels
@@ -202,61 +202,61 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ## Phase 6: Viewport Rendering
 
 ### Edit Area Rendering
-- [ ] Create EditAreaRenderer class
-- [ ] Test: Draw border around edit area
-- [ ] Test: Render empty edit area
-- [ ] Test: Query data points within current viewport
+- [x] Create EditAreaRenderer class
+- [x] Test: Draw border around edit area
+- [x] Test: Render empty edit area
+- [x] Test: Query data points within current viewport
 - [ ] Test: Apply unsaved changes to viewport data
-- [ ] Test: Render single 'x' point at screen position
-- [ ] Test: Render single 'o' point at screen position
-- [ ] Test: Render multiple x's at same cell as 'X'
-- [ ] Test: Render multiple o's at same cell as 'O'
-- [ ] Test: Render mixed x+o at same cell as '#'
+- [x] Test: Render single 'x' point at screen position
+- [x] Test: Render single 'o' point at screen position
+- [x] Test: Render multiple x's at same cell as 'X'
+- [x] Test: Render multiple o's at same cell as 'O'
+- [x] Test: Render mixed x+o at same cell as '#'
 - [ ] Test: Render wall characters '!' for out-of-valid-range areas
-- [ ] Test: Draw cursor at current position
+- [x] Test: Draw cursor at current position
 - [ ] Test: Show cursor coordinates in header
 
 ### Header Rendering
-- [ ] Create HeaderRenderer class
-- [ ] Test: Display database filename
-- [ ] Test: Display table name
-- [ ] Test: Display target column name
-- [ ] Test: Display x and o meanings
-- [ ] Test: Display counts (total, x count, o count)
-- [ ] Test: Display valid x/y ranges
+- [x] Create HeaderRenderer class
+- [x] Test: Display database filename
+- [x] Test: Display table name
+- [x] Test: Display target column name
+- [x] Test: Display x and o meanings
+- [x] Test: Display counts (total, x count, o count)
+- [x] Test: Display valid x/y ranges
 - [ ] Test: Display current zoom info
-- [ ] Test: Highlight focused field (for Tab navigation)
+- [x] Test: Highlight focused field (for Tab navigation)
 
 ### Footer Rendering
-- [ ] Test: Display zoom controls (+ - =)
-- [ ] Test: Display cursor position
-- [ ] Test: Display valid ranges
-- [ ] Test: Display action buttons (Tabular, Undo, Quit, Save)
+- [x] Test: Display zoom controls (+ - =)
+- [x] Test: Display cursor position
+- [x] Test: Display valid ranges
+- [x] Test: Display action buttons (Tabular, Undo, Quit, Save)
 
 ---
 
 ## Phase 7: Input Handling & Navigation
 
 ### Keyboard Input
-- [ ] Create InputHandler class
+- [x] Create InputHandler class
 - [ ] Test: Read single keypress (blocking)
-- [ ] Test: Parse arrow keys
-- [ ] Test: Parse letter keys (x, o, g, X, O, etc.)
-- [ ] Test: Parse special keys (Tab, Enter, Space, Esc)
-- [ ] Test: Parse symbols (+, -, =, #, ?, u, q, s)
+- [x] Test: Parse arrow keys
+- [x] Test: Parse letter keys (x, o, g, X, O, etc.)
+- [x] Test: Parse special keys (Tab, Enter, Space, Esc)
+- [x] Test: Parse symbols (+, -, =, #, ?, u, q, s)
 
 ### Cursor Movement
-- [ ] Test: Move cursor right within viewport
-- [ ] Test: Move cursor left within viewport
-- [ ] Test: Move cursor up within viewport
-- [ ] Test: Move cursor down within viewport
+- [x] Test: Move cursor right within viewport
+- [x] Test: Move cursor left within viewport
+- [x] Test: Move cursor up within viewport
+- [x] Test: Move cursor down within viewport
 - [ ] Test: Pan viewport when cursor reaches edge
 - [ ] Test: Prevent cursor movement beyond valid ranges
 
 ### Tab Navigation
-- [ ] Test: Tab cycles through header fields (left to right)
+- [x] Test: Tab cycles through header fields (left to right)
 - [ ] Test: Tab order: database → table → target → meanings → ranges → buttons → viewport
-- [ ] Test: Enter activates focused field/button
+- [x] Test: Enter activates focused field/button
 - [ ] Test: Edit focused field inline
 
 ---
@@ -264,62 +264,62 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ## Phase 8: Point Editing Operations
 
 ### Point Creation
-- [ ] Create PointEditor class
-- [ ] Test: Press 'x' creates x point at cursor
-- [ ] Test: Press 'o' creates o point at cursor
-- [ ] Test: Reject point creation outside valid ranges
-- [ ] Test: Record point creation in unsaved_changes
-- [ ] Test: Update on-screen display immediately
+- [x] Create PointEditor class
+- [x] Test: Press 'x' creates x point at cursor
+- [x] Test: Press 'o' creates o point at cursor
+- [x] Test: Reject point creation outside valid ranges
+- [x] Test: Record point creation in unsaved_changes
+- [x] Test: Update on-screen display immediately
 
 ### Point Deletion
-- [ ] Test: Press Space deletes all points under cursor
-- [ ] Test: "Under cursor" means rounds to same screen cell
-- [ ] Test: Record deletion in unsaved_changes
-- [ ] Test: Update display after deletion
+- [x] Test: Press Space deletes all points under cursor
+- [x] Test: "Under cursor" means rounds to same screen cell
+- [x] Test: Record deletion in unsaved_changes
+- [x] Test: Update display after deletion
 
 ### Point Conversion
-- [ ] Test: Press Shift-X converts o points under cursor to x
-- [ ] Test: Press Shift-O converts x points under cursor to o
-- [ ] Test: Press 'g' flips each point individually (x↔o)
-- [ ] Test: Record conversions in unsaved_changes
+- [x] Test: Press Shift-X converts o points under cursor to x
+- [x] Test: Press Shift-O converts x points under cursor to o
+- [x] Test: Press 'g' flips each point individually (x↔o)
+- [x] Test: Record conversions in unsaved_changes
 
 ### Hit Testing
-- [ ] Test: Find all points that round to cursor's screen cell
-- [ ] Test: Handle multiple points at exact same (x,y)
-- [ ] Test: Handle points close enough to round to same cell
+- [x] Test: Find all points that round to cursor's screen cell
+- [x] Test: Handle multiple points at exact same (x,y)
+- [x] Test: Handle points close enough to round to same cell
 
 ---
 
 ## Phase 9: Undo/Redo System
 
 ### Undo Stack Management
-- [ ] Create UndoManager class
-- [ ] Test: Track current position in unsaved_changes
-- [ ] Test: Press 'u' undoes last action
-- [ ] Test: Multiple undo steps backward
-- [ ] Test: Enable redo after undo
-- [ ] Test: Clear redo stack on new edit
-- [ ] Test: Display undo/redo availability in UI
+- [x] Create UndoManager class
+- [x] Test: Track current position in unsaved_changes
+- [x] Test: Press 'u' undoes last action
+- [x] Test: Multiple undo steps backward
+- [x] Test: Enable redo after undo
+- [x] Test: Clear redo stack on new edit
+- [x] Test: Display undo/redo availability in UI
 
 ### Undo/Redo Operations
-- [ ] Test: Undo point insert (mark as undone)
-- [ ] Test: Undo point delete
-- [ ] Test: Undo point update
-- [ ] Test: Undo metadata change
-- [ ] Test: Redo undone operation
-- [ ] Test: Update display after undo/redo
+- [x] Test: Undo point insert (mark as undone)
+- [x] Test: Undo point delete
+- [x] Test: Undo point update
+- [x] Test: Undo metadata change
+- [x] Test: Redo undone operation
+- [x] Test: Update display after undo/redo
 
 ---
 
 ## Phase 10: Save/Quit Operations
 
 ### Save Mechanism
-- [ ] Create SaveManager class
-- [ ] Test: Commit all unsaved_changes to data table in transaction
-- [ ] Test: Apply inserts, deletes, updates in correct order
-- [ ] Test: Apply metadata changes
-- [ ] Test: Clear/mark unsaved_changes as applied after save
-- [ ] Test: Continue running after save (don't exit)
+- [x] Create SaveManager class
+- [x] Test: Commit all unsaved_changes to data table in transaction
+- [x] Test: Apply inserts, deletes, updates in correct order
+- [x] Test: Apply metadata changes
+- [x] Test: Clear/mark unsaved_changes as applied after save
+- [x] Test: Continue running after save (don't exit)
 - [ ] Test: Handle save errors (exit code 65)
 
 ### Quit Operations
@@ -333,12 +333,12 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ## Phase 11: Tabular View
 
 ### Table View UI
-- [ ] Create TableView class
-- [ ] Test: Display three columns (x, y, target)
-- [ ] Test: Show all rows by default
+- [x] Create TableView class
+- [x] Test: Display three columns (x, y, target)
+- [x] Test: Show all rows by default
 - [ ] Test: Display filter at top
-- [ ] Test: Default filter = current viewport bounds when entering from viewport
-- [ ] Test: Navigate rows with arrow keys
+- [x] Test: Default filter = current viewport bounds when entering from viewport
+- [x] Test: Navigate rows with arrow keys
 - [ ] Test: Edit cell values inline
 
 ### Table View Operations
@@ -351,7 +351,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [ ] Test: Validate numeric input for x and y
 
 ### Filter & View Switching
-- [ ] Test: Edit filter (SQL WHERE clause)
+- [x] Test: Edit filter (SQL WHERE clause)
 - [ ] Test: Apply filter to visible rows
 - [ ] Test: Switch from viewport to table (press #)
 - [ ] Test: Switch from table to viewport (press #)
@@ -376,11 +376,11 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ## Phase 13: Non-Interactive Commands
 
 ### Table Management Commands
-- [ ] Test: --create-table creates table with metadata
-- [ ] Test: --rename-table renames table and updates metadata
-- [ ] Test: --copy-table duplicates table and metadata
-- [ ] Test: --delete-table removes table and metadata
-- [ ] Test: --list-tables outputs all tables to stdout
+- [x] Test: --create-table creates table with metadata
+- [x] Test: --rename-table renames table and updates metadata
+- [x] Test: --copy-table duplicates table and metadata
+- [x] Test: --delete-table removes table and metadata
+- [x] Test: --list-tables outputs all tables to stdout
 - [ ] Test: --show-metadata outputs metadata for table
 
 ### Point Management Commands
@@ -388,10 +388,10 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [ ] Test: --delete-point removes point by id or coordinates
 
 ### Undo Log Commands
-- [ ] Test: --clear-undo-log removes unsaved_changes for table
-- [ ] Test: --clear-all-undo-log removes all unsaved_changes
-- [ ] Test: --commit-unsaved-changes applies and clears for table
-- [ ] Test: --list-unsaved-changes outputs pending changes
+- [x] Test: --clear-undo-log removes unsaved_changes for table
+- [x] Test: --clear-all-undo-log removes all unsaved_changes
+- [x] Test: --commit-unsaved-changes applies and clears for table
+- [x] Test: --list-unsaved-changes outputs pending changes
 
 ### Testing Commands
 - [ ] Test: --key-stroke-at-point simulates key press at coordinates
@@ -525,6 +525,14 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [ ] Test: Complete workflow: zoom/pan with many points
 - [ ] Test: Handle 1M row dataset (performance check)
 - [x] Test: Multiple table workflow in same database
+- [x] Test: List tables (empty and with data)
+- [x] Test: Add point via command line
+- [x] Test: Delete point via command line
+- [x] Test: CSV export (empty, with data, with quotes)
+- [x] Test: Help and version flags
+- [x] Test: Clear undo logs
+- [x] Test: Commit unsaved changes
+- [x] Test: End-to-end workflow
 
 ### Automated TUI Tests Using Keystroke Playback
 - [ ] Test: Basic point creation workflow (move cursor, add x, add o, verify screen)
