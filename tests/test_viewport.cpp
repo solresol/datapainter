@@ -226,3 +226,186 @@ TEST(ViewportOffsetTest, NonOriginBounds) {
     EXPECT_NEAR(screen->row, 10, 1);
     EXPECT_NEAR(screen->col, 20, 1);
 }
+
+// Test: Respect valid range constraints during zoom
+TEST(ViewportConstraintsTest, ZoomRespectValidRanges) {
+    // Create viewport with valid ranges [-10, 10] x [-10, 10]
+    // Start with viewport showing [-5, 5] x [-5, 5]
+    Viewport vp(-5.0, 5.0, -5.0, 5.0,
+                -10.0, 10.0, -10.0, 10.0,
+                20, 40);
+
+    // Zoom out repeatedly - should stop at valid ranges
+    DataCoord center{0.0, 0.0};
+    vp.zoom_out(center);  // Should expand
+    vp.zoom_out(center);  // Should expand more
+    vp.zoom_out(center);  // Should hit valid range limits
+
+    // Should be clamped to valid ranges
+    EXPECT_DOUBLE_EQ(vp.data_x_min(), -10.0);
+    EXPECT_DOUBLE_EQ(vp.data_x_max(), 10.0);
+    EXPECT_DOUBLE_EQ(vp.data_y_min(), -10.0);
+    EXPECT_DOUBLE_EQ(vp.data_y_max(), 10.0);
+}
+
+// Test: Zoom in stays within valid ranges
+TEST(ViewportConstraintsTest, ZoomInStaysWithinValidRanges) {
+    // Create viewport starting at valid range boundaries
+    Viewport vp(-10.0, 10.0, -10.0, 10.0,
+                -10.0, 10.0, -10.0, 10.0,
+                20, 40);
+
+    // Zoom in from center
+    DataCoord center{0.0, 0.0};
+    vp.zoom_in(center);
+
+    // Should be smaller than valid ranges but still within them
+    EXPECT_GT(vp.data_x_min(), -10.0);
+    EXPECT_LT(vp.data_x_max(), 10.0);
+    EXPECT_GT(vp.data_y_min(), -10.0);
+    EXPECT_LT(vp.data_y_max(), 10.0);
+}
+
+// Test: Pan right
+TEST(ViewportPanTest, PanRight) {
+    // Create viewport with valid ranges
+    Viewport vp(-5.0, 5.0, -5.0, 5.0,
+                -10.0, 10.0, -10.0, 10.0,
+                20, 40);
+
+    double original_x_min = vp.data_x_min();
+    double original_x_max = vp.data_x_max();
+
+    vp.pan_right();
+
+    // X bounds should have shifted right
+    EXPECT_GT(vp.data_x_min(), original_x_min);
+    EXPECT_GT(vp.data_x_max(), original_x_max);
+    // Y bounds should not have changed
+    EXPECT_DOUBLE_EQ(vp.data_y_min(), -5.0);
+    EXPECT_DOUBLE_EQ(vp.data_y_max(), 5.0);
+}
+
+// Test: Pan left
+TEST(ViewportPanTest, PanLeft) {
+    // Create viewport with valid ranges
+    Viewport vp(-5.0, 5.0, -5.0, 5.0,
+                -10.0, 10.0, -10.0, 10.0,
+                20, 40);
+
+    double original_x_min = vp.data_x_min();
+    double original_x_max = vp.data_x_max();
+
+    vp.pan_left();
+
+    // X bounds should have shifted left
+    EXPECT_LT(vp.data_x_min(), original_x_min);
+    EXPECT_LT(vp.data_x_max(), original_x_max);
+    // Y bounds should not have changed
+    EXPECT_DOUBLE_EQ(vp.data_y_min(), -5.0);
+    EXPECT_DOUBLE_EQ(vp.data_y_max(), 5.0);
+}
+
+// Test: Pan up
+TEST(ViewportPanTest, PanUp) {
+    // Create viewport with valid ranges
+    Viewport vp(-5.0, 5.0, -5.0, 5.0,
+                -10.0, 10.0, -10.0, 10.0,
+                20, 40);
+
+    double original_y_min = vp.data_y_min();
+    double original_y_max = vp.data_y_max();
+
+    vp.pan_up();
+
+    // Y bounds should have shifted up
+    EXPECT_GT(vp.data_y_min(), original_y_min);
+    EXPECT_GT(vp.data_y_max(), original_y_max);
+    // X bounds should not have changed
+    EXPECT_DOUBLE_EQ(vp.data_x_min(), -5.0);
+    EXPECT_DOUBLE_EQ(vp.data_x_max(), 5.0);
+}
+
+// Test: Pan down
+TEST(ViewportPanTest, PanDown) {
+    // Create viewport with valid ranges
+    Viewport vp(-5.0, 5.0, -5.0, 5.0,
+                -10.0, 10.0, -10.0, 10.0,
+                20, 40);
+
+    double original_y_min = vp.data_y_min();
+    double original_y_max = vp.data_y_max();
+
+    vp.pan_down();
+
+    // Y bounds should have shifted down
+    EXPECT_LT(vp.data_y_min(), original_y_min);
+    EXPECT_LT(vp.data_y_max(), original_y_max);
+    // X bounds should not have changed
+    EXPECT_DOUBLE_EQ(vp.data_x_min(), -5.0);
+    EXPECT_DOUBLE_EQ(vp.data_x_max(), 5.0);
+}
+
+// Test: Prevent pan beyond valid ranges (right)
+TEST(ViewportPanTest, PreventPanBeyondValidRangesRight) {
+    // Create viewport near right edge of valid range
+    Viewport vp(5.0, 9.0, -5.0, 5.0,
+                -10.0, 10.0, -10.0, 10.0,
+                20, 40);
+
+    // Try to pan right multiple times
+    vp.pan_right();
+    vp.pan_right();
+    vp.pan_right();
+
+    // Should be clamped to valid range
+    EXPECT_LE(vp.data_x_max(), 10.0);
+    EXPECT_GE(vp.data_x_min(), -10.0);
+}
+
+// Test: Prevent pan beyond valid ranges (left)
+TEST(ViewportPanTest, PreventPanBeyondValidRangesLeft) {
+    // Create viewport near left edge of valid range
+    Viewport vp(-9.0, -5.0, -5.0, 5.0,
+                -10.0, 10.0, -10.0, 10.0,
+                20, 40);
+
+    // Try to pan left multiple times
+    vp.pan_left();
+    vp.pan_left();
+    vp.pan_left();
+
+    // Should be clamped to valid range
+    EXPECT_GE(vp.data_x_min(), -10.0);
+    EXPECT_LE(vp.data_x_max(), 10.0);
+}
+
+// Test: Cursor movement within viewport (no pan)
+TEST(ViewportPanTest, CursorMovementWithinViewport) {
+    // This test verifies that cursor movement doesn't affect viewport bounds
+    // The actual cursor movement is handled by InputHandler, not Viewport
+    Viewport vp(-5.0, 5.0, -5.0, 5.0,
+                -10.0, 10.0, -10.0, 10.0,
+                20, 40);
+
+    double original_x_min = vp.data_x_min();
+    double original_x_max = vp.data_x_max();
+    double original_y_min = vp.data_y_min();
+    double original_y_max = vp.data_y_max();
+
+    // Simulate checking cursor positions (viewport should not change)
+    DataCoord cursor1{0.0, 0.0};
+    DataCoord cursor2{2.0, 3.0};
+    DataCoord cursor3{-2.0, -3.0};
+
+    // Verify positions are visible
+    EXPECT_TRUE(vp.is_visible(cursor1));
+    EXPECT_TRUE(vp.is_visible(cursor2));
+    EXPECT_TRUE(vp.is_visible(cursor3));
+
+    // Viewport bounds should not have changed
+    EXPECT_DOUBLE_EQ(vp.data_x_min(), original_x_min);
+    EXPECT_DOUBLE_EQ(vp.data_x_max(), original_x_max);
+    EXPECT_DOUBLE_EQ(vp.data_y_min(), original_y_min);
+    EXPECT_DOUBLE_EQ(vp.data_y_max(), original_y_max);
+}
