@@ -261,3 +261,194 @@ TEST(ArgumentParserTest, ParseInvalidDouble) {
 
     EXPECT_TRUE(parsed.has_errors());
 }
+
+// Test parsing --rename-table flag
+TEST(ArgumentParserTest, ParseRenameTable) {
+    ArgvHelper args({"datapainter", "--rename-table"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.rename_table);
+}
+
+// Test parsing --copy-table flag
+TEST(ArgumentParserTest, ParseCopyTable) {
+    ArgvHelper args({"datapainter", "--copy-table"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.copy_table);
+}
+
+// Test parsing --delete-table flag
+TEST(ArgumentParserTest, ParseDeleteTable) {
+    ArgvHelper args({"datapainter", "--delete-table"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.delete_table);
+}
+
+// Test parsing --show-metadata flag
+TEST(ArgumentParserTest, ParseShowMetadata) {
+    ArgvHelper args({"datapainter", "--show-metadata"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.show_metadata);
+}
+
+// Test parsing --add-point flag
+TEST(ArgumentParserTest, ParseAddPoint) {
+    ArgvHelper args({"datapainter", "--add-point", "--x", "1.5", "--y", "2.3", "--target", "positive"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.add_point);
+    ASSERT_TRUE(parsed.point_x.has_value());
+    EXPECT_DOUBLE_EQ(parsed.point_x.value(), 1.5);
+    ASSERT_TRUE(parsed.point_y.has_value());
+    EXPECT_DOUBLE_EQ(parsed.point_y.value(), 2.3);
+    ASSERT_TRUE(parsed.point_target.has_value());
+    EXPECT_EQ(parsed.point_target.value(), "positive");
+}
+
+// Test parsing --delete-point flag
+TEST(ArgumentParserTest, ParseDeletePoint) {
+    ArgvHelper args({"datapainter", "--delete-point", "--point-id", "42"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.delete_point);
+    ASSERT_TRUE(parsed.point_id.has_value());
+    EXPECT_EQ(parsed.point_id.value(), 42);
+}
+
+// Test parsing --key-stroke-at-point
+TEST(ArgumentParserTest, ParseKeyStrokeAtPoint) {
+    ArgvHelper args({"datapainter", "--key-stroke-at-point", "1.5,2.3,x"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    ASSERT_TRUE(parsed.key_stroke_at_point.has_value());
+    EXPECT_EQ(parsed.key_stroke_at_point.value(), "1.5,2.3,x");
+}
+
+// Test parsing --dump-screen flag
+TEST(ArgumentParserTest, ParseDumpScreen) {
+    ArgvHelper args({"datapainter", "--dump-screen"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.dump_screen);
+}
+
+// Test parsing --dump-edit-area-contents flag
+TEST(ArgumentParserTest, ParseDumpEditAreaContents) {
+    ArgvHelper args({"datapainter", "--dump-edit-area-contents"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.dump_edit_area_contents);
+}
+
+// Test parsing --zoom-in flag
+TEST(ArgumentParserTest, ParseZoomIn) {
+    ArgvHelper args({"datapainter", "--zoom-in"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.zoom_in);
+}
+
+// Test parsing --zoom-out flag
+TEST(ArgumentParserTest, ParseZoomOut) {
+    ArgvHelper args({"datapainter", "--zoom-out"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.zoom_out);
+}
+
+// Test parsing --list-x-axis-marks flag
+TEST(ArgumentParserTest, ParseListXAxisMarks) {
+    ArgvHelper args({"datapainter", "--list-x-axis-marks"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.list_x_axis_marks);
+}
+
+// Test parsing --list-y-axis-marks flag
+TEST(ArgumentParserTest, ParseListYAxisMarks) {
+    ArgvHelper args({"datapainter", "--list-y-axis-marks"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.list_y_axis_marks);
+}
+
+// Test parsing --random-target
+TEST(ArgumentParserTest, ParseRandomTarget) {
+    ArgvHelper args({"datapainter", "--random-target", "cat"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    ASSERT_TRUE(parsed.random_target.has_value());
+    EXPECT_EQ(parsed.random_target.value(), "cat");
+}
+
+// Test parsing --mean-x and --mean-y
+TEST(ArgumentParserTest, ParseMeanXY) {
+    ArgvHelper args({"datapainter", "--mean-x", "3.5", "--mean-y", "4.2"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    ASSERT_TRUE(parsed.mean_x.has_value());
+    EXPECT_DOUBLE_EQ(parsed.mean_x.value(), 3.5);
+    ASSERT_TRUE(parsed.mean_y.has_value());
+    EXPECT_DOUBLE_EQ(parsed.mean_y.value(), 4.2);
+}
+
+// Test parsing --normal-x and --normal-y
+TEST(ArgumentParserTest, ParseNormalXY) {
+    ArgvHelper args({"datapainter", "--normal-x", "--normal-y", "--std-x", "1.5", "--std-y", "2.0"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.normal_x);
+    EXPECT_TRUE(parsed.normal_y);
+    ASSERT_TRUE(parsed.std_x.has_value());
+    EXPECT_DOUBLE_EQ(parsed.std_x.value(), 1.5);
+    ASSERT_TRUE(parsed.std_y.has_value());
+    EXPECT_DOUBLE_EQ(parsed.std_y.value(), 2.0);
+}
+
+// Test parsing --uniform-x and --uniform-y
+TEST(ArgumentParserTest, ParseUniformXY) {
+    ArgvHelper args({"datapainter", "--uniform-x", "--uniform-y", "--range-x", "10.0", "--range-y", "20.0"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.uniform_x);
+    EXPECT_TRUE(parsed.uniform_y);
+    ASSERT_TRUE(parsed.range_x.has_value());
+    EXPECT_DOUBLE_EQ(parsed.range_x.value(), 10.0);
+    ASSERT_TRUE(parsed.range_y.has_value());
+    EXPECT_DOUBLE_EQ(parsed.range_y.value(), 20.0);
+}
+
+// Test parsing --clear-undo-log flag
+TEST(ArgumentParserTest, ParseClearUndoLog) {
+    ArgvHelper args({"datapainter", "--clear-undo-log"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.clear_undo_log);
+}
+
+// Test parsing --clear-all-undo-log flag
+TEST(ArgumentParserTest, ParseClearAllUndoLog) {
+    ArgvHelper args({"datapainter", "--clear-all-undo-log"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.clear_all_undo_log);
+}
+
+// Test parsing --commit-unsaved-changes flag
+TEST(ArgumentParserTest, ParseCommitUnsavedChanges) {
+    ArgvHelper args({"datapainter", "--commit-unsaved-changes"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.commit_unsaved_changes);
+}
+
+// Test parsing --list-unsaved-changes flag
+TEST(ArgumentParserTest, ParseListUnsavedChanges) {
+    ArgvHelper args({"datapainter", "--list-unsaved-changes"});
+    auto parsed = ArgumentParser::parse(args.argc(), args.argv());
+
+    EXPECT_TRUE(parsed.list_unsaved_changes);
+}
