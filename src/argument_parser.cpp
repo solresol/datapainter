@@ -1,8 +1,10 @@
 #include "argument_parser.h"
+#include "metadata.h"
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <cmath>
 
 namespace datapainter {
 
@@ -222,6 +224,93 @@ std::vector<std::string> ArgumentParser::validate(const Arguments& args) {
     }
 
     return errors;
+}
+
+std::vector<std::string> ArgumentParser::detect_conflicts(const Arguments& args, const Metadata& metadata) {
+    std::vector<std::string> conflicts;
+
+    // Helper to format conflict message
+    auto format_conflict = [&](const std::string& flag, const std::string& cli_value, const std::string& meta_value) {
+        std::ostringstream oss;
+        oss << "Conflict detected for " << flag << ":\n";
+        oss << "  CLI argument:      " << cli_value << "\n";
+        oss << "  Existing metadata: " << meta_value << "\n";
+        oss << "  Resolution: Remove the " << flag << " flag or use a different table";
+        return oss.str();
+    };
+
+    // Check x_axis_name
+    if (args.x_axis_name.has_value() && args.x_axis_name.value() != metadata.x_axis_name) {
+        conflicts.push_back(format_conflict("--x-axis-name", args.x_axis_name.value(), metadata.x_axis_name));
+    }
+
+    // Check y_axis_name
+    if (args.y_axis_name.has_value() && args.y_axis_name.value() != metadata.y_axis_name) {
+        conflicts.push_back(format_conflict("--y-axis-name", args.y_axis_name.value(), metadata.y_axis_name));
+    }
+
+    // Check target_column_name
+    if (args.target_column_name.has_value() && args.target_column_name.value() != metadata.target_col_name) {
+        conflicts.push_back(format_conflict("--target-column-name", args.target_column_name.value(), metadata.target_col_name));
+    }
+
+    // Check x_meaning
+    if (args.x_meaning.has_value() && args.x_meaning.value() != metadata.x_meaning) {
+        conflicts.push_back(format_conflict("--x-meaning", args.x_meaning.value(), metadata.x_meaning));
+    }
+
+    // Check o_meaning
+    if (args.o_meaning.has_value() && args.o_meaning.value() != metadata.o_meaning) {
+        conflicts.push_back(format_conflict("--o-meaning", args.o_meaning.value(), metadata.o_meaning));
+    }
+
+    // Check min_x
+    if (args.min_x.has_value() && metadata.valid_x_min.has_value()) {
+        if (std::abs(args.min_x.value() - metadata.valid_x_min.value()) > 1e-9) {
+            conflicts.push_back(format_conflict("--min-x",
+                std::to_string(args.min_x.value()),
+                std::to_string(metadata.valid_x_min.value())));
+        }
+    }
+
+    // Check max_x
+    if (args.max_x.has_value() && metadata.valid_x_max.has_value()) {
+        if (std::abs(args.max_x.value() - metadata.valid_x_max.value()) > 1e-9) {
+            conflicts.push_back(format_conflict("--max-x",
+                std::to_string(args.max_x.value()),
+                std::to_string(metadata.valid_x_max.value())));
+        }
+    }
+
+    // Check min_y
+    if (args.min_y.has_value() && metadata.valid_y_min.has_value()) {
+        if (std::abs(args.min_y.value() - metadata.valid_y_min.value()) > 1e-9) {
+            conflicts.push_back(format_conflict("--min-y",
+                std::to_string(args.min_y.value()),
+                std::to_string(metadata.valid_y_min.value())));
+        }
+    }
+
+    // Check max_y
+    if (args.max_y.has_value() && metadata.valid_y_max.has_value()) {
+        if (std::abs(args.max_y.value() - metadata.valid_y_max.value()) > 1e-9) {
+            conflicts.push_back(format_conflict("--max-y",
+                std::to_string(args.max_y.value()),
+                std::to_string(metadata.valid_y_max.value())));
+        }
+    }
+
+    // Check show_zero_bars
+    if (args.show_zero_bars != metadata.show_zero_bars) {
+        // Only report conflict if explicitly set via CLI
+        // (since args.show_zero_bars defaults to false, we need to be careful)
+        // For now, we'll report it if it's true in args but false in metadata
+        if (args.show_zero_bars && !metadata.show_zero_bars) {
+            conflicts.push_back(format_conflict("--show-zero-bars", "true", "false"));
+        }
+    }
+
+    return conflicts;
 }
 
 bool ArgumentParser::has_flag(int argc, char** argv, const std::string& flag) {

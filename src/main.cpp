@@ -567,6 +567,16 @@ int main(int argc, char** argv) {
     }
     Metadata meta = meta_opt.value();
 
+    // Check for conflicts between CLI arguments and existing metadata
+    auto conflicts = ArgumentParser::detect_conflicts(args, meta);
+    if (!conflicts.empty()) {
+        std::cerr << "Error: Conflicts detected between CLI arguments and existing metadata:\n" << std::endl;
+        for (const auto& conflict : conflicts) {
+            std::cerr << conflict << "\n" << std::endl;
+        }
+        return 2;
+    }
+
     // Initialize terminal
     Terminal terminal;
     if (!terminal.detect_size()) {

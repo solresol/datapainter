@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "argument_parser.h"
+#include "metadata.h"
 #include <vector>
 #include <cstring>
 
@@ -451,4 +452,241 @@ TEST(ArgumentParserTest, ParseListUnsavedChanges) {
     auto parsed = ArgumentParser::parse(args.argc(), args.argv());
 
     EXPECT_TRUE(parsed.list_unsaved_changes);
+}
+
+// ========== Conflict Detection Tests ==========
+
+// Test conflict detection: x-axis name mismatch
+TEST(ArgumentParserTest, DetectXAxisNameConflict) {
+    Metadata meta;
+    meta.table_name = "test_table";
+    meta.x_axis_name = "time";
+    meta.y_axis_name = "value";
+    meta.target_col_name = "label";
+    meta.x_meaning = "positive";
+    meta.o_meaning = "negative";
+    meta.valid_x_min = -10.0;
+    meta.valid_x_max = 10.0;
+    meta.valid_y_min = -10.0;
+    meta.valid_y_max = 10.0;
+    meta.show_zero_bars = false;
+
+    Arguments args;
+    args.x_axis_name = "frequency";  // Conflict!
+
+    auto conflicts = ArgumentParser::detect_conflicts(args, meta);
+    EXPECT_FALSE(conflicts.empty());
+    EXPECT_TRUE(std::any_of(conflicts.begin(), conflicts.end(),
+                           [](const std::string& msg) { return msg.find("--x-axis-name") != std::string::npos; }));
+}
+
+// Test conflict detection: y-axis name mismatch
+TEST(ArgumentParserTest, DetectYAxisNameConflict) {
+    Metadata meta;
+    meta.table_name = "test_table";
+    meta.x_axis_name = "time";
+    meta.y_axis_name = "value";
+    meta.target_col_name = "label";
+    meta.x_meaning = "positive";
+    meta.o_meaning = "negative";
+
+    Arguments args;
+    args.y_axis_name = "amplitude";  // Conflict!
+
+    auto conflicts = ArgumentParser::detect_conflicts(args, meta);
+    EXPECT_FALSE(conflicts.empty());
+    EXPECT_TRUE(std::any_of(conflicts.begin(), conflicts.end(),
+                           [](const std::string& msg) { return msg.find("--y-axis-name") != std::string::npos; }));
+}
+
+// Test conflict detection: target column name mismatch
+TEST(ArgumentParserTest, DetectTargetColumnNameConflict) {
+    Metadata meta;
+    meta.table_name = "test_table";
+    meta.x_axis_name = "time";
+    meta.y_axis_name = "value";
+    meta.target_col_name = "label";
+    meta.x_meaning = "positive";
+    meta.o_meaning = "negative";
+
+    Arguments args;
+    args.target_column_name = "class";  // Conflict!
+
+    auto conflicts = ArgumentParser::detect_conflicts(args, meta);
+    EXPECT_FALSE(conflicts.empty());
+    EXPECT_TRUE(std::any_of(conflicts.begin(), conflicts.end(),
+                           [](const std::string& msg) { return msg.find("--target-column-name") != std::string::npos; }));
+}
+
+// Test conflict detection: x-meaning mismatch
+TEST(ArgumentParserTest, DetectXMeaningConflict) {
+    Metadata meta;
+    meta.table_name = "test_table";
+    meta.x_axis_name = "time";
+    meta.y_axis_name = "value";
+    meta.target_col_name = "label";
+    meta.x_meaning = "positive";
+    meta.o_meaning = "negative";
+
+    Arguments args;
+    args.x_meaning = "cat";  // Conflict!
+
+    auto conflicts = ArgumentParser::detect_conflicts(args, meta);
+    EXPECT_FALSE(conflicts.empty());
+    EXPECT_TRUE(std::any_of(conflicts.begin(), conflicts.end(),
+                           [](const std::string& msg) { return msg.find("--x-meaning") != std::string::npos; }));
+}
+
+// Test conflict detection: o-meaning mismatch
+TEST(ArgumentParserTest, DetectOMeaningConflict) {
+    Metadata meta;
+    meta.table_name = "test_table";
+    meta.x_axis_name = "time";
+    meta.y_axis_name = "value";
+    meta.target_col_name = "label";
+    meta.x_meaning = "positive";
+    meta.o_meaning = "negative";
+
+    Arguments args;
+    args.o_meaning = "dog";  // Conflict!
+
+    auto conflicts = ArgumentParser::detect_conflicts(args, meta);
+    EXPECT_FALSE(conflicts.empty());
+    EXPECT_TRUE(std::any_of(conflicts.begin(), conflicts.end(),
+                           [](const std::string& msg) { return msg.find("--o-meaning") != std::string::npos; }));
+}
+
+// Test conflict detection: min-x mismatch
+TEST(ArgumentParserTest, DetectMinXConflict) {
+    Metadata meta;
+    meta.table_name = "test_table";
+    meta.x_axis_name = "time";
+    meta.y_axis_name = "value";
+    meta.target_col_name = "label";
+    meta.x_meaning = "positive";
+    meta.o_meaning = "negative";
+    meta.valid_x_min = -10.0;
+    meta.valid_x_max = 10.0;
+    meta.valid_y_min = -10.0;
+    meta.valid_y_max = 10.0;
+
+    Arguments args;
+    args.min_x = -5.0;  // Conflict!
+
+    auto conflicts = ArgumentParser::detect_conflicts(args, meta);
+    EXPECT_FALSE(conflicts.empty());
+    EXPECT_TRUE(std::any_of(conflicts.begin(), conflicts.end(),
+                           [](const std::string& msg) { return msg.find("--min-x") != std::string::npos; }));
+}
+
+// Test conflict detection: max-y mismatch
+TEST(ArgumentParserTest, DetectMaxYConflict) {
+    Metadata meta;
+    meta.table_name = "test_table";
+    meta.x_axis_name = "time";
+    meta.y_axis_name = "value";
+    meta.target_col_name = "label";
+    meta.x_meaning = "positive";
+    meta.o_meaning = "negative";
+    meta.valid_x_min = -10.0;
+    meta.valid_x_max = 10.0;
+    meta.valid_y_min = -10.0;
+    meta.valid_y_max = 10.0;
+
+    Arguments args;
+    args.max_y = 20.0;  // Conflict!
+
+    auto conflicts = ArgumentParser::detect_conflicts(args, meta);
+    EXPECT_FALSE(conflicts.empty());
+    EXPECT_TRUE(std::any_of(conflicts.begin(), conflicts.end(),
+                           [](const std::string& msg) { return msg.find("--max-y") != std::string::npos; }));
+}
+
+// Test conflict detection: no conflicts when args match metadata
+TEST(ArgumentParserTest, DetectNoConflictsWhenMatching) {
+    Metadata meta;
+    meta.table_name = "test_table";
+    meta.x_axis_name = "time";
+    meta.y_axis_name = "value";
+    meta.target_col_name = "label";
+    meta.x_meaning = "positive";
+    meta.o_meaning = "negative";
+    meta.valid_x_min = -10.0;
+    meta.valid_x_max = 10.0;
+    meta.valid_y_min = -10.0;
+    meta.valid_y_max = 10.0;
+    meta.show_zero_bars = false;
+
+    Arguments args;
+    args.x_axis_name = "time";  // Matches!
+    args.y_axis_name = "value";  // Matches!
+    args.min_x = -10.0;  // Matches!
+
+    auto conflicts = ArgumentParser::detect_conflicts(args, meta);
+    EXPECT_TRUE(conflicts.empty());
+}
+
+// Test conflict detection: no conflicts when no args provided
+TEST(ArgumentParserTest, DetectNoConflictsWhenNoArgs) {
+    Metadata meta;
+    meta.table_name = "test_table";
+    meta.x_axis_name = "time";
+    meta.y_axis_name = "value";
+    meta.target_col_name = "label";
+    meta.x_meaning = "positive";
+    meta.o_meaning = "negative";
+
+    Arguments args;
+    // No conflicting arguments provided
+
+    auto conflicts = ArgumentParser::detect_conflicts(args, meta);
+    EXPECT_TRUE(conflicts.empty());
+}
+
+// Test conflict detection: generate clear error message
+TEST(ArgumentParserTest, ConflictMessageFormat) {
+    Metadata meta;
+    meta.table_name = "test_table";
+    meta.x_axis_name = "time";
+    meta.y_axis_name = "value";
+    meta.target_col_name = "label";
+    meta.x_meaning = "positive";
+    meta.o_meaning = "negative";
+
+    Arguments args;
+    args.x_meaning = "cat";  // Conflict!
+
+    auto conflicts = ArgumentParser::detect_conflicts(args, meta);
+    ASSERT_FALSE(conflicts.empty());
+
+    // Verify message contains key elements
+    const std::string& msg = conflicts[0];
+    EXPECT_TRUE(msg.find("Conflict detected") != std::string::npos);
+    EXPECT_TRUE(msg.find("CLI argument") != std::string::npos);
+    EXPECT_TRUE(msg.find("Existing metadata") != std::string::npos);
+    EXPECT_TRUE(msg.find("Resolution") != std::string::npos);
+    EXPECT_TRUE(msg.find("cat") != std::string::npos);
+    EXPECT_TRUE(msg.find("positive") != std::string::npos);
+}
+
+// Test conflict detection: suggest resolution
+TEST(ArgumentParserTest, ConflictMessageSuggestsResolution) {
+    Metadata meta;
+    meta.table_name = "test_table";
+    meta.x_axis_name = "time";
+    meta.y_axis_name = "value";
+    meta.target_col_name = "label";
+    meta.x_meaning = "positive";
+    meta.o_meaning = "negative";
+
+    Arguments args;
+    args.y_axis_name = "amplitude";  // Conflict!
+
+    auto conflicts = ArgumentParser::detect_conflicts(args, meta);
+    ASSERT_FALSE(conflicts.empty());
+
+    const std::string& msg = conflicts[0];
+    EXPECT_TRUE(msg.find("Remove") != std::string::npos ||
+                msg.find("remove") != std::string::npos);
+    EXPECT_TRUE(msg.find("different table") != std::string::npos);
 }

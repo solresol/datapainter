@@ -101,6 +101,10 @@ public:
     // Returns error messages if validation fails
     static std::vector<std::string> validate(const Arguments& args);
 
+    // Detect conflicts between CLI arguments and existing metadata
+    // Returns error messages for any conflicts found
+    static std::vector<std::string> detect_conflicts(const Arguments& args, const struct Metadata& metadata);
+
     // Print help message to the given output stream
     static void print_help(std::ostream& out);
 
