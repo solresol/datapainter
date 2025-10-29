@@ -2,62 +2,101 @@
 #include <map>
 #include <iostream>
 
+#ifdef __unix__
+#include <ncurses.h>
+#endif
+
 namespace datapainter {
 
 void EditAreaRenderer::render(Terminal& terminal, const Viewport& viewport, DataTable& table,
-                              const std::vector<ChangeRecord>& unsaved_changes, int cursor_row,
-                              int cursor_col, const std::string& x_target,
-                              const std::string& o_target) {
+                              const std::vector<ChangeRecord>& unsaved_changes, int start_row,
+                              int height, int width, int cursor_row, int cursor_col,
+                              const std::string& x_target, const std::string& o_target) {
     // Suppress unused parameter warnings for now
     (void)unsaved_changes;
     (void)cursor_row;
     (void)cursor_col;
 
-    // Clear the terminal first
-    terminal.clear_buffer();
-
-    // Draw the border
-    draw_border(terminal);
+    // Draw the border for the edit area
+    draw_border(terminal, start_row, height, width);
 
     // Render all points in the viewport
-    render_points(terminal, viewport, table, x_target, o_target);
+    render_points(terminal, viewport, table, start_row, height, width, x_target, o_target);
 
     // Draw cursor (optional - for now we'll just verify it doesn't crash)
     // draw_cursor(terminal, cursor_row, cursor_col);
 }
 
-void EditAreaRenderer::draw_border(Terminal& terminal) {
-    int rows = terminal.rows();
-    int cols = terminal.cols();
+void EditAreaRenderer::draw_border(Terminal& terminal, int start_row, int height, int width) {
+    // Calculate border position
+    int end_row = start_row + height - 1;
+    int end_col = width - 1;
 
+#ifdef __unix__
+    // Use ncurses line-drawing characters on Unix
     // Draw corners
-    terminal.write_char(0, 0, '+');
-    terminal.write_char(0, cols - 1, '+');
-    terminal.write_char(rows - 1, 0, '+');
-    terminal.write_char(rows - 1, cols - 1, '+');
+    mvaddch(start_row, 0, ACS_ULCORNER);
+    mvaddch(start_row, end_col, ACS_URCORNER);
+    mvaddch(end_row, 0, ACS_LLCORNER);
+    mvaddch(end_row, end_col, ACS_LRCORNER);
 
     // Draw top and bottom edges
-    for (int col = 1; col < cols - 1; ++col) {
-        terminal.write_char(0, col, '-');
-        terminal.write_char(rows - 1, col, '-');
+    for (int col = 1; col < end_col; ++col) {
+        mvaddch(start_row, col, ACS_HLINE);
+        mvaddch(end_row, col, ACS_HLINE);
     }
 
     // Draw left and right edges
-    for (int row = 1; row < rows - 1; ++row) {
-        terminal.write_char(row, 0, '|');
-        terminal.write_char(row, cols - 1, '|');
+    for (int row = start_row + 1; row < end_row; ++row) {
+        mvaddch(row, 0, ACS_VLINE);
+        mvaddch(row, end_col, ACS_VLINE);
     }
+
+    // Write to terminal buffer as well (for compatibility)
+    terminal.write_char(start_row, 0, '+');
+    terminal.write_char(start_row, end_col, '+');
+    terminal.write_char(end_row, 0, '+');
+    terminal.write_char(end_row, end_col, '+');
+    for (int col = 1; col < end_col; ++col) {
+        terminal.write_char(start_row, col, '-');
+        terminal.write_char(end_row, col, '-');
+    }
+    for (int row = start_row + 1; row < end_row; ++row) {
+        terminal.write_char(row, 0, '|');
+        terminal.write_char(row, end_col, '|');
+    }
+#else
+    // Use ASCII characters on other platforms
+    terminal.write_char(start_row, 0, '+');
+    terminal.write_char(start_row, end_col, '+');
+    terminal.write_char(end_row, 0, '+');
+    terminal.write_char(end_row, end_col, '+');
+
+    for (int col = 1; col < end_col; ++col) {
+        terminal.write_char(start_row, col, '-');
+        terminal.write_char(end_row, col, '-');
+    }
+
+    for (int row = start_row + 1; row < end_row; ++row) {
+        terminal.write_char(row, 0, '|');
+        terminal.write_char(row, end_col, '|');
+    }
+#endif
 }
 
 void EditAreaRenderer::render_points(Terminal& terminal, const Viewport& viewport,
-                                     DataTable& table, const std::string& x_target,
-                                     const std::string& o_target) {
+                                     DataTable& table, int start_row, int height, int width,
+                                     const std::string& x_target, const std::string& o_target) {
     // Query all points within the viewport bounds
     auto points = table.query_viewport(viewport.data_x_min(), viewport.data_x_max(),
                                        viewport.data_y_min(), viewport.data_y_max());
 
     // Map from screen coordinates to counts of x and o points
     std::map<std::pair<int, int>, std::pair<int, int>> cell_counts;
+
+    // Calculate content area (inside border)
+    int content_height = height - 2;  // Exclude top and bottom border
+    int content_width = width - 2;    // Exclude left and right border
 
     // Count points at each screen cell
     for (const auto& point : points) {
@@ -67,9 +106,9 @@ void EditAreaRenderer::render_points(Terminal& terminal, const Viewport& viewpor
         // Check if point maps to valid screen coordinates
         if (screen_opt.has_value()) {
             auto screen = screen_opt.value();
-            // Ensure point is within screen bounds (excluding border)
-            if (screen.row >= 0 && screen.row < viewport.screen_height() &&
-                screen.col >= 0 && screen.col < viewport.screen_width()) {
+            // Ensure point is within content area bounds (viewport coordinates are 0-based)
+            if (screen.row >= 0 && screen.row < content_height &&
+                screen.col >= 0 && screen.col < content_width) {
                 auto key = std::make_pair(screen.row, screen.col);
                 if (point.target == x_target) {
                     cell_counts[key].first++;  // x count
@@ -85,9 +124,10 @@ void EditAreaRenderer::render_points(Terminal& terminal, const Viewport& viewpor
         auto [screen_row, screen_col] = coord;
         auto [x_count, o_count] = counts;
 
-        // Adjust for border (add 1 to both row and col)
+        // Adjust for border and start_row offset
+        // Border is 1 char wide, so content starts at start_row+1, col 1
         char ch = get_point_char(x_count, o_count);
-        terminal.write_char(screen_row + 1, screen_col + 1, ch);
+        terminal.write_char(start_row + 1 + screen_row, 1 + screen_col, ch);
     }
 }
 

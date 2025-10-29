@@ -624,9 +624,10 @@ int main(int argc, char** argv) {
     // Main TUI loop
     bool running = true;
     bool needs_redraw = true;
-    // Cursor is within edit area only
-    int cursor_row = edit_area_start_row + edit_area_height / 2;
-    int cursor_col = screen_width / 2;
+    // Cursor is within edit area content (inside border)
+    // Border takes 1 row at top/bottom and 1 col at left/right
+    int cursor_row = edit_area_start_row + 1 + (edit_area_height - 2) / 2;
+    int cursor_col = 1 + (screen_width - 2) / 2;
 
     std::cout << "Starting DataPainter TUI..." << std::endl;
     std::cout << "Press 'q' to quit, '+'/'-' to zoom, arrow keys to move cursor" << std::endl;
@@ -672,6 +673,7 @@ int main(int argc, char** argv) {
             // Render edit area
             std::vector<ChangeRecord> unsaved_changes;  // Empty for now
             edit_area_renderer.render(terminal, viewport, data_table, unsaved_changes,
+                                     edit_area_start_row, edit_area_height, screen_width,
                                      cursor_row, cursor_col, meta.x_meaning, meta.o_meaning);
 
             // Render footer
@@ -688,30 +690,33 @@ int main(int argc, char** argv) {
         if (key >= 0) {
             // Handle arrow keys (from ncurses or our own codes)
             if (key == Terminal::KEY_UP_ARROW) {
-                // Up arrow - move cursor up (within edit area)
-                if (cursor_row > edit_area_start_row) {
+                // Up arrow - move cursor up (within edit area content, inside border)
+                // Border is at edit_area_start_row, content starts at edit_area_start_row + 1
+                if (cursor_row > edit_area_start_row + 1) {
                     cursor_row--;
                     needs_redraw = true;
                 }
             }
             else if (key == Terminal::KEY_DOWN_ARROW) {
-                // Down arrow - move cursor down (within edit area)
-                int edit_area_end_row = edit_area_start_row + edit_area_height - 1;
+                // Down arrow - move cursor down (within edit area content, inside border)
+                // Border is at edit_area_start_row + edit_area_height - 1
+                // Content ends at edit_area_start_row + edit_area_height - 2
+                int edit_area_end_row = edit_area_start_row + edit_area_height - 2;
                 if (cursor_row < edit_area_end_row) {
                     cursor_row++;
                     needs_redraw = true;
                 }
             }
             else if (key == Terminal::KEY_LEFT_ARROW) {
-                // Left arrow - move cursor left
-                if (cursor_col > 0) {
+                // Left arrow - move cursor left (inside border at column 1)
+                if (cursor_col > 1) {
                     cursor_col--;
                     needs_redraw = true;
                 }
             }
             else if (key == Terminal::KEY_RIGHT_ARROW) {
-                // Right arrow - move cursor right
-                if (cursor_col < screen_width - 1) {
+                // Right arrow - move cursor right (inside border at column screen_width - 2)
+                if (cursor_col < screen_width - 2) {
                     cursor_col++;
                     needs_redraw = true;
                 }
