@@ -223,6 +223,16 @@ std::vector<std::string> ArgumentParser::validate(const Arguments& args) {
         }
     }
 
+    // Validate --study requires both --database and --table
+    if (args.study) {
+        if (!args.database.has_value()) {
+            errors.push_back("--study requires --database to be specified");
+        }
+        if (!args.table.has_value()) {
+            errors.push_back("--study requires --table to be specified");
+        }
+    }
+
     return errors;
 }
 

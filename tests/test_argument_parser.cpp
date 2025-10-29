@@ -237,6 +237,31 @@ TEST(ArgumentParserTest, ValidateValidRanges) {
     EXPECT_TRUE(errors.empty());
 }
 
+// Test validation: --study requires --database and --table
+TEST(ArgumentParserTest, ValidateStudyRequiresDatabaseAndTable) {
+    Arguments args;
+    args.study = true;
+    // Missing both --database and --table
+
+    auto errors = ArgumentParser::validate(args);
+    EXPECT_FALSE(errors.empty());
+    EXPECT_TRUE(std::any_of(errors.begin(), errors.end(),
+                           [](const std::string& e) { return e.find("--database") != std::string::npos; }));
+    EXPECT_TRUE(std::any_of(errors.begin(), errors.end(),
+                           [](const std::string& e) { return e.find("--table") != std::string::npos; }));
+}
+
+// Test validation: --study with --database and --table is OK
+TEST(ArgumentParserTest, ValidateStudyWithDatabaseAndTable) {
+    Arguments args;
+    args.study = true;
+    args.database = "test.db";
+    args.table = "test_table";
+
+    auto errors = ArgumentParser::validate(args);
+    EXPECT_TRUE(errors.empty());
+}
+
 // Test parsing with no arguments
 TEST(ArgumentParserTest, ParseNoArguments) {
     ArgvHelper args({"datapainter"});
