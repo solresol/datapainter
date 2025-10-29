@@ -136,16 +136,16 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Zoom in (halve data-per-screen-space, centered on cursor)
 - [x] Test: Zoom out (double data-per-screen-space, centered on cursor)
 - [x] Test: Full viewport zoom (= key, fit all data)
-- [ ] Test: Respect valid range constraints during zoom
+- [x] Test: Respect valid range constraints during zoom
 - [ ] Test: Calculate decimal place for major tick marks (log10 of range)
 
 ### Pan Operations
-- [ ] Test: Pan right (shift viewport if cursor at edge and range available)
-- [ ] Test: Pan left
-- [ ] Test: Pan up
-- [ ] Test: Pan down
-- [ ] Test: Prevent pan beyond valid ranges
-- [ ] Test: Cursor movement within viewport (no pan)
+- [x] Test: Pan right (shift viewport if cursor at edge and range available)
+- [x] Test: Pan left
+- [x] Test: Pan up
+- [x] Test: Pan down
+- [x] Test: Prevent pan beyond valid ranges
+- [x] Test: Cursor movement within viewport (no pan)
 
 ---
 
