@@ -29,7 +29,7 @@ TEST_F(HeaderRendererTest, DisplayDatabaseFilename) {
 
     renderer.render(terminal_, db_path, table_name, target_col,
                     x_meaning, o_meaning, total_count, x_count, o_count,
-                    -1.0, 1.0, -1.0, 1.0, 0);
+                    -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 0);
 
     std::string row0 = terminal_.get_row(0);
     EXPECT_NE(row0.find("mydata.db"), std::string::npos);
@@ -50,7 +50,7 @@ TEST_F(HeaderRendererTest, DisplayTableName) {
 
     renderer.render(terminal_, db_path, table_name, target_col,
                     x_meaning, o_meaning, total_count, x_count, o_count,
-                    -1.0, 1.0, -1.0, 1.0, 0);
+                    -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 0);
 
     std::string row0 = terminal_.get_row(0);
     EXPECT_NE(row0.find("my_test_table"), std::string::npos);
@@ -71,7 +71,7 @@ TEST_F(HeaderRendererTest, DisplayTargetColumnName) {
 
     renderer.render(terminal_, db_path, table_name, target_col,
                     x_meaning, o_meaning, total_count, x_count, o_count,
-                    -1.0, 1.0, -1.0, 1.0, 0);
+                    -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 0);
 
     // Check header rows for target column name
     std::string header;
@@ -96,7 +96,7 @@ TEST_F(HeaderRendererTest, DisplayMeanings) {
 
     renderer.render(terminal_, db_path, table_name, target_col,
                     x_meaning, o_meaning, total_count, x_count, o_count,
-                    -1.0, 1.0, -1.0, 1.0, 0);
+                    -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 0);
 
     // Check header rows for meanings
     std::string header;
@@ -122,7 +122,7 @@ TEST_F(HeaderRendererTest, DisplayCounts) {
 
     renderer.render(terminal_, db_path, table_name, target_col,
                     x_meaning, o_meaning, total_count, x_count, o_count,
-                    -1.0, 1.0, -1.0, 1.0, 0);
+                    -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 0);
 
     // Check header rows for counts
     std::string header;
@@ -153,6 +153,7 @@ TEST_F(HeaderRendererTest, DisplayValidRanges) {
 
     renderer.render(terminal_, db_path, table_name, target_col,
                     x_meaning, o_meaning, total_count, x_count, o_count,
+                    x_min, x_max, y_min, y_max,
                     x_min, x_max, y_min, y_max, 0);
 
     // Check header rows for range values
@@ -184,7 +185,7 @@ TEST_F(HeaderRendererTest, HighlightFocusedField) {
     // Render with focus on field 0 (database)
     renderer.render(terminal_, db_path, table_name, target_col,
                     x_meaning, o_meaning, total_count, x_count, o_count,
-                    -1.0, 1.0, -1.0, 1.0, 0);
+                    -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 0);
 
     std::string header_focused;
     for (int row = 0; row < 3; ++row) {
@@ -194,6 +195,7 @@ TEST_F(HeaderRendererTest, HighlightFocusedField) {
     // Render with focus on field 1 (table)
     renderer.render(terminal_, db_path, table_name, target_col,
                     x_meaning, o_meaning, total_count, x_count, o_count,
+                    -1.0, 1.0, -1.0, 1.0,
                     -1.0, 1.0, -1.0, 1.0, 1);
 
     std::string header_focused_1;
@@ -221,7 +223,7 @@ TEST_F(HeaderRendererTest, FitsWithinScreenWidth) {
 
     renderer.render(terminal_, db_path, table_name, target_col,
                     x_meaning, o_meaning, total_count, x_count, o_count,
-                    -1.0, 1.0, -1.0, 1.0, 0);
+                    -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 0);
 
     // Check that no row exceeds terminal width
     for (int row = 0; row < 3; ++row) {
@@ -245,7 +247,7 @@ TEST_F(HeaderRendererTest, UsesMultipleRows) {
 
     renderer.render(terminal_, db_path, table_name, target_col,
                     x_meaning, o_meaning, total_count, x_count, o_count,
-                    -1.0, 1.0, -1.0, 1.0, 0);
+                    -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 0);
 
     // At least one of the first 3 rows should have non-space content
     bool has_content = false;

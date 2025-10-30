@@ -10,6 +10,7 @@ void HeaderRenderer::render(Terminal& terminal, const std::string& db_path,
                            const std::string& x_meaning, const std::string& o_meaning,
                            int total_count, int x_count, int o_count,
                            double x_min, double x_max, double y_min, double y_max,
+                           double vp_x_min, double vp_x_max, double vp_y_min, double vp_y_max,
                            int focused_field) {
     int cols = terminal.cols();
 
@@ -67,19 +68,32 @@ void HeaderRenderer::render(Terminal& terminal, const std::string& db_path,
         terminal.write_char(1, i, row1_str[i]);
     }
 
-    // Row 2: Counts and valid ranges
-    std::ostringstream row2;
-    row2 << "Total: " << total_count;
-    row2 << " (x: " << x_count << ", o: " << o_count << ")";
-    row2 << " | X: [" << format_value(x_min) << ", " << format_value(x_max) << "]";
-    row2 << " Y: [" << format_value(y_min) << ", " << format_value(y_max) << "]";
+    // Row 2: Counts on left, viewport range on right
+    std::ostringstream row2_left;
+    row2_left << "Total: " << total_count;
+    row2_left << " (x: " << x_count << ", o: " << o_count << ")";
+    row2_left << " Valid X: [" << format_value(x_min) << ", " << format_value(x_max) << "]";
+    row2_left << " Y: [" << format_value(y_min) << ", " << format_value(y_max) << "]";
 
-    std::string row2_str = row2.str();
-    if (static_cast<int>(row2_str.length()) > cols) {
-        row2_str = row2_str.substr(0, cols);
+    std::ostringstream row2_right;
+    row2_right << "View X: [" << format_value(vp_x_min) << ", " << format_value(vp_x_max) << "]";
+    row2_right << " Y: [" << format_value(vp_y_min) << ", " << format_value(vp_y_max) << "]";
+
+    std::string left_str = row2_left.str();
+    std::string right_str = row2_right.str();
+
+    // Write left side
+    int left_len = std::min(static_cast<int>(left_str.length()), cols - static_cast<int>(right_str.length()) - 2);
+    for (int i = 0; i < left_len; ++i) {
+        terminal.write_char(2, i, left_str[i]);
     }
-    for (size_t i = 0; i < row2_str.length(); ++i) {
-        terminal.write_char(2, i, row2_str[i]);
+
+    // Write right side (right-aligned)
+    int right_start = cols - right_str.length();
+    if (right_start > left_len) {
+        for (size_t i = 0; i < right_str.length(); ++i) {
+            terminal.write_char(2, right_start + i, right_str[i]);
+        }
     }
 }
 

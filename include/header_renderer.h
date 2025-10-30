@@ -25,12 +25,17 @@ public:
     //   x_max: Maximum valid x value
     //   y_min: Minimum valid y value
     //   y_max: Maximum valid y value
+    //   vp_x_min: Current viewport minimum x
+    //   vp_x_max: Current viewport maximum x
+    //   vp_y_min: Current viewport minimum y
+    //   vp_y_max: Current viewport maximum y
     //   focused_field: Which field has focus (for Tab navigation, 0-based)
     void render(Terminal& terminal, const std::string& db_path,
                 const std::string& table_name, const std::string& target_col,
                 const std::string& x_meaning, const std::string& o_meaning,
                 int total_count, int x_count, int o_count,
                 double x_min, double x_max, double y_min, double y_max,
+                double vp_x_min, double vp_x_max, double vp_y_min, double vp_y_max,
                 int focused_field);
 
 private:

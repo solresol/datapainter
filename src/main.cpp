@@ -603,7 +603,10 @@ int main(int argc, char** argv) {
     double y_min = meta.valid_y_min.value_or(-10.0);
     double y_max = meta.valid_y_max.value_or(10.0);
 
+    // Create viewport with valid ranges specified
+    // Initial viewport shows entire valid range
     Viewport viewport(x_min, x_max, y_min, y_max,
+                     x_min, x_max, y_min, y_max,  // Valid ranges
                      screen_height, screen_width);
 
     // Create data table
@@ -668,7 +671,9 @@ int main(int argc, char** argv) {
             header_renderer.render(terminal, args.database.value(), meta.table_name,
                                   meta.target_col_name, meta.x_meaning, meta.o_meaning,
                                   total_count, x_count, o_count,
-                                  x_min, x_max, y_min, y_max, 0);
+                                  x_min, x_max, y_min, y_max,
+                                  viewport.data_x_min(), viewport.data_x_max(),
+                                  viewport.data_y_min(), viewport.data_y_max(), 0);
 
             // Render edit area
             std::vector<ChangeRecord> unsaved_changes;  // Empty for now
