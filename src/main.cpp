@@ -523,8 +523,18 @@ int main(int argc, char** argv) {
 
     // Apply overrides if specified
     if (args.override_screen_height.has_value() && args.override_screen_width.has_value()) {
-        terminal.set_dimensions(args.override_screen_height.value(),
-                               args.override_screen_width.value());
+        int override_height = args.override_screen_height.value();
+        int override_width = args.override_screen_width.value();
+
+        // Validate that overrides don't exceed actual terminal size
+        if (!terminal.validate_override_dimensions(override_height, override_width)) {
+            std::cerr << "Error: Override dimensions (" << override_height << "x" << override_width
+                      << ") exceed actual terminal size (" << terminal.actual_rows() << "x" << terminal.actual_cols() << ")"
+                      << std::endl;
+            return 64;
+        }
+
+        terminal.set_dimensions(override_height, override_width);
     }
 
     // Initialize viewport

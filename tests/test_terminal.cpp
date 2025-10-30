@@ -166,3 +166,23 @@ TEST_F(TerminalTest, DetectSizeDoesNotCrash) {
     EXPECT_GT(term->rows(), 0);
     EXPECT_GT(term->cols(), 0);
 }
+
+// Test validate override dimensions
+TEST_F(TerminalTest, ValidateOverrideDimensions) {
+    // First detect actual terminal size
+    term->detect_size();
+
+    int actual_rows = term->actual_rows();
+    int actual_cols = term->actual_cols();
+
+    // Validation should succeed for dimensions within actual terminal bounds
+    EXPECT_TRUE(term->validate_override_dimensions(actual_rows, actual_cols));
+    EXPECT_TRUE(term->validate_override_dimensions(actual_rows - 1, actual_cols - 1));
+    EXPECT_TRUE(term->validate_override_dimensions(10, 20));  // Assume this is smaller than any real terminal
+
+    // Validation should fail for dimensions exceeding actual terminal
+    EXPECT_FALSE(term->validate_override_dimensions(actual_rows + 10, actual_cols));
+    EXPECT_FALSE(term->validate_override_dimensions(actual_rows, actual_cols + 10));
+    EXPECT_FALSE(term->validate_override_dimensions(actual_rows + 10, actual_cols + 10));
+    EXPECT_FALSE(term->validate_override_dimensions(1000, 1000));  // Very large dimensions
+}

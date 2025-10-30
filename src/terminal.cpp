@@ -16,7 +16,7 @@ namespace datapainter {
 // Track whether ncurses is initialized
 static bool ncurses_initialized = false;
 
-Terminal::Terminal() : rows_(24), cols_(80) {
+Terminal::Terminal() : rows_(24), cols_(80), actual_rows_(24), actual_cols_(80) {
     resize_buffer();
 }
 
@@ -40,6 +40,8 @@ bool Terminal::detect_size() {
     if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
         cols_ = csbi.srWindow.Right - csbi.srWindow.Left + 1;
         rows_ = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+        actual_cols_ = cols_;
+        actual_rows_ = rows_;
         resize_buffer();
         return true;
     }
@@ -48,6 +50,8 @@ bool Terminal::detect_size() {
     // If ncurses is initialized, use its size detection
     if (ncurses_initialized) {
         getmaxyx(stdscr, rows_, cols_);
+        actual_rows_ = rows_;
+        actual_cols_ = cols_;
         resize_buffer();
         return true;
     }
@@ -57,6 +61,8 @@ bool Terminal::detect_size() {
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0) {
         rows_ = w.ws_row;
         cols_ = w.ws_col;
+        actual_rows_ = rows_;
+        actual_cols_ = cols_;
         resize_buffer();
         return true;
     }
@@ -68,6 +74,11 @@ bool Terminal::is_size_adequate() const {
     // Need at least header + 3 rows for minimal display
     // And at least 40 columns for reasonable text
     return rows_ >= 5 && cols_ >= 40;
+}
+
+bool Terminal::validate_override_dimensions(int rows, int cols) const {
+    // Override dimensions must not exceed actual terminal dimensions
+    return rows <= actual_rows_ && cols <= actual_cols_;
 }
 
 void Terminal::clear_buffer() {

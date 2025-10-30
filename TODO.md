@@ -138,7 +138,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Full viewport zoom (= key, fit all data)
 - [x] Test: Respect valid range constraints during zoom
 - [x] Test: Smart zoom centering (adjust center at edges to maximize usable area)
-- [ ] Test: Calculate decimal place for major tick marks (log10 of range)
+- [x] Test: Calculate decimal place for major tick marks (log10 of range)
 
 ### Pan Operations
 - [x] Test: Pan right (shift viewport if cursor at edge and range available)
@@ -156,7 +156,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Create Terminal class
 - [x] Test: Detect terminal dimensions (rows, cols)
 - [x] Test: Override dimensions with CLI args
-- [ ] Test: Exit code 64 if override exceeds actual terminal size
+- [x] Test: Exit code 64 if override exceeds actual terminal size
 - [ ] Test: Handle SIGWINCH (terminal resize)
 - [x] Test: Pause rendering if screen too small (< header + 3 rows)
 - [ ] Test: Show "enlarge terminal" message when too small

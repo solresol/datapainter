@@ -15,11 +15,19 @@ public:
     int rows() const { return rows_; }
     int cols() const { return cols_; }
 
+    // Actual terminal dimensions (physical terminal size)
+    int actual_rows() const { return actual_rows_; }
+    int actual_cols() const { return actual_cols_; }
+
     // Override dimensions (for testing)
     void set_dimensions(int rows, int cols);
 
     // Detect actual terminal size
     bool detect_size();
+
+    // Validate that override dimensions don't exceed actual terminal size
+    // Returns true if dimensions are valid (within actual terminal bounds)
+    bool validate_override_dimensions(int rows, int cols) const;
 
     // Check if dimensions are valid (not too small)
     bool is_size_adequate() const;
@@ -66,6 +74,8 @@ public:
 private:
     int rows_;
     int cols_;
+    int actual_rows_;   // Physical terminal dimensions
+    int actual_cols_;
     std::vector<std::vector<char>> buffer_;
     std::vector<std::vector<AcsChar>> acs_buffer_;  // Parallel buffer for ACS characters
 
