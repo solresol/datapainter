@@ -135,19 +135,58 @@ void Viewport::clamp_to_valid_ranges() {
 }
 
 void Viewport::zoom_in(const DataCoord& center) {
-    // Halve the viewport size, centered on given point
-    double x_range = (data_x_max_ - data_x_min_) / 2.0;
-    double y_range = (data_y_max_ - data_y_min_) / 2.0;
+    // Calculate new viewport size (halve current size)
+    double new_x_range = (data_x_max_ - data_x_min_) / 2.0;
+    double new_y_range = (data_y_max_ - data_y_min_) / 2.0;
 
-    double half_x_range = x_range / 2.0;
-    double half_y_range = y_range / 2.0;
+    double half_x_range = new_x_range / 2.0;
+    double half_y_range = new_y_range / 2.0;
 
-    data_x_min_ = center.x - half_x_range;
-    data_x_max_ = center.x + half_x_range;
-    data_y_min_ = center.y - half_y_range;
-    data_y_max_ = center.y + half_y_range;
+    // Start with cursor position as center
+    double center_x = center.x;
+    double center_y = center.y;
 
-    // Clamp to valid ranges
+    // Adjust center_x to avoid showing too much forbidden area on X axis
+    double valid_x_range = valid_x_max_ - valid_x_min_;
+    if (new_x_range >= valid_x_range) {
+        // New viewport is larger than or equal to valid range
+        // Center on the valid range midpoint
+        center_x = (valid_x_min_ + valid_x_max_) / 2.0;
+    } else {
+        // Check if centering on cursor would exceed valid_x_min
+        if (center_x - half_x_range < valid_x_min_) {
+            center_x = valid_x_min_ + half_x_range;
+        }
+        // Check if centering on cursor would exceed valid_x_max
+        if (center_x + half_x_range > valid_x_max_) {
+            center_x = valid_x_max_ - half_x_range;
+        }
+    }
+
+    // Adjust center_y to avoid showing too much forbidden area on Y axis
+    double valid_y_range = valid_y_max_ - valid_y_min_;
+    if (new_y_range >= valid_y_range) {
+        // New viewport is larger than or equal to valid range
+        // Center on the valid range midpoint
+        center_y = (valid_y_min_ + valid_y_max_) / 2.0;
+    } else {
+        // Check if centering on cursor would exceed valid_y_min
+        if (center_y - half_y_range < valid_y_min_) {
+            center_y = valid_y_min_ + half_y_range;
+        }
+        // Check if centering on cursor would exceed valid_y_max
+        if (center_y + half_y_range > valid_y_max_) {
+            center_y = valid_y_max_ - half_y_range;
+        }
+    }
+
+    // Apply zoom with adjusted center
+    data_x_min_ = center_x - half_x_range;
+    data_x_max_ = center_x + half_x_range;
+    data_y_min_ = center_y - half_y_range;
+    data_y_max_ = center_y + half_y_range;
+
+    // Final clamp to valid ranges (for safety)
     clamp_to_valid_ranges();
 }
 

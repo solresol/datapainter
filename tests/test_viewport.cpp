@@ -409,3 +409,163 @@ TEST(ViewportPanTest, CursorMovementWithinViewport) {
     EXPECT_DOUBLE_EQ(vp.data_y_min(), original_y_min);
     EXPECT_DOUBLE_EQ(vp.data_y_max(), original_y_max);
 }
+
+// ========== Smart Zoom Centering Tests ==========
+
+// Test: Zoom in at right edge adjusts center to avoid forbidden area
+TEST(ViewportSmartZoomTest, ZoomInAtRightEdgeAdjustsCenter) {
+    // Valid range: [-10, 10], current viewport shows entire range
+    Viewport vp(-10.0, 10.0, -10.0, 10.0,
+                -10.0, 10.0, -10.0, 10.0,
+                20, 40);
+
+    // Cursor near right edge at x=9.5
+    DataCoord cursor{9.5, 0.0};
+    vp.zoom_in(cursor);
+
+    // After zoom, viewport width should be 10 (half of 20)
+    double viewport_width = vp.data_x_max() - vp.data_x_min();
+    EXPECT_NEAR(viewport_width, 10.0, 0.01);
+
+    // The viewport should NOT extend beyond valid_x_max (10.0)
+    EXPECT_LE(vp.data_x_max(), 10.0);
+
+    // The viewport should be shifted left to accommodate
+    // Expected: center at 5.0, so viewport is [0, 10]
+    EXPECT_NEAR(vp.data_x_min(), 0.0, 0.01);
+    EXPECT_NEAR(vp.data_x_max(), 10.0, 0.01);
+
+    // Cursor position (9.5, 0.0) should still be visible
+    EXPECT_TRUE(vp.is_visible(cursor));
+}
+
+// Test: Zoom in at left edge adjusts center to avoid forbidden area
+TEST(ViewportSmartZoomTest, ZoomInAtLeftEdgeAdjustsCenter) {
+    Viewport vp(-10.0, 10.0, -10.0, 10.0,
+                -10.0, 10.0, -10.0, 10.0,
+                20, 40);
+
+    // Cursor near left edge at x=-9.5
+    DataCoord cursor{-9.5, 0.0};
+    vp.zoom_in(cursor);
+
+    double viewport_width = vp.data_x_max() - vp.data_x_min();
+    EXPECT_NEAR(viewport_width, 10.0, 0.01);
+
+    // The viewport should NOT extend beyond valid_x_min (-10.0)
+    EXPECT_GE(vp.data_x_min(), -10.0);
+
+    // Expected: center at -5.0, so viewport is [-10, 0]
+    EXPECT_NEAR(vp.data_x_min(), -10.0, 0.01);
+    EXPECT_NEAR(vp.data_x_max(), 0.0, 0.01);
+
+    // Cursor should still be visible
+    EXPECT_TRUE(vp.is_visible(cursor));
+}
+
+// Test: Zoom in at top-right corner adjusts both axes
+TEST(ViewportSmartZoomTest, ZoomInAtCornerAdjustsBothAxes) {
+    Viewport vp(-10.0, 10.0, -10.0, 10.0,
+                -10.0, 10.0, -10.0, 10.0,
+                20, 40);
+
+    // Cursor at top-right corner
+    DataCoord cursor{9.0, 9.0};
+    vp.zoom_in(cursor);
+
+    // Viewport should be adjusted on both axes
+    EXPECT_LE(vp.data_x_max(), 10.0);
+    EXPECT_LE(vp.data_y_max(), 10.0);
+    EXPECT_GE(vp.data_x_min(), -10.0);
+    EXPECT_GE(vp.data_y_min(), -10.0);
+
+    // Cursor should still be visible
+    EXPECT_TRUE(vp.is_visible(cursor));
+
+    // Expected viewport: [0, 10] x [0, 10] (centered at 5, 5)
+    EXPECT_NEAR(vp.data_x_min(), 0.0, 0.01);
+    EXPECT_NEAR(vp.data_x_max(), 10.0, 0.01);
+    EXPECT_NEAR(vp.data_y_min(), 0.0, 0.01);
+    EXPECT_NEAR(vp.data_y_max(), 10.0, 0.01);
+}
+
+// Test: Zoom in at center works normally (no adjustment needed)
+TEST(ViewportSmartZoomTest, ZoomInAtCenterNoAdjustment) {
+    Viewport vp(-10.0, 10.0, -10.0, 10.0,
+                -10.0, 10.0, -10.0, 10.0,
+                20, 40);
+
+    // Cursor at center
+    DataCoord cursor{0.0, 0.0};
+    vp.zoom_in(cursor);
+
+    // Should center normally at (0, 0)
+    // New viewport: [-5, 5] x [-5, 5]
+    EXPECT_NEAR(vp.data_x_min(), -5.0, 0.01);
+    EXPECT_NEAR(vp.data_x_max(), 5.0, 0.01);
+    EXPECT_NEAR(vp.data_y_min(), -5.0, 0.01);
+    EXPECT_NEAR(vp.data_y_max(), 5.0, 0.01);
+
+    EXPECT_TRUE(vp.is_visible(cursor));
+}
+
+// Test: Zoom in with cursor slightly off-center from edge
+TEST(ViewportSmartZoomTest, ZoomInNearEdgeButNotAt) {
+    Viewport vp(-10.0, 10.0, -10.0, 10.0,
+                -10.0, 10.0, -10.0, 10.0,
+                20, 40);
+
+    // Cursor at x=7 (not quite at edge, but zoom would overshoot)
+    DataCoord cursor{7.0, 0.0};
+    vp.zoom_in(cursor);
+
+    // Viewport width now 10, centered at 7 would give [2, 12]
+    // This exceeds valid_x_max (10), so should adjust to [0, 10]
+    EXPECT_LE(vp.data_x_max(), 10.0);
+    EXPECT_NEAR(vp.data_x_max(), 10.0, 0.01);
+
+    // Cursor should still be visible
+    EXPECT_TRUE(vp.is_visible(cursor));
+}
+
+// Test: Multiple zoom-ins at edge converge properly
+TEST(ViewportSmartZoomTest, MultipleZoomInsAtEdge) {
+    Viewport vp(-10.0, 10.0, -10.0, 10.0,
+                -10.0, 10.0, -10.0, 10.0,
+                20, 40);
+
+    DataCoord cursor{9.0, 0.0};
+
+    // First zoom: [0, 10]
+    vp.zoom_in(cursor);
+    EXPECT_LE(vp.data_x_max(), 10.0);
+    EXPECT_TRUE(vp.is_visible(cursor));
+
+    // Second zoom: should still keep cursor visible and not exceed bounds
+    vp.zoom_in(cursor);
+    EXPECT_LE(vp.data_x_max(), 10.0);
+    EXPECT_TRUE(vp.is_visible(cursor));
+
+    double width = vp.data_x_max() - vp.data_x_min();
+    EXPECT_NEAR(width, 5.0, 0.01);  // Half of 10 (20 -> 10 -> 5)
+}
+
+// Test: Zoom behavior with asymmetric valid ranges
+TEST(ViewportSmartZoomTest, AsymmetricValidRanges) {
+    // Valid range: [0, 20] (not centered on origin)
+    Viewport vp(0.0, 20.0, 0.0, 20.0,
+                0.0, 20.0, 0.0, 20.0,
+                20, 40);
+
+    // Cursor near right edge
+    DataCoord cursor{18.0, 18.0};
+    vp.zoom_in(cursor);
+
+    // Should adjust to keep within [0, 20]
+    EXPECT_GE(vp.data_x_min(), 0.0);
+    EXPECT_LE(vp.data_x_max(), 20.0);
+    EXPECT_GE(vp.data_y_min(), 0.0);
+    EXPECT_LE(vp.data_y_max(), 20.0);
+
+    EXPECT_TRUE(vp.is_visible(cursor));
+}
