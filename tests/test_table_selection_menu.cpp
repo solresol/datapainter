@@ -128,3 +128,35 @@ TEST_F(TableSelectionMenuTest, EmptyTableListSelection) {
     EXPECT_EQ(menu.normalize_selection(-1, tables), 1);  // Wrap to last action
     EXPECT_EQ(menu.normalize_selection(2, tables), 0);   // Wrap to first action
 }
+
+TEST_F(TableSelectionMenuTest, ResizeUpdatesDisplay) {
+    std::vector<std::string> tables = {"users", "products"};
+    TableSelectionMenu menu(terminal);
+
+    // Initial render at 24x80
+    menu.render(tables, 0);
+    EXPECT_EQ(terminal.rows(), 24);
+    EXPECT_EQ(terminal.cols(), 80);
+
+    // Simulate terminal resize to 30x100
+    terminal.set_dimensions(30, 100);
+
+    // Re-render after resize
+    menu.render(tables, 0);
+
+    // Verify the buffer has been resized
+    EXPECT_EQ(terminal.rows(), 30);
+    EXPECT_EQ(terminal.cols(), 100);
+
+    // Verify content still renders correctly (title should still be present)
+    std::string row0 = terminal.get_row(0);
+    EXPECT_NE(row0.find("DataPainter"), std::string::npos);
+
+    // Verify tables still appear
+    std::string full_output;
+    for (int row = 0; row < terminal.rows(); ++row) {
+        full_output += terminal.get_row(row);
+    }
+    EXPECT_NE(full_output.find("users"), std::string::npos);
+    EXPECT_NE(full_output.find("products"), std::string::npos);
+}
