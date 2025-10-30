@@ -159,8 +159,8 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Exit code 64 if override exceeds actual terminal size
 - [x] Test: Handle SIGWINCH (terminal resize)
 - [x] Test: Pause rendering if screen too small (< header + 3 rows)
-- [ ] Test: Show "enlarge terminal" message when too small
-- [ ] Test: Resume rendering when size adequate
+- [x] Test: Show "enlarge terminal" message when too small
+- [x] Test: Resume rendering when size adequate
 
 ### Screen Buffer
 - [x] Create ScreenBuffer class

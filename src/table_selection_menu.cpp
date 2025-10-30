@@ -12,6 +12,30 @@ void TableSelectionMenu::render(const std::vector<std::string>& tables, int sele
     int screen_height = terminal_.rows();
     int screen_width = terminal_.cols();
 
+    // Check if terminal is too small
+    if (!terminal_.is_size_adequate()) {
+        // Show "enlarge terminal" message
+        std::string msg = "Please enlarge your terminal";
+        std::string size_msg = "(minimum: 5 rows x 40 columns)";
+
+        int msg_row = screen_height / 2;
+        int msg_col = (screen_width - msg.length()) / 2;
+        if (msg_col < 0) msg_col = 0;
+
+        for (size_t i = 0; i < msg.length() && msg_col + i < static_cast<size_t>(screen_width); ++i) {
+            terminal_.write_char(msg_row, msg_col + i, msg[i]);
+        }
+
+        if (msg_row + 1 < screen_height) {
+            int size_col = (screen_width - size_msg.length()) / 2;
+            if (size_col < 0) size_col = 0;
+            for (size_t i = 0; i < size_msg.length() && size_col + i < static_cast<size_t>(screen_width); ++i) {
+                terminal_.write_char(msg_row + 1, size_col + i, size_msg[i]);
+            }
+        }
+        return;  // Don't render normal menu
+    }
+
     // Title at top with terminal dimensions
     std::string title = "DataPainter - Table Selection";
     std::string size_info = " [" + std::to_string(screen_height) + "x" + std::to_string(screen_width) + "]";

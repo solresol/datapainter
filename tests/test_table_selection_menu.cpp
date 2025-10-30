@@ -160,3 +160,50 @@ TEST_F(TableSelectionMenuTest, ResizeUpdatesDisplay) {
     EXPECT_NE(full_output.find("users"), std::string::npos);
     EXPECT_NE(full_output.find("products"), std::string::npos);
 }
+
+TEST_F(TableSelectionMenuTest, ShowEnlargeTerminalMessage) {
+    std::vector<std::string> tables = {"users", "products"};
+    TableSelectionMenu menu(terminal);
+
+    // Set terminal to too small (< 5 rows or < 40 cols)
+    terminal.set_dimensions(4, 30);
+
+    // Render with too-small terminal
+    menu.render(tables, 0);
+
+    // Should show "enlarge terminal" message
+    std::string full_output;
+    for (int row = 0; row < terminal.rows(); ++row) {
+        full_output += terminal.get_row(row);
+    }
+
+    EXPECT_NE(full_output.find("enlarge"), std::string::npos);
+}
+
+TEST_F(TableSelectionMenuTest, ResumeRenderingWhenSizeAdequate) {
+    std::vector<std::string> tables = {"users", "products"};
+    TableSelectionMenu menu(terminal);
+
+    // Start with too-small terminal
+    terminal.set_dimensions(4, 30);
+    menu.render(tables, 0);
+
+    std::string small_output;
+    for (int row = 0; row < terminal.rows(); ++row) {
+        small_output += terminal.get_row(row);
+    }
+    EXPECT_NE(small_output.find("enlarge"), std::string::npos);
+
+    // Resize to adequate size
+    terminal.set_dimensions(24, 80);
+    menu.render(tables, 0);
+
+    // Should show normal menu content, not "enlarge" message
+    std::string normal_output;
+    for (int row = 0; row < terminal.rows(); ++row) {
+        normal_output += terminal.get_row(row);
+    }
+
+    EXPECT_EQ(normal_output.find("enlarge"), std::string::npos);
+    EXPECT_NE(normal_output.find("users"), std::string::npos);
+}
