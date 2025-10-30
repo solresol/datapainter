@@ -12,11 +12,16 @@ void TableSelectionMenu::render(const std::vector<std::string>& tables, int sele
     int screen_height = terminal_.rows();
     int screen_width = terminal_.cols();
 
-    // Title at top
+    // Title at top with terminal dimensions
     std::string title = "DataPainter - Table Selection";
-    int title_col = (screen_width - title.length()) / 2;
-    for (size_t i = 0; i < title.length(); ++i) {
-        terminal_.write_char(0, title_col + i, title[i]);
+    std::string size_info = " [" + std::to_string(screen_height) + "x" + std::to_string(screen_width) + "]";
+    std::string full_title = title + size_info;
+
+    int title_col = (screen_width - full_title.length()) / 2;
+    if (title_col < 0) title_col = 0;
+
+    for (size_t i = 0; i < full_title.length() && title_col + i < static_cast<size_t>(screen_width); ++i) {
+        terminal_.write_char(0, title_col + i, full_title[i]);
     }
 
     // Draw border for menu area (starting at row 2)
