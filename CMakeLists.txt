@@ -77,6 +77,7 @@ set(DATAPAINTER_SOURCES
     src/table_view.cpp
     src/table_manager.cpp
     src/undo_log_manager.cpp
+    src/table_selection_menu.cpp
     # More UI components will go here
 )
 
@@ -132,6 +133,7 @@ if(BUILD_TESTS)
         tests/test_table_view.cpp
         tests/test_table_manager.cpp
         tests/test_undo_log_manager.cpp
+        tests/test_table_selection_menu.cpp
         tests/test_integration.cpp
         # Implementation files needed by tests
         src/database.cpp
@@ -152,6 +154,7 @@ if(BUILD_TESTS)
         src/table_view.cpp
         src/table_manager.cpp
         src/undo_log_manager.cpp
+        src/table_selection_menu.cpp
         # More test files will be added as we build
     )
 
