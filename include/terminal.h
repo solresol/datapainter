@@ -24,9 +24,21 @@ public:
     // Check if dimensions are valid (not too small)
     bool is_size_adequate() const;
 
+    // ACS (Alternative Character Set) box-drawing characters
+    enum class AcsChar {
+        NONE = 0,
+        ULCORNER,   // Upper-left corner
+        URCORNER,   // Upper-right corner
+        LLCORNER,   // Lower-left corner
+        LRCORNER,   // Lower-right corner
+        HLINE,      // Horizontal line
+        VLINE       // Vertical line
+    };
+
     // Screen buffer operations
     void clear_buffer();
     void write_char(int row, int col, char ch);
+    void write_acs(int row, int col, AcsChar acs_type);  // Write ACS box-drawing character
     char read_char(int row, int col) const;
     std::string get_row(int row) const;
 
@@ -55,6 +67,7 @@ private:
     int rows_;
     int cols_;
     std::vector<std::vector<char>> buffer_;
+    std::vector<std::vector<AcsChar>> acs_buffer_;  // Parallel buffer for ACS characters
 
     void resize_buffer();
 };

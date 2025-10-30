@@ -2,10 +2,6 @@
 #include <map>
 #include <iostream>
 
-#ifdef __unix__
-#include <ncurses.h>
-#endif
-
 namespace datapainter {
 
 void EditAreaRenderer::render(Terminal& terminal, const Viewport& viewport, DataTable& table,
@@ -32,56 +28,25 @@ void EditAreaRenderer::draw_border(Terminal& terminal, int start_row, int height
     int end_row = start_row + height - 1;
     int end_col = width - 1;
 
-#ifdef __unix__
-    // Use ncurses line-drawing characters on Unix
-    // Draw corners
-    mvaddch(start_row, 0, ACS_ULCORNER);
-    mvaddch(start_row, end_col, ACS_URCORNER);
-    mvaddch(end_row, 0, ACS_LLCORNER);
-    mvaddch(end_row, end_col, ACS_LRCORNER);
+    // Draw corners using Terminal's ACS support
+    // On Unix/ncurses, these will render as nice box-drawing characters
+    // On other platforms or in tests, they fall back to ASCII (+, -, |)
+    terminal.write_acs(start_row, 0, Terminal::AcsChar::ULCORNER);
+    terminal.write_acs(start_row, end_col, Terminal::AcsChar::URCORNER);
+    terminal.write_acs(end_row, 0, Terminal::AcsChar::LLCORNER);
+    terminal.write_acs(end_row, end_col, Terminal::AcsChar::LRCORNER);
 
     // Draw top and bottom edges
     for (int col = 1; col < end_col; ++col) {
-        mvaddch(start_row, col, ACS_HLINE);
-        mvaddch(end_row, col, ACS_HLINE);
+        terminal.write_acs(start_row, col, Terminal::AcsChar::HLINE);
+        terminal.write_acs(end_row, col, Terminal::AcsChar::HLINE);
     }
 
     // Draw left and right edges
     for (int row = start_row + 1; row < end_row; ++row) {
-        mvaddch(row, 0, ACS_VLINE);
-        mvaddch(row, end_col, ACS_VLINE);
+        terminal.write_acs(row, 0, Terminal::AcsChar::VLINE);
+        terminal.write_acs(row, end_col, Terminal::AcsChar::VLINE);
     }
-
-    // Write to terminal buffer as well (for compatibility)
-    terminal.write_char(start_row, 0, '+');
-    terminal.write_char(start_row, end_col, '+');
-    terminal.write_char(end_row, 0, '+');
-    terminal.write_char(end_row, end_col, '+');
-    for (int col = 1; col < end_col; ++col) {
-        terminal.write_char(start_row, col, '-');
-        terminal.write_char(end_row, col, '-');
-    }
-    for (int row = start_row + 1; row < end_row; ++row) {
-        terminal.write_char(row, 0, '|');
-        terminal.write_char(row, end_col, '|');
-    }
-#else
-    // Use ASCII characters on other platforms
-    terminal.write_char(start_row, 0, '+');
-    terminal.write_char(start_row, end_col, '+');
-    terminal.write_char(end_row, 0, '+');
-    terminal.write_char(end_row, end_col, '+');
-
-    for (int col = 1; col < end_col; ++col) {
-        terminal.write_char(start_row, col, '-');
-        terminal.write_char(end_row, col, '-');
-    }
-
-    for (int row = start_row + 1; row < end_row; ++row) {
-        terminal.write_char(row, 0, '|');
-        terminal.write_char(row, end_col, '|');
-    }
-#endif
 }
 
 void EditAreaRenderer::render_points(Terminal& terminal, const Viewport& viewport,

@@ -74,11 +74,38 @@ void Terminal::clear_buffer() {
     for (auto& row : buffer_) {
         std::fill(row.begin(), row.end(), ' ');
     }
+    for (auto& row : acs_buffer_) {
+        std::fill(row.begin(), row.end(), AcsChar::NONE);
+    }
 }
 
 void Terminal::write_char(int row, int col, char ch) {
     if (row >= 0 && row < rows_ && col >= 0 && col < cols_) {
         buffer_[row][col] = ch;
+        acs_buffer_[row][col] = AcsChar::NONE;  // Clear any ACS marker
+    }
+}
+
+void Terminal::write_acs(int row, int col, Terminal::AcsChar acs_type) {
+    if (row >= 0 && row < rows_ && col >= 0 && col < cols_) {
+        acs_buffer_[row][col] = acs_type;
+        // Store ASCII fallback in buffer for read_char() and tests
+        switch (acs_type) {
+            case AcsChar::ULCORNER:
+            case AcsChar::URCORNER:
+            case AcsChar::LLCORNER:
+            case AcsChar::LRCORNER:
+                buffer_[row][col] = '+';
+                break;
+            case AcsChar::HLINE:
+                buffer_[row][col] = '-';
+                break;
+            case AcsChar::VLINE:
+                buffer_[row][col] = '|';
+                break;
+            case AcsChar::NONE:
+                break;
+        }
     }
 }
 
@@ -102,8 +129,25 @@ void Terminal::render() {
         // Use ncurses for rendering
         clear();
         for (int row = 0; row < rows_ && row < LINES; ++row) {
-            std::string line = get_row(row);
-            mvaddnstr(row, 0, line.c_str(), std::min(cols_, COLS));
+            for (int col = 0; col < cols_ && col < COLS; ++col) {
+                // Check if this position has an ACS character
+                if (acs_buffer_[row][col] != AcsChar::NONE) {
+                    chtype acs_ch;
+                    switch (acs_buffer_[row][col]) {
+                        case AcsChar::ULCORNER: acs_ch = ACS_ULCORNER; break;
+                        case AcsChar::URCORNER: acs_ch = ACS_URCORNER; break;
+                        case AcsChar::LLCORNER: acs_ch = ACS_LLCORNER; break;
+                        case AcsChar::LRCORNER: acs_ch = ACS_LRCORNER; break;
+                        case AcsChar::HLINE:    acs_ch = ACS_HLINE;    break;
+                        case AcsChar::VLINE:    acs_ch = ACS_VLINE;    break;
+                        default:                acs_ch = buffer_[row][col]; break;
+                    }
+                    mvaddch(row, col, acs_ch);
+                } else {
+                    // Regular character
+                    mvaddch(row, col, buffer_[row][col]);
+                }
+            }
         }
         refresh();
         return;
@@ -127,24 +171,34 @@ void Terminal::render_with_cursor(int cursor_row, int cursor_col) {
         // Use ncurses for rendering with cursor
         clear();
         for (int row = 0; row < rows_ && row < LINES; ++row) {
-            std::string line = get_row(row);
+            for (int col = 0; col < cols_ && col < COLS; ++col) {
+                bool is_cursor = (row == cursor_row && col == cursor_col);
 
-            if (row == cursor_row && cursor_col >= 0 && cursor_col < cols_) {
-                // Render line up to cursor
-                if (cursor_col > 0) {
-                    mvaddnstr(row, 0, line.c_str(), cursor_col);
+                // Get the character to display
+                chtype ch;
+                if (acs_buffer_[row][col] != AcsChar::NONE) {
+                    // Use ACS character
+                    switch (acs_buffer_[row][col]) {
+                        case AcsChar::ULCORNER: ch = ACS_ULCORNER; break;
+                        case AcsChar::URCORNER: ch = ACS_URCORNER; break;
+                        case AcsChar::LLCORNER: ch = ACS_LLCORNER; break;
+                        case AcsChar::LRCORNER: ch = ACS_LRCORNER; break;
+                        case AcsChar::HLINE:    ch = ACS_HLINE;    break;
+                        case AcsChar::VLINE:    ch = ACS_VLINE;    break;
+                        default:                ch = buffer_[row][col]; break;
+                    }
+                } else {
+                    ch = buffer_[row][col];
                 }
-                // Render cursor with reverse video
-                attron(A_REVERSE);
-                mvaddch(row, cursor_col, line[cursor_col]);
-                attroff(A_REVERSE);
-                // Render rest of line
-                if (cursor_col + 1 < cols_) {
-                    mvaddnstr(row, cursor_col + 1, line.c_str() + cursor_col + 1,
-                             std::min(cols_ - cursor_col - 1, COLS - cursor_col - 1));
+
+                // Render with or without cursor highlighting
+                if (is_cursor) {
+                    attron(A_REVERSE);
+                    mvaddch(row, col, ch);
+                    attroff(A_REVERSE);
+                } else {
+                    mvaddch(row, col, ch);
                 }
-            } else {
-                mvaddnstr(row, 0, line.c_str(), std::min(cols_, COLS));
             }
         }
         refresh();
@@ -173,16 +227,24 @@ void Terminal::render_with_cursor(int cursor_row, int cursor_col) {
 }
 
 void Terminal::resize_buffer() {
-    // Save old buffer
+    // Save old buffers
     auto old_buffer = buffer_;
+    auto old_acs_buffer = acs_buffer_;
     int old_rows = old_buffer.size();
     int old_cols = old_rows > 0 ? old_buffer[0].size() : 0;
 
-    // Create new buffer
+    // Create new char buffer
     buffer_.clear();
     buffer_.resize(rows_);
     for (auto& row : buffer_) {
         row.resize(cols_, ' ');
+    }
+
+    // Create new ACS buffer
+    acs_buffer_.clear();
+    acs_buffer_.resize(rows_);
+    for (auto& row : acs_buffer_) {
+        row.resize(cols_, AcsChar::NONE);
     }
 
     // Copy old content that fits
@@ -191,6 +253,9 @@ void Terminal::resize_buffer() {
     for (int r = 0; r < copy_rows; ++r) {
         for (int c = 0; c < copy_cols; ++c) {
             buffer_[r][c] = old_buffer[r][c];
+            if (!old_acs_buffer.empty()) {
+                acs_buffer_[r][c] = old_acs_buffer[r][c];
+            }
         }
     }
 }
