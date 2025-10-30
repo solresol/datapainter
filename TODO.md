@@ -213,7 +213,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Render multiple x's at same cell as 'X'
 - [x] Test: Render multiple o's at same cell as 'O'
 - [x] Test: Render mixed x+o at same cell as '#'
-- [ ] Test: Render wall characters '!' for out-of-valid-range areas
+- [x] Test: Render wall characters '!' for out-of-valid-range areas
 - [x] Test: Draw cursor at current position
 - [ ] Test: Show cursor coordinates in header
 
