@@ -87,16 +87,36 @@ void EditAreaRenderer::draw_border(Terminal& terminal, int start_row, int height
 void EditAreaRenderer::render_points(Terminal& terminal, const Viewport& viewport,
                                      DataTable& table, int start_row, int height, int width,
                                      const std::string& x_target, const std::string& o_target) {
+    // Calculate content area (inside border)
+    int content_height = height - 2;  // Exclude top and bottom border
+    int content_width = width - 2;    // Exclude left and right border
+
+    // First pass: Fill forbidden areas with '!' characters
+    // These are areas outside the valid range
+    for (int screen_row = 0; screen_row < content_height; ++screen_row) {
+        for (int screen_col = 0; screen_col < content_width; ++screen_col) {
+            ScreenCoord screen{screen_row, screen_col};
+            DataCoord data = viewport.screen_to_data(screen);
+
+            // Check if this cell is outside the valid range
+            bool outside_valid_range = (data.x < viewport.valid_x_min() ||
+                                       data.x > viewport.valid_x_max() ||
+                                       data.y < viewport.valid_y_min() ||
+                                       data.y > viewport.valid_y_max());
+
+            if (outside_valid_range) {
+                // Mark forbidden area with '!'
+                terminal.write_char(start_row + 1 + screen_row, 1 + screen_col, '!');
+            }
+        }
+    }
+
     // Query all points within the viewport bounds
     auto points = table.query_viewport(viewport.data_x_min(), viewport.data_x_max(),
                                        viewport.data_y_min(), viewport.data_y_max());
 
     // Map from screen coordinates to counts of x and o points
     std::map<std::pair<int, int>, std::pair<int, int>> cell_counts;
-
-    // Calculate content area (inside border)
-    int content_height = height - 2;  // Exclude top and bottom border
-    int content_width = width - 2;    // Exclude left and right border
 
     // Count points at each screen cell
     for (const auto& point : points) {
@@ -119,7 +139,7 @@ void EditAreaRenderer::render_points(Terminal& terminal, const Viewport& viewpor
         }
     }
 
-    // Render each cell
+    // Second pass: Render points (will override '!' if points exist in forbidden areas)
     for (const auto& [coord, counts] : cell_counts) {
         auto [screen_row, screen_col] = coord;
         auto [x_count, o_count] = counts;

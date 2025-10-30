@@ -247,3 +247,189 @@ TEST_F(EditAreaRendererTest, RenderBoundaryPoints) {
     EXPECT_EQ(terminal.read_char(screen1.row + 1, screen1.col + 1), 'x');
     EXPECT_EQ(terminal.read_char(screen2.row + 1, screen2.col + 1), 'x');
 }
+
+// Test: Render '!' for areas outside valid X range (left side)
+TEST_F(EditAreaRendererTest, RenderWallCharactersLeftSide) {
+    Terminal terminal;
+    terminal.set_dimensions(10, 10);
+    // Viewport shows [-10, 10], but valid range is [0, 10]
+    // Left half of viewport is outside valid range
+    Viewport viewport(-10.0, 10.0, -5.0, 5.0,
+                     0.0, 10.0, -5.0, 5.0,  // Valid ranges
+                     8, 8);
+    EditAreaRenderer renderer;
+
+    renderer.render(terminal, viewport, *table_, {}, 0, 10, 10, 0, 0, "0", "1");
+
+    // Check left half of edit area (x < 0) shows '!'
+    for (int row = 1; row < 9; ++row) {
+        // Left half columns (approximately cols 1-4)
+        for (int col = 1; col < 5; ++col) {
+            ScreenCoord screen{row - 1, col - 1};
+            auto data = viewport.screen_to_data(screen);
+            if (data.x < 0.0) {  // Outside valid range
+                EXPECT_EQ(terminal.read_char(row, col), '!')
+                    << "Expected '!' at row=" << row << ", col=" << col
+                    << " (data x=" << data.x << ")";
+            }
+        }
+    }
+}
+
+// Test: Render '!' for areas outside valid X range (right side)
+TEST_F(EditAreaRendererTest, RenderWallCharactersRightSide) {
+    Terminal terminal;
+    terminal.set_dimensions(10, 10);
+    // Viewport shows [-10, 10], but valid range is [-10, 0]
+    // Right half of viewport is outside valid range
+    Viewport viewport(-10.0, 10.0, -5.0, 5.0,
+                     -10.0, 0.0, -5.0, 5.0,  // Valid ranges
+                     8, 8);
+    EditAreaRenderer renderer;
+
+    renderer.render(terminal, viewport, *table_, {}, 0, 10, 10, 0, 0, "0", "1");
+
+    // Check right half of edit area (x > 0) shows '!'
+    for (int row = 1; row < 9; ++row) {
+        for (int col = 5; col < 9; ++col) {
+            ScreenCoord screen{row - 1, col - 1};
+            auto data = viewport.screen_to_data(screen);
+            if (data.x > 0.0) {  // Outside valid range
+                EXPECT_EQ(terminal.read_char(row, col), '!')
+                    << "Expected '!' at row=" << row << ", col=" << col
+                    << " (data x=" << data.x << ")";
+            }
+        }
+    }
+}
+
+// Test: Render '!' for areas outside valid Y range (bottom)
+TEST_F(EditAreaRendererTest, RenderWallCharactersBottom) {
+    Terminal terminal;
+    terminal.set_dimensions(10, 10);
+    // Viewport shows [-5, 5] x [-10, 10], but valid Y range is [0, 10]
+    // Bottom half of viewport is outside valid range
+    Viewport viewport(-5.0, 5.0, -10.0, 10.0,
+                     -5.0, 5.0, 0.0, 10.0,  // Valid ranges
+                     8, 8);
+    EditAreaRenderer renderer;
+
+    renderer.render(terminal, viewport, *table_, {}, 0, 10, 10, 0, 0, "0", "1");
+
+    // Check bottom half of edit area (y < 0) shows '!'
+    for (int row = 5; row < 9; ++row) {
+        for (int col = 1; col < 9; ++col) {
+            ScreenCoord screen{row - 1, col - 1};
+            auto data = viewport.screen_to_data(screen);
+            if (data.y < 0.0) {  // Outside valid range
+                EXPECT_EQ(terminal.read_char(row, col), '!')
+                    << "Expected '!' at row=" << row << ", col=" << col
+                    << " (data y=" << data.y << ")";
+            }
+        }
+    }
+}
+
+// Test: Render '!' for areas outside valid Y range (top)
+TEST_F(EditAreaRendererTest, RenderWallCharactersTop) {
+    Terminal terminal;
+    terminal.set_dimensions(10, 10);
+    // Viewport shows [-5, 5] x [-10, 10], but valid Y range is [-10, 0]
+    // Top half of viewport is outside valid range
+    Viewport viewport(-5.0, 5.0, -10.0, 10.0,
+                     -5.0, 5.0, -10.0, 0.0,  // Valid ranges
+                     8, 8);
+    EditAreaRenderer renderer;
+
+    renderer.render(terminal, viewport, *table_, {}, 0, 10, 10, 0, 0, "0", "1");
+
+    // Check top half of edit area (y > 0) shows '!'
+    for (int row = 1; row < 5; ++row) {
+        for (int col = 1; col < 9; ++col) {
+            ScreenCoord screen{row - 1, col - 1};
+            auto data = viewport.screen_to_data(screen);
+            if (data.y > 0.0) {  // Outside valid range
+                EXPECT_EQ(terminal.read_char(row, col), '!')
+                    << "Expected '!' at row=" << row << ", col=" << col
+                    << " (data y=" << data.y << ")";
+            }
+        }
+    }
+}
+
+// Test: Render '!' in corners (outside both X and Y ranges)
+TEST_F(EditAreaRendererTest, RenderWallCharactersCorners) {
+    Terminal terminal;
+    terminal.set_dimensions(12, 12);
+    // Viewport shows [-10, 10] x [-10, 10], but valid range is [-5, 5] x [-5, 5]
+    // Corners are outside valid range
+    Viewport viewport(-10.0, 10.0, -10.0, 10.0,
+                     -5.0, 5.0, -5.0, 5.0,  // Valid ranges
+                     10, 10);
+    EditAreaRenderer renderer;
+
+    renderer.render(terminal, viewport, *table_, {}, 0, 12, 12, 0, 0, "0", "1");
+
+    // Check corners show '!'
+    // Top-left corner (x < -5, y > 5)
+    bool found_top_left = false;
+    for (int row = 1; row < 4; ++row) {
+        for (int col = 1; col < 4; ++col) {
+            ScreenCoord screen{row - 1, col - 1};
+            auto data = viewport.screen_to_data(screen);
+            if (data.x < -5.0 && data.y > 5.0) {
+                EXPECT_EQ(terminal.read_char(row, col), '!');
+                found_top_left = true;
+            }
+        }
+    }
+    EXPECT_TRUE(found_top_left) << "Should find at least one '!' in top-left corner";
+}
+
+// Test: Valid areas do not show '!' (normal rendering)
+TEST_F(EditAreaRendererTest, ValidAreaNoWallCharacters) {
+    Terminal terminal;
+    terminal.set_dimensions(10, 10);
+    // Viewport equals valid range - no forbidden areas
+    Viewport viewport(-5.0, 5.0, -5.0, 5.0,
+                     -5.0, 5.0, -5.0, 5.0,  // Valid ranges match viewport
+                     8, 8);
+    EditAreaRenderer renderer;
+
+    renderer.render(terminal, viewport, *table_, {}, 0, 10, 10, 0, 0, "0", "1");
+
+    // Check that no cells show '!' (all should be spaces since no points)
+    for (int row = 1; row < 9; ++row) {
+        for (int col = 1; col < 9; ++col) {
+            char ch = terminal.read_char(row, col);
+            EXPECT_NE(ch, '!') << "Should not have '!' at row=" << row << ", col=" << col;
+            EXPECT_EQ(ch, ' ') << "Should be space at row=" << row << ", col=" << col;
+        }
+    }
+}
+
+// Test: Points in valid area override '!' (should not happen, but verify point rendering takes precedence)
+TEST_F(EditAreaRendererTest, PointsInValidAreaNotMarkedAsForbidden) {
+    Terminal terminal;
+    terminal.set_dimensions(10, 10);
+    // Viewport shows [-10, 10], valid range is [-5, 5]
+    Viewport viewport(-10.0, 10.0, -10.0, 10.0,
+                     -5.0, 5.0, -5.0, 5.0,  // Valid ranges
+                     8, 8);
+    EditAreaRenderer renderer;
+
+    // Insert point in valid area
+    table_->insert_point(0.0, 0.0, "0");
+
+    renderer.render(terminal, viewport, *table_, {}, 0, 10, 10, 0, 0, "0", "1");
+
+    // Find where (0, 0) maps to on screen
+    DataCoord data{0.0, 0.0};
+    auto screen_opt = viewport.data_to_screen(data);
+    ASSERT_TRUE(screen_opt.has_value());
+    auto screen = screen_opt.value();
+
+    // Point should be 'x', not '!'
+    EXPECT_EQ(terminal.read_char(screen.row + 1, screen.col + 1), 'x')
+        << "Point in valid area should render as 'x', not '!'";
+}
