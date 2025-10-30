@@ -47,28 +47,33 @@ When the user presses '+' to zoom in:
    - Set viewport to [center_x - new_width/2, center_x + new_width/2] x [center_y - new_height/2, center_y + new_height/2]
    - Clamp to valid ranges (as already implemented)
 
-5. **Cursor behavior**
+5. **Update cursor screen position**
    - The cursor's data coordinates (x_cursor, y_cursor) remain unchanged
-   - The cursor's screen position will change to reflect its new position in the zoomed viewport
-   - This is automatic - no special cursor movement needed
+   - Convert cursor data coordinates to new screen coordinates after zoom
+   - Update cursor_row and cursor_col to the new screen position
+   - Clamp cursor to content area bounds if necessary
+   - **Result**: Cursor maintains same data position but moves on screen to reflect new viewport
 
 ### Examples
 
 **Example 1: Cursor at right edge**
 - Valid range: [-10, 10]
 - Current viewport: [-10, 10] (width 20)
-- Cursor at data position: (9.5, 0)
+- Cursor at data position: (9.5, 0), screen position: (10, 38) [near right edge]
 - Desired new width: 10
 
 Without adjustment:
 - Center at (9.5, 0) → viewport [4.5, 14.5]
 - Shows 4.5 units of forbidden area on the right!
+- Cursor stays at screen (10, 38) but now represents different data coords
 
-With adjustment:
+With smart centering:
 - new_x_max would be 14.5 > 10 (valid_x_max)
 - Adjust center: center_x = 10 - 10/2 = 5
 - Final viewport: [0, 10]
-- Cursor at (9.5, 0) is still visible, now on right side of screen
+- Cursor data coords remain (9.5, 0)
+- **Cursor screen position updates to (10, 36)** [moved toward center]
+- Cursor is now in right portion of screen, not at extreme edge
 
 **Example 2: Cursor at corner**
 - Valid range: [-10, 10] x [-10, 10]

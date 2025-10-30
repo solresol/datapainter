@@ -727,13 +727,45 @@ int main(int argc, char** argv) {
             }
             // Handle zoom
             else if (key == '+' || key == '=') {
-                DataCoord center = viewport.screen_to_data({cursor_row, cursor_col});
-                viewport.zoom_in(center);
+                // Get cursor's current data coordinates
+                DataCoord cursor_data = viewport.screen_to_data({cursor_row, cursor_col});
+
+                // Zoom in (with smart centering to maximize usable area)
+                viewport.zoom_in(cursor_data);
+
+                // Update cursor screen position to maintain same data coordinates
+                auto new_screen_pos = viewport.data_to_screen(cursor_data);
+                if (new_screen_pos.has_value()) {
+                    cursor_row = new_screen_pos->row;
+                    cursor_col = new_screen_pos->col;
+
+                    // Ensure cursor stays within content area bounds (inside border)
+                    cursor_row = std::max(edit_area_start_row + 1,
+                                         std::min(cursor_row, edit_area_start_row + edit_area_height - 2));
+                    cursor_col = std::max(1, std::min(cursor_col, screen_width - 2));
+                }
+
                 needs_redraw = true;
             }
             else if (key == '-' || key == '_') {
-                DataCoord center = viewport.screen_to_data({cursor_row, cursor_col});
-                viewport.zoom_out(center);
+                // Get cursor's current data coordinates
+                DataCoord cursor_data = viewport.screen_to_data({cursor_row, cursor_col});
+
+                // Zoom out
+                viewport.zoom_out(cursor_data);
+
+                // Update cursor screen position to maintain same data coordinates
+                auto new_screen_pos = viewport.data_to_screen(cursor_data);
+                if (new_screen_pos.has_value()) {
+                    cursor_row = new_screen_pos->row;
+                    cursor_col = new_screen_pos->col;
+
+                    // Ensure cursor stays within content area bounds (inside border)
+                    cursor_row = std::max(edit_area_start_row + 1,
+                                         std::min(cursor_row, edit_area_start_row + edit_area_height - 2));
+                    cursor_col = std::max(1, std::min(cursor_col, screen_width - 2));
+                }
+
                 needs_redraw = true;
             }
             // Handle point creation/editing (x, o, #)
