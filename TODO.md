@@ -627,6 +627,7 @@ These are documented in README.md as future features:
 - [ ] CSV export: RFC 4180 compliance, BOM support, filter support
 - [ ] Performance: 30 FPS target for 1M rows
 - [ ] Test hooks: viewport bounds in dump output
+- [ ] Fix automatic terminal resize (currently Ctrl-L works as workaround)
 
 ---
 
