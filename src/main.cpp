@@ -683,7 +683,9 @@ int main(int argc, char** argv) {
 
             // Render footer
             footer_renderer.render(terminal, cursor_data.x, cursor_data.y,
-                                  x_min, x_max, y_min, y_max, 0);
+                                  x_min, x_max, y_min, y_max,
+                                  viewport.data_x_min(), viewport.data_x_max(),
+                                  viewport.data_y_min(), viewport.data_y_max(), 0);
 
             // Display to screen with cursor
             terminal.render_with_cursor(cursor_row, cursor_col);
