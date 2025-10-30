@@ -52,11 +52,15 @@ bool Terminal::detect_size() {
         // Get actual terminal size from the system
         struct winsize w;
         if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0) {
-            // Tell ncurses about the new size using resizeterm()
-            // This updates ncurses's internal data structures
-            resizeterm(w.ws_row, w.ws_col);
+            // Only call resizeterm() if the size actually changed
+            // This prevents infinite resize loops
+            if (w.ws_row != rows_ || w.ws_col != cols_) {
+                // Tell ncurses about the new size using resizeterm()
+                // This updates ncurses's internal data structures
+                resizeterm(w.ws_row, w.ws_col);
+            }
 
-            // Now get the size from ncurses (should match what we just set)
+            // Now get the size from ncurses
             getmaxyx(stdscr, rows_, cols_);
             actual_rows_ = rows_;
             actual_cols_ = cols_;
