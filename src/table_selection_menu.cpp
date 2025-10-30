@@ -212,7 +212,11 @@ MenuResult TableSelectionMenu::run(const std::vector<std::string>& tables) {
         // Read keyboard input
         int key = terminal_.read_key();
         if (key >= 0) {
-            if (key == Terminal::KEY_UP_ARROW) {
+            if (key == Terminal::KEY_RESIZE) {
+                // Terminal was resized - update dimensions and redraw
+                terminal_.detect_size();
+                needs_redraw = true;
+            } else if (key == Terminal::KEY_UP_ARROW) {
                 selected_index = normalize_selection(selected_index - 1, tables);
                 needs_redraw = true;
             } else if (key == Terminal::KEY_DOWN_ARROW) {

@@ -337,13 +337,16 @@ int Terminal::read_key() {
             return -1;
         }
 
-        // ncurses translates arrow keys to special codes
+        // ncurses translates arrow keys and special events to codes
         // Map them to our public key codes
         switch (ch) {
             case KEY_UP:    return KEY_UP_ARROW;
             case KEY_DOWN:  return KEY_DOWN_ARROW;
             case KEY_LEFT:  return KEY_LEFT_ARROW;
             case KEY_RIGHT: return KEY_RIGHT_ARROW;
+#ifdef KEY_RESIZE
+            case KEY_RESIZE: return 1004;  // Terminal::KEY_RESIZE (avoid macro expansion issue)
+#endif
             default:        return ch;
         }
     }

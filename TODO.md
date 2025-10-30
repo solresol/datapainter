@@ -157,7 +157,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Detect terminal dimensions (rows, cols)
 - [x] Test: Override dimensions with CLI args
 - [x] Test: Exit code 64 if override exceeds actual terminal size
-- [ ] Test: Handle SIGWINCH (terminal resize)
+- [x] Test: Handle SIGWINCH (terminal resize)
 - [x] Test: Pause rendering if screen too small (< header + 3 rows)
 - [ ] Test: Show "enlarge terminal" message when too small
 - [ ] Test: Resume rendering when size adequate

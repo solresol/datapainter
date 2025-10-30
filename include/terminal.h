@@ -70,6 +70,7 @@ public:
     static constexpr int KEY_DOWN_ARROW = 1001;
     static constexpr int KEY_LEFT_ARROW = 1002;
     static constexpr int KEY_RIGHT_ARROW = 1003;
+    static constexpr int KEY_RESIZE = 1004;  // Terminal window was resized
 
 private:
     int rows_;
