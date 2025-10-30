@@ -285,6 +285,11 @@ bool Terminal::enter_raw_mode() {
 #else
     // Unix: use ncurses
     if (!ncurses_initialized) {
+        // Unset LINES and COLUMNS environment variables if they exist
+        // These can interfere with ncurses's ability to detect terminal resizes
+        unsetenv("LINES");
+        unsetenv("COLUMNS");
+
         initscr();              // Initialize ncurses
         raw();                  // Disable line buffering
         noecho();               // Don't echo typed characters
