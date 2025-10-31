@@ -576,6 +576,15 @@ int main(int argc, char** argv) {
     const int edit_area_height = screen_height - HEADER_ROWS - FOOTER_ROWS;
     const int edit_area_start_row = HEADER_ROWS;
 
+    // Helper lambda to convert cursor position from screen coordinates to edit area content coordinates
+    auto cursor_to_content_coords = [&](int cursor_screen_row, int cursor_screen_col) -> ScreenCoord {
+        // Convert from absolute screen coordinates to edit area content coordinates (0-based)
+        // Subtract edit area offset and border (1 char)
+        int content_row = cursor_screen_row - edit_area_start_row - 1;
+        int content_col = cursor_screen_col - 1;
+        return {content_row, content_col};
+    };
+
     // Main TUI loop
     bool running = true;
     bool needs_redraw = true;
@@ -617,7 +626,8 @@ int main(int argc, char** argv) {
             EditAreaRenderer edit_area_renderer;
 
             // Get current cursor position in data coordinates
-            DataCoord cursor_data = viewport.screen_to_data({cursor_row, cursor_col});
+            ScreenCoord cursor_content = cursor_to_content_coords(cursor_row, cursor_col);
+            DataCoord cursor_data = viewport.screen_to_data(cursor_content);
 
             // Render header
             header_renderer.render(terminal, args.database.value(), meta.table_name,
@@ -689,7 +699,8 @@ int main(int argc, char** argv) {
             // Handle zoom
             else if (key == '+' || key == '=') {
                 // Get cursor's current data coordinates
-                DataCoord cursor_data = viewport.screen_to_data({cursor_row, cursor_col});
+                ScreenCoord cursor_content = cursor_to_content_coords(cursor_row, cursor_col);
+                DataCoord cursor_data = viewport.screen_to_data(cursor_content);
 
                 // Zoom in (with smart centering to maximize usable area)
                 viewport.zoom_in(cursor_data);
@@ -710,7 +721,8 @@ int main(int argc, char** argv) {
             }
             else if (key == '-' || key == '_') {
                 // Get cursor's current data coordinates
-                DataCoord cursor_data = viewport.screen_to_data({cursor_row, cursor_col});
+                ScreenCoord cursor_content = cursor_to_content_coords(cursor_row, cursor_col);
+                DataCoord cursor_data = viewport.screen_to_data(cursor_content);
 
                 // Zoom out
                 viewport.zoom_out(cursor_data);
@@ -732,7 +744,8 @@ int main(int argc, char** argv) {
             // Handle point creation and editing
             else if (key == 'x' || key == 'o') {
                 // Create a point at cursor position
-                DataCoord cursor_data = viewport.screen_to_data({cursor_row, cursor_col});
+                ScreenCoord cursor_content = cursor_to_content_coords(cursor_row, cursor_col);
+                DataCoord cursor_data = viewport.screen_to_data(cursor_content);
 
                 // Create point (PointEditor will record in unsaved_changes)
                 if (point_editor.create_point(cursor_data.x, cursor_data.y, static_cast<char>(key))) {
@@ -741,7 +754,8 @@ int main(int argc, char** argv) {
             }
             else if (key == 'X') {
                 // Convert all 'o' points at cursor to 'x'
-                DataCoord cursor_data = viewport.screen_to_data({cursor_row, cursor_col});
+                ScreenCoord cursor_content = cursor_to_content_coords(cursor_row, cursor_col);
+                DataCoord cursor_data = viewport.screen_to_data(cursor_content);
                 double cell_size_x = (viewport.data_x_max() - viewport.data_x_min()) / (screen_width - 2);
                 double cell_size = cell_size_x;  // Use x cell size for hit testing
 
@@ -752,7 +766,8 @@ int main(int argc, char** argv) {
             }
             else if (key == 'O') {
                 // Convert all 'x' points at cursor to 'o'
-                DataCoord cursor_data = viewport.screen_to_data({cursor_row, cursor_col});
+                ScreenCoord cursor_content = cursor_to_content_coords(cursor_row, cursor_col);
+                DataCoord cursor_data = viewport.screen_to_data(cursor_content);
                 double cell_size_x = (viewport.data_x_max() - viewport.data_x_min()) / (screen_width - 2);
                 double cell_size = cell_size_x;
 
@@ -763,7 +778,8 @@ int main(int argc, char** argv) {
             }
             else if (key == 'g') {
                 // Flip all points at cursor (x ↔ o)
-                DataCoord cursor_data = viewport.screen_to_data({cursor_row, cursor_col});
+                ScreenCoord cursor_content = cursor_to_content_coords(cursor_row, cursor_col);
+                DataCoord cursor_data = viewport.screen_to_data(cursor_content);
                 double cell_size_x = (viewport.data_x_max() - viewport.data_x_min()) / (screen_width - 2);
                 double cell_size = cell_size_x;
 
@@ -774,7 +790,8 @@ int main(int argc, char** argv) {
             }
             else if (key == ' ') {
                 // Delete all points at cursor
-                DataCoord cursor_data = viewport.screen_to_data({cursor_row, cursor_col});
+                ScreenCoord cursor_content = cursor_to_content_coords(cursor_row, cursor_col);
+                DataCoord cursor_data = viewport.screen_to_data(cursor_content);
                 double cell_size_x = (viewport.data_x_max() - viewport.data_x_min()) / (screen_width - 2);
                 double cell_size = cell_size_x;
 

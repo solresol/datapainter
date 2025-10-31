@@ -135,6 +135,7 @@ if(BUILD_TESTS)
         tests/test_undo_log_manager.cpp
         tests/test_table_selection_menu.cpp
         tests/test_integration.cpp
+        tests/test_cursor_coordinate_conversion.cpp
         # Implementation files needed by tests
         src/database.cpp
         src/argument_parser.cpp
