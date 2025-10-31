@@ -132,6 +132,8 @@ if(BUILD_TESTS)
         tests/test_save_manager.cpp
         tests/test_table_view.cpp
         tests/test_table_manager.cpp
+        tests/test_deletion_database.cpp
+        tests/test_render_inactive_inserts.cpp
         tests/test_undo_log_manager.cpp
         tests/test_table_selection_menu.cpp
         tests/test_integration.cpp

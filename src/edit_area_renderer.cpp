@@ -56,6 +56,13 @@ void EditAreaRenderer::render_points(Terminal& terminal, const Viewport& viewpor
     int content_height = height - 2;  // Exclude top and bottom border
     int content_width = width - 2;    // Exclude left and right border
 
+    // Clear the content area first (so deleted points disappear)
+    for (int screen_row = 0; screen_row < content_height; ++screen_row) {
+        for (int screen_col = 0; screen_col < content_width; ++screen_col) {
+            terminal.write_char(start_row + 1 + screen_row, 1 + screen_col, ' ');
+        }
+    }
+
     // First pass: Fill forbidden areas with '!' characters
     // These are areas outside the valid range
     for (int screen_row = 0; screen_row < content_height; ++screen_row) {

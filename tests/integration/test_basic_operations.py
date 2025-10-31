@@ -155,7 +155,7 @@ class TestPointDeletion:
 
             # Delete point with backspace (special key)
             test.send_keys('BACKSPACE')
-            time.sleep(0.2)
+            time.sleep(1.0)  # Give extra time for render to complete
 
             # Count 'x' and 'X' in middle area after deletion
             lines_after = test.get_display_lines()
