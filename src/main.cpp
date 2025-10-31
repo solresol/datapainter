@@ -10,6 +10,8 @@
 #include "footer_renderer.h"
 #include "edit_area_renderer.h"
 #include "table_selection_menu.h"
+#include "point_editor.h"
+#include "unsaved_changes.h"
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -556,6 +558,12 @@ int main(int argc, char** argv) {
     // Create data table
     DataTable data_table(db, table_name);
 
+    // Create point editor for handling x/o creation
+    PointEditor point_editor(db, table_name);
+
+    // Create unsaved changes tracker
+    UnsavedChanges unsaved_changes_tracker(db);
+
     // Enter raw mode
     if (!terminal.enter_raw_mode()) {
         std::cerr << "Error: Could not enter raw terminal mode" << std::endl;
@@ -619,8 +627,10 @@ int main(int argc, char** argv) {
                                   viewport.data_x_min(), viewport.data_x_max(),
                                   viewport.data_y_min(), viewport.data_y_max(), 0);
 
+            // Load unsaved changes for this table
+            std::vector<ChangeRecord> unsaved_changes = unsaved_changes_tracker.get_changes(table_name);
+
             // Render edit area
-            std::vector<ChangeRecord> unsaved_changes;  // Empty for now
             edit_area_renderer.render(terminal, viewport, data_table, unsaved_changes,
                                      edit_area_start_row, edit_area_height, screen_width,
                                      cursor_row, cursor_col, meta.x_meaning, meta.o_meaning);
@@ -719,11 +729,59 @@ int main(int argc, char** argv) {
 
                 needs_redraw = true;
             }
-            // Handle point creation/editing (x, o, #)
-            else if (key == 'x' || key == 'X' || key == 'o' || key == 'O' || key == '#') {
-                // TODO: Implement point editing
-                // For now, just acknowledge the keypress
-                needs_redraw = true;
+            // Handle point creation and editing
+            else if (key == 'x' || key == 'o') {
+                // Create a point at cursor position
+                DataCoord cursor_data = viewport.screen_to_data({cursor_row, cursor_col});
+
+                // Create point (PointEditor will record in unsaved_changes)
+                if (point_editor.create_point(cursor_data.x, cursor_data.y, static_cast<char>(key))) {
+                    needs_redraw = true;
+                }
+            }
+            else if (key == 'X') {
+                // Convert all 'o' points at cursor to 'x'
+                DataCoord cursor_data = viewport.screen_to_data({cursor_row, cursor_col});
+                double cell_size_x = (viewport.data_x_max() - viewport.data_x_min()) / (screen_width - 2);
+                double cell_size = cell_size_x;  // Use x cell size for hit testing
+
+                int converted = point_editor.convert_points_at_cursor(cursor_data.x, cursor_data.y, cell_size, 'x');
+                if (converted > 0) {
+                    needs_redraw = true;
+                }
+            }
+            else if (key == 'O') {
+                // Convert all 'x' points at cursor to 'o'
+                DataCoord cursor_data = viewport.screen_to_data({cursor_row, cursor_col});
+                double cell_size_x = (viewport.data_x_max() - viewport.data_x_min()) / (screen_width - 2);
+                double cell_size = cell_size_x;
+
+                int converted = point_editor.convert_points_at_cursor(cursor_data.x, cursor_data.y, cell_size, 'o');
+                if (converted > 0) {
+                    needs_redraw = true;
+                }
+            }
+            else if (key == 'g') {
+                // Flip all points at cursor (x ↔ o)
+                DataCoord cursor_data = viewport.screen_to_data({cursor_row, cursor_col});
+                double cell_size_x = (viewport.data_x_max() - viewport.data_x_min()) / (screen_width - 2);
+                double cell_size = cell_size_x;
+
+                int flipped = point_editor.flip_points_at_cursor(cursor_data.x, cursor_data.y, cell_size);
+                if (flipped > 0) {
+                    needs_redraw = true;
+                }
+            }
+            else if (key == ' ') {
+                // Delete all points at cursor
+                DataCoord cursor_data = viewport.screen_to_data({cursor_row, cursor_col});
+                double cell_size_x = (viewport.data_x_max() - viewport.data_x_min()) / (screen_width - 2);
+                double cell_size = cell_size_x;
+
+                int deleted = point_editor.delete_points_at_cursor(cursor_data.x, cursor_data.y, cell_size);
+                if (deleted > 0) {
+                    needs_redraw = true;
+                }
             }
         }
 
