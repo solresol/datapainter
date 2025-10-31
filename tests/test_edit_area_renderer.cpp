@@ -433,3 +433,136 @@ TEST_F(EditAreaRendererTest, PointsInValidAreaNotMarkedAsForbidden) {
     EXPECT_EQ(terminal.read_char(screen.row + 1, screen.col + 1), 'x')
         << "Point in valid area should render as 'x', not '!'";
 }
+
+// Test: Apply unsaved changes to viewport data - insert action
+TEST_F(EditAreaRendererTest, ApplyUnsavedChangesInsert) {
+    Terminal terminal;
+    terminal.set_dimensions(10, 10);
+    Viewport viewport(-4.0, 4.0, -4.0, 4.0, 8, 8);
+    EditAreaRenderer renderer;
+
+    // Create an unsaved insert change (not yet in the database)
+    std::vector<ChangeRecord> unsaved_changes;
+    ChangeRecord change;
+    change.id = 1;
+    change.table_name = "test_table";
+    change.action = "insert";
+    change.x = 0.0;
+    change.y = 0.0;
+    change.new_target = "0";  // x point
+    change.is_active = true;
+    unsaved_changes.push_back(change);
+
+    // Render with unsaved changes (point not in database yet)
+    renderer.render(terminal, viewport, *table_, unsaved_changes, 0, 10, 10, 0, 0, "0", "1");
+
+    // Point (0, 0) should be rendered even though it's not in database
+    DataCoord data{0.0, 0.0};
+    auto screen_opt = viewport.data_to_screen(data);
+    ASSERT_TRUE(screen_opt.has_value());
+    auto screen = screen_opt.value();
+    EXPECT_EQ(terminal.read_char(screen.row + 1, screen.col + 1), 'x')
+        << "Unsaved insert should render as 'x'";
+}
+
+// Test: Apply unsaved changes to viewport data - delete action
+TEST_F(EditAreaRendererTest, ApplyUnsavedChangesDelete) {
+    Terminal terminal;
+    terminal.set_dimensions(10, 10);
+    Viewport viewport(-4.0, 4.0, -4.0, 4.0, 8, 8);
+    EditAreaRenderer renderer;
+
+    // Insert a point into the database
+    auto id = table_->insert_point(0.0, 0.0, "0");
+    ASSERT_TRUE(id.has_value());
+
+    // Create an unsaved delete change
+    std::vector<ChangeRecord> unsaved_changes;
+    ChangeRecord change;
+    change.id = 1;
+    change.table_name = "test_table";
+    change.action = "delete";
+    change.data_id = id.value();
+    change.x = 0.0;
+    change.y = 0.0;
+    change.old_target = "0";
+    change.is_active = true;
+    unsaved_changes.push_back(change);
+
+    // Render with unsaved changes (point deleted but not committed)
+    renderer.render(terminal, viewport, *table_, unsaved_changes, 0, 10, 10, 0, 0, "0", "1");
+
+    // Point should NOT be rendered (deleted by unsaved change)
+    DataCoord data{0.0, 0.0};
+    auto screen_opt = viewport.data_to_screen(data);
+    ASSERT_TRUE(screen_opt.has_value());
+    auto screen = screen_opt.value();
+    EXPECT_EQ(terminal.read_char(screen.row + 1, screen.col + 1), ' ')
+        << "Deleted point should not render";
+}
+
+// Test: Apply unsaved changes to viewport data - update action
+TEST_F(EditAreaRendererTest, ApplyUnsavedChangesUpdate) {
+    Terminal terminal;
+    terminal.set_dimensions(10, 10);
+    Viewport viewport(-4.0, 4.0, -4.0, 4.0, 8, 8);
+    EditAreaRenderer renderer;
+
+    // Insert a point into the database with target "0" (x)
+    auto id = table_->insert_point(0.0, 0.0, "0");
+    ASSERT_TRUE(id.has_value());
+
+    // Create an unsaved update change (changing from "0" to "1", x to o)
+    std::vector<ChangeRecord> unsaved_changes;
+    ChangeRecord change;
+    change.id = 1;
+    change.table_name = "test_table";
+    change.action = "update";
+    change.data_id = id.value();
+    change.old_target = "0";
+    change.new_target = "1";  // Changed to o
+    change.is_active = true;
+    unsaved_changes.push_back(change);
+
+    // Render with unsaved changes
+    renderer.render(terminal, viewport, *table_, unsaved_changes, 0, 10, 10, 0, 0, "0", "1");
+
+    // Point should render as 'o' (updated target)
+    DataCoord data{0.0, 0.0};
+    auto screen_opt = viewport.data_to_screen(data);
+    ASSERT_TRUE(screen_opt.has_value());
+    auto screen = screen_opt.value();
+    EXPECT_EQ(terminal.read_char(screen.row + 1, screen.col + 1), 'o')
+        << "Updated point should render as 'o'";
+}
+
+// Test: Inactive unsaved changes are not applied
+TEST_F(EditAreaRendererTest, InactiveUnsavedChangesIgnored) {
+    Terminal terminal;
+    terminal.set_dimensions(10, 10);
+    Viewport viewport(-4.0, 4.0, -4.0, 4.0, 8, 8);
+    EditAreaRenderer renderer;
+
+    // Create an inactive (undone) insert change
+    std::vector<ChangeRecord> unsaved_changes;
+    ChangeRecord change;
+    change.id = 1;
+    change.table_name = "test_table";
+    change.action = "insert";
+    change.x = 0.0;
+    change.y = 0.0;
+    change.new_target = "0";
+    change.is_active = false;  // Undone!
+    unsaved_changes.push_back(change);
+
+    // Render with inactive changes
+    renderer.render(terminal, viewport, *table_, unsaved_changes, 0, 10, 10, 0, 0, "0", "1");
+
+    // Point should NOT be rendered (change is inactive)
+    DataCoord data{0.0, 0.0};
+    auto screen_opt = viewport.data_to_screen(data);
+    ASSERT_TRUE(screen_opt.has_value());
+    auto screen = screen_opt.value();
+    EXPECT_EQ(terminal.read_char(screen.row + 1, screen.col + 1), ' ')
+        << "Inactive change should not render";
+}

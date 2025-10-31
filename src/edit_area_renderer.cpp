@@ -8,16 +8,15 @@ void EditAreaRenderer::render(Terminal& terminal, const Viewport& viewport, Data
                               const std::vector<ChangeRecord>& unsaved_changes, int start_row,
                               int height, int width, int cursor_row, int cursor_col,
                               const std::string& x_target, const std::string& o_target) {
-    // Suppress unused parameter warnings for now
-    (void)unsaved_changes;
+    // Suppress unused parameter warnings for cursor (not yet implemented)
     (void)cursor_row;
     (void)cursor_col;
 
     // Draw the border for the edit area
     draw_border(terminal, start_row, height, width);
 
-    // Render all points in the viewport
-    render_points(terminal, viewport, table, start_row, height, width, x_target, o_target);
+    // Render all points in the viewport with unsaved changes applied
+    render_points(terminal, viewport, table, unsaved_changes, start_row, height, width, x_target, o_target);
 
     // Draw cursor (optional - for now we'll just verify it doesn't crash)
     // draw_cursor(terminal, cursor_row, cursor_col);
@@ -50,7 +49,8 @@ void EditAreaRenderer::draw_border(Terminal& terminal, int start_row, int height
 }
 
 void EditAreaRenderer::render_points(Terminal& terminal, const Viewport& viewport,
-                                     DataTable& table, int start_row, int height, int width,
+                                     DataTable& table, const std::vector<ChangeRecord>& unsaved_changes,
+                                     int start_row, int height, int width,
                                      const std::string& x_target, const std::string& o_target) {
     // Calculate content area (inside border)
     int content_height = height - 2;  // Exclude top and bottom border
@@ -80,11 +80,37 @@ void EditAreaRenderer::render_points(Terminal& terminal, const Viewport& viewpor
     auto points = table.query_viewport(viewport.data_x_min(), viewport.data_x_max(),
                                        viewport.data_y_min(), viewport.data_y_max());
 
+    // Build maps to track unsaved changes
+    std::map<int, bool> deleted_ids;  // data_id -> true if deleted
+    std::map<int, std::string> updated_targets;  // data_id -> new target value
+
+    // Process active unsaved changes to build modification maps
+    for (const auto& change : unsaved_changes) {
+        if (!change.is_active) continue;  // Skip inactive (undone) changes
+
+        if (change.action == "delete" && change.data_id.has_value()) {
+            deleted_ids[change.data_id.value()] = true;
+        } else if (change.action == "update" && change.data_id.has_value() && change.new_target.has_value()) {
+            updated_targets[change.data_id.value()] = change.new_target.value();
+        }
+    }
+
     // Map from screen coordinates to counts of x and o points
     std::map<std::pair<int, int>, std::pair<int, int>> cell_counts;
 
-    // Count points at each screen cell
+    // Count points at each screen cell, applying deletions and updates
     for (const auto& point : points) {
+        // Skip if this point has been deleted by an unsaved change
+        if (deleted_ids.count(point.id) > 0) {
+            continue;
+        }
+
+        // Apply any target update from unsaved changes
+        std::string effective_target = point.target;
+        if (updated_targets.count(point.id) > 0) {
+            effective_target = updated_targets[point.id];
+        }
+
         DataCoord data{point.x, point.y};
         auto screen_opt = viewport.data_to_screen(data);
 
@@ -95,10 +121,39 @@ void EditAreaRenderer::render_points(Terminal& terminal, const Viewport& viewpor
             if (screen.row >= 0 && screen.row < content_height &&
                 screen.col >= 0 && screen.col < content_width) {
                 auto key = std::make_pair(screen.row, screen.col);
-                if (point.target == x_target) {
+                if (effective_target == x_target) {
                     cell_counts[key].first++;  // x count
-                } else if (point.target == o_target) {
+                } else if (effective_target == o_target) {
                     cell_counts[key].second++;  // o count
+                }
+            }
+        }
+    }
+
+    // Add inserted points from unsaved changes
+    for (const auto& change : unsaved_changes) {
+        if (!change.is_active) continue;  // Skip inactive changes
+
+        if (change.action == "insert" && change.x.has_value() && change.y.has_value() && change.new_target.has_value()) {
+            DataCoord data{change.x.value(), change.y.value()};
+
+            // Check if inserted point is within viewport bounds
+            if (data.x >= viewport.data_x_min() && data.x <= viewport.data_x_max() &&
+                data.y >= viewport.data_y_min() && data.y <= viewport.data_y_max()) {
+
+                auto screen_opt = viewport.data_to_screen(data);
+                if (screen_opt.has_value()) {
+                    auto screen = screen_opt.value();
+                    if (screen.row >= 0 && screen.row < content_height &&
+                        screen.col >= 0 && screen.col < content_width) {
+                        auto key = std::make_pair(screen.row, screen.col);
+                        std::string target = change.new_target.value();
+                        if (target == x_target) {
+                            cell_counts[key].first++;  // x count
+                        } else if (target == o_target) {
+                            cell_counts[key].second++;  // o count
+                        }
+                    }
                 }
             }
         }

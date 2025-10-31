@@ -34,6 +34,7 @@ public:
 private:
     void draw_border(Terminal& terminal, int start_row, int height, int width);
     void render_points(Terminal& terminal, const Viewport& viewport, DataTable& table,
+                       const std::vector<ChangeRecord>& unsaved_changes,
                        int start_row, int height, int width,
                        const std::string& x_target, const std::string& o_target);
     void draw_cursor(Terminal& terminal, int cursor_row, int cursor_col);
