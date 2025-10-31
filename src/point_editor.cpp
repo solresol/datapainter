@@ -40,32 +40,22 @@ bool PointEditor::create_point(double x, double y, char type) {
         return false;
     }
 
-    // Insert point
-    DataTable dt(db_, table_name_);
-    auto id_opt = dt.insert_point(x, y, target);
-    if (!id_opt) {
-        return false;
-    }
-
-    // Record in unsaved changes
+    // Record in unsaved changes ONLY (don't insert into database yet)
+    // The point will be inserted when the user saves
     UnsavedChanges uc(db_);
-    uc.record_insert(table_name_, x, y, target);
+    auto change_id = uc.record_insert(table_name_, x, y, target);
 
-    return true;
+    return change_id.has_value();
 }
 
 int PointEditor::delete_points_at_cursor(double cursor_x, double cursor_y, double cell_size) {
     auto points = get_points_at_cursor(cursor_x, cursor_y, cell_size);
 
-    DataTable dt(db_, table_name_);
     UnsavedChanges uc(db_);
 
     for (const auto& point : points) {
-        // Record deletion before deleting
+        // Record deletion in unsaved changes ONLY (don't delete from database yet)
         uc.record_delete(table_name_, point.id, point.x, point.y, point.target);
-
-        // Delete the point
-        dt.delete_point(point.id);
     }
 
     return points.size();
@@ -88,18 +78,14 @@ int PointEditor::convert_points_at_cursor(double cursor_x, double cursor_y,
         return 0;
     }
 
-    DataTable dt(db_, table_name_);
     UnsavedChanges uc(db_);
 
     int converted = 0;
     for (const auto& point : points) {
         // Only convert points that are currently the opposite type
         if (point.target == from_target) {
-            // Record update
+            // Record update in unsaved changes ONLY (don't update database yet)
             uc.record_update(table_name_, point.id, point.target, to_target);
-
-            // Update the point
-            dt.update_point_target(point.id, to_target);
             converted++;
         }
     }
@@ -110,7 +96,6 @@ int PointEditor::convert_points_at_cursor(double cursor_x, double cursor_y,
 int PointEditor::flip_points_at_cursor(double cursor_x, double cursor_y, double cell_size) {
     auto points = get_points_at_cursor(cursor_x, cursor_y, cell_size);
 
-    DataTable dt(db_, table_name_);
     UnsavedChanges uc(db_);
 
     for (const auto& point : points) {
@@ -122,11 +107,8 @@ int PointEditor::flip_points_at_cursor(double cursor_x, double cursor_y, double 
             new_target = x_meaning_;
         }
 
-        // Record update
+        // Record update in unsaved changes ONLY (don't update database yet)
         uc.record_update(table_name_, point.id, point.target, new_target);
-
-        // Update the point
-        dt.update_point_target(point.id, new_target);
     }
 
     return points.size();
