@@ -32,8 +32,8 @@ On screen you have something that looks like this:
    -10  -9   -8  -7  -6  -5  -4  -3  -2  -1   0   1   2   3   4   5   6   7   8   9  10  11
                                       [X-axis column name]
     + zoom in    - zoom out    = full viewport   cursor pos = (2.25,1.5) 
-Valid x-range [   ] to [    ]. Valid y-range [   ] to [    ]
-                                   [Tabular view]  [Undo]     [Quit without saving]  [Save]
+Valid x-range [   ] to [    ]. Valid y-range [   ] to [    ]  [Unsaved: 3]
+                                   [Tabular view]  [Undo]     [Quit]  [Save]
 ```
 
 You move around the edit area with cursor arrows. Arrow keys move cursor within viewport.
@@ -42,6 +42,9 @@ If the first column is already at the pre-defined x minimum, nothing happens: ot
 it shifts the viewport.
 
 TAB gets you to the other places (e.g. valid x-ranges, quit, undo and save. u, q and s
+
+**Note:** When attempting to quit (press 'q' or ESC) with unsaved changes, a confirmation dialog
+appears asking "Save changes before quitting? (y/n/cancel)". This prevents accidental data loss.
 are short cuts.
 
 Space erases any points under the cursor. Multiple points can exist at the exact same (x,y)

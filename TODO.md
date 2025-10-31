@@ -324,9 +324,19 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [ ] Test: Handle save errors (exit code 65)
 
 ### Quit Operations
-- [ ] Test: Press 'q' quits without saving (if no unsaved changes)
-- [ ] Test: Warn if unsaved changes exist
-- [ ] Test: "Quit without saving" button discards changes
+- [x] Test: Check for unsaved changes (count active changes)
+- [x] Test: Count unsaved changes across multiple tables
+- [ ] **HUMAN REVIEW**: Flip functionality tests pass but doesn't work in UI
+- [ ] Display unsaved changes count in UI (header or footer) - show "[Unsaved: N]"
+- [ ] Test: Press 'q' quits immediately (if no unsaved changes)
+- [ ] Test: Warn if unsaved changes exist - show confirmation dialog
+- [ ] Implement warning dialog: "Save changes before quitting? (y/n/cancel)"
+  - [ ] 'y' = save then quit
+  - [ ] 'n' = quit without saving (discard changes)
+  - [ ] 'cancel' or ESC = return to editor
+- [ ] Test: Confirmation dialog saves and quits on 'y'
+- [ ] Test: Confirmation dialog discards and quits on 'n'
+- [ ] Test: Confirmation dialog cancels on 'cancel'
 - [ ] Test: Exit with code 0 on normal quit
 
 ---
