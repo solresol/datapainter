@@ -594,7 +594,7 @@ int main(int argc, char** argv) {
     int cursor_col = 1 + (screen_width - 2) / 2;
 
     std::cout << "Starting DataPainter TUI..." << std::endl;
-    std::cout << "Press 'q' to quit, '+'/'-' to zoom, arrow keys to move cursor" << std::endl;
+    std::cout << "Keys: q=quit, +/-=zoom, arrows=move, x/o=add point, backspace=delete" << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
     while (running) {
@@ -788,8 +788,8 @@ int main(int argc, char** argv) {
                     needs_redraw = true;
                 }
             }
-            else if (key == ' ') {
-                // Delete all points at cursor
+            else if (key == 127 || key == 8) {
+                // Delete all points at cursor (backspace or delete key)
                 ScreenCoord cursor_content = cursor_to_content_coords(cursor_row, cursor_col);
                 DataCoord cursor_data = viewport.screen_to_data(cursor_content);
                 double cell_size_x = (viewport.data_x_max() - viewport.data_x_min()) / (screen_width - 2);

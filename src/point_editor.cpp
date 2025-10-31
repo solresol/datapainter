@@ -3,6 +3,7 @@
 #include "unsaved_changes.h"
 #include <cmath>
 #include <optional>
+#include <map>
 
 namespace datapainter {
 
@@ -54,6 +55,15 @@ int PointEditor::delete_points_at_cursor(double cursor_x, double cursor_y, doubl
     UnsavedChanges uc(db_);
 
     for (const auto& point : points) {
+        if (point.id < 0) {
+            // This is an unsaved insert (negative ID = -change_id)
+            // We can't delete it from DB, so we just mark the insert as inactive
+            // by recording a "cancel" - but we don't have that yet
+            // For now, just skip it - the user will need to undo the insert
+            // TODO: Implement proper cancellation of unsaved inserts
+            continue;
+        }
+
         // Record deletion in unsaved changes ONLY (don't delete from database yet)
         uc.record_delete(table_name_, point.id, point.x, point.y, point.target);
     }
@@ -130,15 +140,72 @@ std::vector<DataPoint> PointEditor::get_points_at_cursor(double cursor_x, double
     DataTable dt(db_, table_name_);
     auto all_points = dt.query_viewport(x_min, x_max, y_min, y_max);
 
-    // Filter to only points that round to the same cell
+    // Load unsaved changes and apply them
+    UnsavedChanges uc(db_);
+    auto unsaved_changes = uc.get_changes(table_name_);
+
+    // Build maps to track unsaved changes
+    std::map<int, bool> deleted_ids;
+    std::map<int, std::string> updated_targets;
+
+    for (const auto& change : unsaved_changes) {
+        if (!change.is_active) continue;
+
+        if (change.action == "delete" && change.data_id.has_value()) {
+            deleted_ids[change.data_id.value()] = true;
+        } else if (change.action == "update" && change.data_id.has_value() && change.new_target.has_value()) {
+            updated_targets[change.data_id.value()] = change.new_target.value();
+        }
+    }
+
+    // Filter database points: apply deletions and updates, check cell membership
     std::vector<DataPoint> result;
-    for (const auto& point : all_points) {
+    for (auto point : all_points) {
+        // Skip if deleted
+        if (deleted_ids.count(point.id) > 0) {
+            continue;
+        }
+
+        // Apply target update if any
+        if (updated_targets.count(point.id) > 0) {
+            point.target = updated_targets[point.id];
+        }
+
+        // Check if point rounds to the same cell
         double point_cell_x = round_to_cell(point.x, cell_size);
         double point_cell_y = round_to_cell(point.y, cell_size);
 
         if (std::abs(point_cell_x - cell_x) < 0.001 &&
             std::abs(point_cell_y - cell_y) < 0.001) {
             result.push_back(point);
+        }
+    }
+
+    // Add inserted points from unsaved changes that fall in this cell
+    for (const auto& change : unsaved_changes) {
+        if (!change.is_active) continue;
+
+        if (change.action == "insert" && change.x.has_value() && change.y.has_value() && change.new_target.has_value()) {
+            double x = change.x.value();
+            double y = change.y.value();
+
+            // Check if inserted point is within cell bounds
+            if (x >= x_min && x <= x_max && y >= y_min && y <= y_max) {
+                double point_cell_x = round_to_cell(x, cell_size);
+                double point_cell_y = round_to_cell(y, cell_size);
+
+                if (std::abs(point_cell_x - cell_x) < 0.001 &&
+                    std::abs(point_cell_y - cell_y) < 0.001) {
+                    // Create a pseudo-DataPoint for this unsaved insert
+                    // Use a negative ID to indicate it's not in the database yet
+                    DataPoint pseudo_point;
+                    pseudo_point.id = -change.id;  // Negative to distinguish from DB points
+                    pseudo_point.x = x;
+                    pseudo_point.y = y;
+                    pseudo_point.target = change.new_target.value();
+                    result.push_back(pseudo_point);
+                }
+            }
         }
     }
 
