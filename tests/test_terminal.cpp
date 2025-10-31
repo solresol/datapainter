@@ -186,3 +186,35 @@ TEST_F(TerminalTest, ValidateOverrideDimensions) {
     EXPECT_FALSE(term->validate_override_dimensions(actual_rows + 10, actual_cols + 10));
     EXPECT_FALSE(term->validate_override_dimensions(1000, 1000));  // Very large dimensions
 }
+
+// Test blocking wide characters (emoji, multi-byte)
+TEST_F(TerminalTest, BlockWideCharacters) {
+    term->clear_buffer();
+
+    // Test valid ASCII characters - these should be accepted
+    term->write_char(0, 0, 'A');
+    EXPECT_EQ(term->read_char(0, 0), 'A');
+
+    term->write_char(0, 1, 'x');
+    EXPECT_EQ(term->read_char(0, 1), 'x');
+
+    term->write_char(0, 2, '!');
+    EXPECT_EQ(term->read_char(0, 2), '!');
+
+    // Test characters with high bit set (> 127)
+    // These could be part of multi-byte UTF-8 sequences
+    // They should be replaced with '?' or blocked
+    term->write_char(1, 0, static_cast<char>(0x80));  // High bit set
+    EXPECT_EQ(term->read_char(1, 0), '?');
+
+    term->write_char(1, 1, static_cast<char>(0xFF));  // All bits set
+    EXPECT_EQ(term->read_char(1, 1), '?');
+
+    term->write_char(1, 2, static_cast<char>(0xC3));  // UTF-8 continuation byte
+    EXPECT_EQ(term->read_char(1, 2), '?');
+
+    // Test that the buffer doesn't accept negative char values
+    // (which can represent UTF-8 multi-byte characters)
+    term->write_char(2, 0, static_cast<char>(200));  // > 127
+    EXPECT_EQ(term->read_char(2, 0), '?');
+}

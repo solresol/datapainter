@@ -106,7 +106,16 @@ void Terminal::clear_buffer() {
 
 void Terminal::write_char(int row, int col, char ch) {
     if (row >= 0 && row < rows_ && col >= 0 && col < cols_) {
-        buffer_[row][col] = ch;
+        // Block wide characters (emoji, multi-byte UTF-8 sequences)
+        // Only allow printable ASCII (32-126) and common control chars like tab/newline
+        // Characters with high bit set (>127) are part of multi-byte UTF-8
+        unsigned char uch = static_cast<unsigned char>(ch);
+        if (uch > 127) {
+            // Replace non-ASCII characters with '?'
+            buffer_[row][col] = '?';
+        } else {
+            buffer_[row][col] = ch;
+        }
         acs_buffer_[row][col] = AcsChar::NONE;  // Clear any ACS marker
     }
 }
