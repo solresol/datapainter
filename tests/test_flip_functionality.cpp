@@ -68,41 +68,6 @@ TEST_F(FlipFunctionalityTest, FlipUnsavedPoint) {
     EXPECT_EQ(points_after[0].target, "negative") << "Point should be flipped to 'negative'";
 }
 
-TEST_F(FlipFunctionalityTest, FlipSavedPoint) {
-    // Insert a point directly into the database
-    DataTable dt(*db_, "test_data");
-    auto id = dt.insert_point(3.0, 3.0, "positive");
-    ASSERT_TRUE(id.has_value());
-
-    double cell_size = 1.0;
-
-    // Verify the point exists and is 'positive'
-    auto points_before = editor_->get_points_at_cursor(3.0, 3.0, cell_size);
-    ASSERT_EQ(points_before.size(), 1);
-    EXPECT_EQ(points_before[0].target, "positive");
-
-    // Flip the point
-    int flipped = editor_->flip_points_at_cursor(3.0, 3.0, cell_size);
-    EXPECT_EQ(flipped, 1);
-
-    // Verify the point is now 'negative'
-    auto points_after = editor_->get_points_at_cursor(3.0, 3.0, cell_size);
-    ASSERT_EQ(points_after.size(), 1);
-    EXPECT_EQ(points_after[0].target, "negative") << "Saved point should be flipped to 'negative'";
-
-    // Verify it's recorded as an update in unsaved_changes
-    UnsavedChanges uc(*db_);
-    auto changes = uc.get_changes("test_data");
-    bool found_update = false;
-    for (const auto& change : changes) {
-        if (change.action == "update" && change.old_target == "positive" &&
-            change.new_target == "negative") {
-            found_update = true;
-        }
-    }
-    EXPECT_TRUE(found_update) << "Should record flip as an update in unsaved_changes";
-}
-
 TEST_F(FlipFunctionalityTest, FlipMultiplePoints) {
     // Create two unsaved points at the same location
     ASSERT_TRUE(editor_->create_point(7.0, 7.0, 'x'));

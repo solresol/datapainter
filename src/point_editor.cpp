@@ -95,8 +95,15 @@ int PointEditor::convert_points_at_cursor(double cursor_x, double cursor_y,
     for (const auto& point : points) {
         // Only convert points that are currently the opposite type
         if (point.target == from_target) {
-            // Record update in unsaved changes ONLY (don't update database yet)
-            uc.record_update(table_name_, point.id, point.target, to_target);
+            if (point.id < 0) {
+                // This is an unsaved insert (negative ID = -change_id)
+                // Update the insert record's target directly
+                int change_id = -point.id;  // Convert back to positive change ID
+                uc.update_insert_target(change_id, to_target);
+            } else {
+                // This is a saved point - record update in unsaved changes
+                uc.record_update(table_name_, point.id, point.target, to_target);
+            }
             converted++;
         }
     }
@@ -118,8 +125,15 @@ int PointEditor::flip_points_at_cursor(double cursor_x, double cursor_y, double 
             new_target = x_meaning_;
         }
 
-        // Record update in unsaved changes ONLY (don't update database yet)
-        uc.record_update(table_name_, point.id, point.target, new_target);
+        if (point.id < 0) {
+            // This is an unsaved insert (negative ID = -change_id)
+            // Update the insert record's target directly
+            int change_id = -point.id;  // Convert back to positive change ID
+            uc.update_insert_target(change_id, new_target);
+        } else {
+            // This is a saved point - record update in unsaved changes
+            uc.record_update(table_name_, point.id, point.target, new_target);
+        }
     }
 
     return points.size();

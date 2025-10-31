@@ -289,4 +289,22 @@ bool UnsavedChanges::mark_change_inactive(int change_id) {
     return rc == SQLITE_DONE;
 }
 
+bool UnsavedChanges::update_insert_target(int change_id, const std::string& new_target) {
+    const char* sql = "UPDATE unsaved_changes SET new_target = ? WHERE id = ? AND action = 'insert'";
+
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(db_.connection(), sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        return false;
+    }
+
+    sqlite3_bind_text(stmt, 1, new_target.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, change_id);
+
+    rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    return rc == SQLITE_DONE;
+}
+
 } // namespace datapainter

@@ -57,6 +57,10 @@ public:
     // Mark a specific change as inactive (for canceling unsaved inserts)
     bool mark_change_inactive(int change_id);
 
+    // Update the target of an unsaved insert record
+    // Used when flipping or converting unsaved points
+    bool update_insert_target(int change_id, const std::string& new_target);
+
 private:
     Database& db_;
 };
