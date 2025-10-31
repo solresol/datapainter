@@ -57,15 +57,13 @@ int PointEditor::delete_points_at_cursor(double cursor_x, double cursor_y, doubl
     for (const auto& point : points) {
         if (point.id < 0) {
             // This is an unsaved insert (negative ID = -change_id)
-            // We can't delete it from DB, so we just mark the insert as inactive
-            // by recording a "cancel" - but we don't have that yet
-            // For now, just skip it - the user will need to undo the insert
-            // TODO: Implement proper cancellation of unsaved inserts
-            continue;
+            // Mark the original insert as inactive (cancels the insert)
+            int change_id = -point.id;  // Convert back to positive change ID
+            uc.mark_change_inactive(change_id);
+        } else {
+            // Record deletion in unsaved changes ONLY (don't delete from database yet)
+            uc.record_delete(table_name_, point.id, point.x, point.y, point.target);
         }
-
-        // Record deletion in unsaved changes ONLY (don't delete from database yet)
-        uc.record_delete(table_name_, point.id, point.x, point.y, point.target);
     }
 
     return points.size();

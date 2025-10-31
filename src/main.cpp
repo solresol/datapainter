@@ -659,11 +659,6 @@ int main(int argc, char** argv) {
         // Read keyboard input
         int key = terminal.read_key();
         if (key >= 0) {
-            // DEBUG: Log key code to see what we're receiving
-            // TODO: Remove this debug logging
-            if (key < 32 || key > 126) {
-                std::cerr << "DEBUG: Special key code: " << key << std::endl;
-            }
             // Handle arrow keys (from ncurses or our own codes)
             if (key == Terminal::KEY_UP_ARROW) {
                 // Up arrow - move cursor up (within edit area content, inside border)
@@ -800,14 +795,7 @@ int main(int argc, char** argv) {
                 double cell_size_x = (viewport.data_x_max() - viewport.data_x_min()) / (screen_width - 2);
                 double cell_size = cell_size_x;
 
-                // DEBUG: Show what we're trying to delete
-                std::cerr << "DEBUG: Delete at cursor (" << cursor_data.x << ", " << cursor_data.y << "), cell_size=" << cell_size << std::endl;
-
                 int deleted = point_editor.delete_points_at_cursor(cursor_data.x, cursor_data.y, cell_size);
-
-                // DEBUG: Show result
-                std::cerr << "DEBUG: Deleted " << deleted << " points" << std::endl;
-
                 if (deleted > 0) {
                     needs_redraw = true;
                 }

@@ -272,4 +272,21 @@ bool UnsavedChanges::clear_all_changes() {
     return db_.execute("DELETE FROM unsaved_changes");
 }
 
+bool UnsavedChanges::mark_change_inactive(int change_id) {
+    const char* sql = "UPDATE unsaved_changes SET is_active = 0 WHERE id = ?";
+
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(db_.connection(), sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        return false;
+    }
+
+    sqlite3_bind_int(stmt, 1, change_id);
+
+    rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    return rc == SQLITE_DONE;
+}
+
 } // namespace datapainter

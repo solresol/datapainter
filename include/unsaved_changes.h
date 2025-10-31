@@ -54,6 +54,9 @@ public:
     bool clear_changes(const std::string& table_name);
     bool clear_all_changes();
 
+    // Mark a specific change as inactive (for canceling unsaved inserts)
+    bool mark_change_inactive(int change_id);
+
 private:
     Database& db_;
 };
