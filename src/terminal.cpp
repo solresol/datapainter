@@ -375,6 +375,12 @@ int Terminal::read_key() {
 #ifdef KEY_RESIZE
             case KEY_RESIZE: return 1004;  // Terminal::KEY_RESIZE (avoid macro expansion issue)
 #endif
+#ifdef KEY_DC
+            case KEY_DC:    return 127;  // Delete key (forward delete) -> map to DEL
+#endif
+#ifdef KEY_BACKSPACE
+            case KEY_BACKSPACE: return 127;  // Backspace key -> map to DEL
+#endif
             default:        return ch;
         }
     }
