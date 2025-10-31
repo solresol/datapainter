@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "datapainter-integration-tests"
+version = "0.1.0"
+description = "Integration tests for DataPainter TUI"
+requires-python = ">=3.8"
+dependencies = [
+    "pyte>=0.8.0",
+    "pytest>=7.0.0",
+    "pytest-timeout>=2.1.0",
+]
+
+[tool.setuptools]
+py-modules = ["tui_test_framework"]
+
+[tool.pytest.ini_options]
+testpaths = ["."]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+timeout = 10

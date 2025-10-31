@@ -1,0 +1,22 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+venv/
+
+# Test artifacts
+.pytest_cache/
+snapshots/
+debug_snapshots/
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Temporary databases
+*.db
