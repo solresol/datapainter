@@ -29,6 +29,11 @@ public:
                                                      double data_max,
                                                      double major_step);
 
+    // Generate tenth tick marks (if >= 6 chars between majors)
+    static std::vector<double> generate_tenth_ticks(double data_min,
+                                                     double data_max,
+                                                     double major_step);
+
     // Format tick label with appropriate precision
     // Uses scientific notation for |exponent| >= 4
     static std::string format_label(double value);

@@ -185,3 +185,66 @@ TEST(AxisRendererTest, TicksCoverRange) {
     // Last tick should be at or after max
     EXPECT_GE(ticks.back().value, 15.0);
 }
+
+// Test generating tenth ticks
+TEST(AxisRendererTest, GenerateTenthTicks) {
+    auto tenths = AxisRenderer::generate_tenth_ticks(0.0, 10.0, 2.0);
+
+    // Should have tenth ticks between major ticks
+    EXPECT_GT(tenths.size(), 0);
+
+    // Tenth ticks should be within range
+    for (double tenth : tenths) {
+        EXPECT_GE(tenth, 0.0);
+        EXPECT_LE(tenth, 10.0);
+    }
+
+    // Tenth ticks should be finer than minor ticks (10 divisions)
+    // With major_step = 2.0, tenth_step should be 0.2
+    // Expected tenths at: 0.2, 0.6, 1.0, 1.4, 1.8, 2.2, 2.6, 3.0, etc.
+    // (skipping multiples of 0.4 which are minor ticks, and multiples of 2.0 which are major ticks)
+
+    // Verify we have approximately the right number of tenths
+    // Between 0 and 10, with major_step=2.0, we have 5 major intervals
+    // Each interval has 10 tenths, minus 1 major tick and 4 minor ticks = 5 tenths per interval
+    // So we expect around 5 * 5 = 25 tenth ticks
+    EXPECT_GT(tenths.size(), 20);
+    EXPECT_LT(tenths.size(), 30);
+}
+
+// Test tenth ticks don't coincide with major ticks
+TEST(AxisRendererTest, TenthTicksAvoidMajorTicks) {
+    auto tenths = AxisRenderer::generate_tenth_ticks(0.0, 10.0, 2.0);
+
+    // Major ticks are at 0, 2, 4, 6, 8, 10
+    // Tenth ticks should not be at these positions
+    for (double tenth : tenths) {
+        double remainder = std::fmod(std::abs(tenth), 2.0);
+        // Should not be close to 0 (which would mean it's at a major tick)
+        EXPECT_GT(std::abs(remainder), 0.05);
+    }
+}
+
+// Test tenth ticks don't coincide with minor ticks
+TEST(AxisRendererTest, TenthTicksAvoidMinorTicks) {
+    double major_step = 2.0;
+    auto tenths = AxisRenderer::generate_tenth_ticks(0.0, 10.0, major_step);
+
+    // Minor ticks divide major intervals into 5 parts (minor_step = 0.4)
+    // Minor ticks are at 0.4, 0.8, 1.2, 1.6, 2.4, 2.8, etc.
+    double minor_step = major_step / 5.0;
+
+    for (double tenth : tenths) {
+        // Check if this tenth tick is at a minor tick position
+        double remainder = std::fmod(std::abs(tenth), minor_step);
+        // Should not be very close to 0 (which would mean it's at a minor tick)
+        // Allow some tolerance for floating point
+        bool is_at_minor = (remainder < 0.05) || (remainder > minor_step - 0.05);
+        if (is_at_minor) {
+            // This tenth is at a minor tick position - verify it's not included
+            // Actually, we should skip these positions
+            EXPECT_FALSE(is_at_minor) << "Tenth tick at " << tenth
+                                      << " coincides with minor tick";
+        }
+    }
+}

@@ -73,6 +73,40 @@ std::vector<double> AxisRenderer::generate_minor_ticks(double data_min,
     return minors;
 }
 
+std::vector<double> AxisRenderer::generate_tenth_ticks(double data_min,
+                                                        double data_max,
+                                                        double major_step) {
+    std::vector<double> tenths;
+
+    if (major_step <= 0.0) {
+        return tenths;
+    }
+
+    // Generate 9 tenth ticks between each major tick (10 divisions total)
+    double tenth_step = major_step / 10.0;
+    double minor_step = major_step / 5.0;
+
+    double first_tenth = std::floor(data_min / tenth_step) * tenth_step;
+
+    for (double value = first_tenth; value <= data_max; value += tenth_step) {
+        // Skip if this coincides with a major tick
+        double major_remainder = std::fmod(std::abs(value), major_step);
+        bool at_major = major_remainder < tenth_step * 0.1 ||
+                        major_remainder > major_step - tenth_step * 0.1;
+
+        // Skip if this coincides with a minor tick
+        double minor_remainder = std::fmod(std::abs(value), minor_step);
+        bool at_minor = minor_remainder < tenth_step * 0.1 ||
+                        minor_remainder > minor_step - tenth_step * 0.1;
+
+        if (!at_major && !at_minor) {
+            tenths.push_back(value);
+        }
+    }
+
+    return tenths;
+}
+
 std::string AxisRenderer::format_label(double value) {
     // Handle zero specially
     if (std::abs(value) < 1e-10) {
