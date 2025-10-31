@@ -145,3 +145,47 @@ The deletion functionality should work correctly in the UI. If there's still an 
 ## Status: RESOLVED
 
 The initial test failures were due to uninitialized member variables. The deletion logic is correct and tests pass.
+
+---
+
+## Follow-up Investigation: Flip Functionality (2025-10-31)
+
+### Issue Discovered
+While verifying the deletion fix worked, user reported that flip functionality ('g' key) doesn't seem to work in the UI. Created comprehensive tests to verify flip behavior.
+
+### Test Results
+
+**FlipFunctionalityTest results:**
+- ✅ FlipMultiplePoints: PASS
+- ✅ FlipEmptyCell: PASS
+- ❌ FlipUnsavedPoint: **FAIL** - Point remains "positive", doesn't flip to "negative"
+- ❌ FlipSavedPoint: FAIL (but due to insert_point not working correctly in test setup)
+- ❌ FlipBackAndForth: **FAIL** - Same issue as FlipUnsavedPoint
+
+### Root Cause
+
+The `flip_points_at_cursor()` function (src/point_editor.cpp:107-126) tries to record an UPDATE for all points, including unsaved ones:
+
+```cpp
+for (const auto& point : points) {
+    std::string new_target = (point.target == x_meaning_) ? o_meaning_ : x_meaning_;
+    uc.record_update(table_name_, point.id, point.target, new_target);
+}
+```
+
+**The problem:** For unsaved points (negative IDs = -change_id), calling `record_update()` with a negative `data_id` doesn't make sense. The point doesn't exist in the database yet - it only exists as an insert record in the `unsaved_changes` table.
+
+**What should happen:** For unsaved points, we need to directly update the `new_target` field of the insert record in the `unsaved_changes` table, not create an update record.
+
+### Solution Needed
+
+The `flip_points_at_cursor()` function needs to handle two cases:
+
+1. **Saved points (positive ID)**: Record an update in unsaved_changes ✅ (currently works)
+2. **Unsaved points (negative ID)**: Update the insert record's `new_target` field directly ❌ (not implemented)
+
+This requires either:
+- A new method in `UnsavedChanges` class: `update_insert_target(int change_id, const std::string& new_target)`
+- Or inline SQL in `flip_points_at_cursor()` to update the insert record
+
+The same issue likely affects the `convert_points_at_cursor()` function which also tries to flip/convert point targets.

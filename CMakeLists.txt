@@ -139,6 +139,7 @@ if(BUILD_TESTS)
         tests/test_integration.cpp
         tests/test_cursor_coordinate_conversion.cpp
         tests/test_point_editor_with_unsaved.cpp
+        tests/test_flip_functionality.cpp
         # Implementation files needed by tests
         src/database.cpp
         src/argument_parser.cpp
