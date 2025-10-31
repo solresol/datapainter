@@ -8,7 +8,10 @@
 namespace datapainter {
 
 PointEditor::PointEditor(Database& db, const std::string& table_name)
-    : db_(db), table_name_(table_name) {
+    : db_(db), table_name_(table_name),
+      x_meaning_(""), o_meaning_(""),
+      x_min_(-10.0), x_max_(10.0),
+      y_min_(-10.0), y_max_(10.0) {
     load_metadata();
 }
 

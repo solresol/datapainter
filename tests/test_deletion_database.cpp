@@ -121,8 +121,3 @@ TEST_F(DeletionDatabaseTest, GetPointsAtCursorSkipsInactiveInserts) {
     auto points_after = editor_->get_points_at_cursor(5.0, 5.0, cell_size);
     EXPECT_EQ(points_after.size(), 0) << "Should not find inactive inserted point";
 }
-
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

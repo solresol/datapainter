@@ -53,7 +53,8 @@ TEST(RenderInactiveInsertsTest, SkipsInactiveInserts) {
     EXPECT_TRUE(has_inactive) << "Should have at least one inactive change";
 
     // Set up viewport and rendering
-    Terminal terminal(24, 80);
+    Terminal terminal;
+    terminal.set_dimensions(24, 80);
     Viewport viewport(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0, -10.0, 10.0, 18, 78);
     DataTable dt(db, "test_data");
 
@@ -61,19 +62,15 @@ TEST(RenderInactiveInsertsTest, SkipsInactiveInserts) {
     EditAreaRenderer renderer;
     renderer.render(terminal, viewport, dt, changes, 3, 20, 80, 10, 40, "positive", "negative");
 
-    // Check the rendered output
+    // Check the rendered output using read_char()
     // Active insert at (0,0) should appear, inactive insert at (1,0) should not
-    std::string screen = terminal.get_debug_string();
-
     // Count 'x' characters in the middle content area (excluding borders)
     // There should be exactly 1 'x' from the active insert
     int x_count = 0;
-    auto lines = terminal.get_display_lines();
-    for (size_t row = 4; row < 22; ++row) {
-        if (row >= lines.size()) break;
-        for (size_t col = 1; col < 79; ++col) {
-            if (col >= lines[row].size()) break;
-            if (lines[row][col] == 'x' || lines[row][col] == 'X') {
+    for (int row = 4; row < 22; ++row) {
+        for (int col = 1; col < 79; ++col) {
+            char ch = terminal.read_char(row, col);
+            if (ch == 'x' || ch == 'X') {
                 x_count++;
             }
         }
@@ -81,9 +78,4 @@ TEST(RenderInactiveInsertsTest, SkipsInactiveInserts) {
 
     // Should have exactly 1 point visible (the active insert)
     EXPECT_EQ(x_count, 1) << "Should render only the active insert, not the inactive one";
-}
-
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }
