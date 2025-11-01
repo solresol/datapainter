@@ -869,6 +869,24 @@ int main(int argc, char** argv) {
                 // Redraw the main UI after dismissing help
                 needs_redraw = true;
             }
+            else if (key == 's' || key == 'S') {
+                // Save unsaved changes to database
+                SaveManager save_manager(db, table_name);
+                bool save_success = save_manager.save();
+
+                if (save_success) {
+                    // Save successful, redraw to update unsaved count
+                    needs_redraw = true;
+                } else {
+                    // Save failed - show error message
+                    terminal.exit_raw_mode();
+                    std::cerr << "Error: Failed to save changes to database" << std::endl;
+                    std::cerr << "Press Enter to continue..." << std::endl;
+                    std::cin.get();
+                    terminal.enter_raw_mode();
+                    needs_redraw = true;
+                }
+            }
             else if (key == 127 || key == 8) {
                 // Delete all points at cursor (backspace or delete key)
                 ScreenCoord cursor_content = cursor_to_content_coords(cursor_row, cursor_col);

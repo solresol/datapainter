@@ -143,6 +143,9 @@ if(BUILD_TESTS)
         tests/test_flip_functionality.cpp
         tests/test_quit_with_unsaved.cpp
         tests/test_help_overlay.cpp
+        tests/test_save_resets_unsaved_count.cpp
+        tests/test_footer_width.cpp
+        tests/test_mouse_support.cpp
         # Implementation files needed by tests
         src/database.cpp
         src/argument_parser.cpp
