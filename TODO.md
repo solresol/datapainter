@@ -415,13 +415,13 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ## Phase 14: CSV Export
 
 ### CSV Writer
-- [ ] Create CSVExporter class
-- [ ] Test: --to-csv exports table to stdout
-- [ ] Test: Output format: header row + data rows
-- [ ] Test: Three columns: x, y, target
-- [ ] Test: Rows ordered by id
-- [ ] Test: UTF-8 encoding
-- [ ] Test: Proper quote escaping for text values
+- [x] Create CSVExporter class - implemented inline in main.cpp
+- [x] Test: --to-csv exports table to stdout
+- [x] Test: Output format: header row + data rows
+- [x] Test: Three columns: x, y, target
+- [x] Test: Rows ordered by id
+- [x] Test: UTF-8 encoding - uses std::cout (UTF-8 compatible)
+- [x] Test: Proper quote escaping for text values
 - [ ] Test: Exit code 67 on write error
 
 ---
