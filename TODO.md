@@ -207,7 +207,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Draw border around edit area
 - [x] Test: Render empty edit area
 - [x] Test: Query data points within current viewport
-- [ ] Test: Apply unsaved changes to viewport data
+- [x] Test: Apply unsaved changes to viewport data
 - [x] Test: Render single 'x' point at screen position
 - [x] Test: Render single 'o' point at screen position
 - [x] Test: Render multiple x's at same cell as 'X'
@@ -215,7 +215,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Render mixed x+o at same cell as '#'
 - [x] Test: Render wall characters '!' for out-of-valid-range areas
 - [x] Test: Draw cursor at current position
-- [ ] Test: Show cursor coordinates in header
+- [x] Test: Show cursor coordinates in header
 
 ### Header Rendering
 - [x] Create HeaderRenderer class
