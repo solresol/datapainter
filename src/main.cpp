@@ -543,6 +543,154 @@ int main(int argc, char** argv) {
         return 0;
     }
 
+    // --key-stroke-at-point
+    if (args.key_stroke_at_point.has_value()) {
+        if (!args.table.has_value()) {
+            std::cerr << "Error: --table is required for --key-stroke-at-point" << std::endl;
+            return 2;
+        }
+
+        // Parse x,y,key from the string
+        std::string input = args.key_stroke_at_point.value();
+        size_t first_comma = input.find(',');
+        size_t second_comma = input.find(',', first_comma + 1);
+
+        if (first_comma == std::string::npos || second_comma == std::string::npos) {
+            std::cerr << "Error: --key-stroke-at-point requires format x,y,key (e.g. 1.5,2.3,x)" << std::endl;
+            return 2;
+        }
+
+        std::string x_str = input.substr(0, first_comma);
+        std::string y_str = input.substr(first_comma + 1, second_comma - first_comma - 1);
+        std::string key_str = input.substr(second_comma + 1);
+
+        // Parse x and y coordinates
+        double point_x, point_y;
+        try {
+            point_x = std::stod(x_str);
+            point_y = std::stod(y_str);
+        } catch (const std::exception& e) {
+            std::cerr << "Error: Invalid x,y coordinates in --key-stroke-at-point: " << e.what() << std::endl;
+            return 2;
+        }
+
+        // Validate key is a single character
+        if (key_str.length() != 1) {
+            std::cerr << "Error: --key-stroke-at-point key must be a single character" << std::endl;
+            return 2;
+        }
+        char key = key_str[0];
+
+        // Validate key is one of the supported keys
+        if (key != 'x' && key != 'o' && key != ' ' && key != 'X' && key != 'O' && key != 'g') {
+            std::cerr << "Error: --key-stroke-at-point key must be one of: x, o, space, X, O, g" << std::endl;
+            return 2;
+        }
+
+        // Load metadata
+        MetadataManager metadata_mgr(db);
+        auto meta_opt = metadata_mgr.read(args.table.value());
+        if (!meta_opt.has_value()) {
+            std::cerr << "Error: Table not found: " << args.table.value() << std::endl;
+            return 66;
+        }
+        Metadata meta = meta_opt.value();
+
+        // Check for conflicts
+        auto conflicts = ArgumentParser::detect_conflicts(args, meta);
+        if (!conflicts.empty()) {
+            std::cerr << "Error: Conflicts detected between CLI arguments and existing metadata:\n" << std::endl;
+            for (const auto& conflict : conflicts) {
+                std::cerr << conflict << "\n" << std::endl;
+            }
+            return 2;
+        }
+
+        // Initialize terminal
+        Terminal terminal;
+        if (!terminal.detect_size()) {
+            std::cerr << "Warning: Could not detect terminal size, using defaults" << std::endl;
+        }
+
+        // Apply overrides if specified
+        if (args.override_screen_height.has_value() && args.override_screen_width.has_value()) {
+            int override_height = args.override_screen_height.value();
+            int override_width = args.override_screen_width.value();
+
+            // Validate that overrides don't exceed actual terminal size
+            if (!terminal.validate_override_dimensions(override_height, override_width)) {
+                std::cerr << "Error: Override dimensions (" << override_height << "x" << override_width
+                          << ") exceed actual terminal size (" << terminal.actual_rows() << "x"
+                          << terminal.actual_cols() << ")" << std::endl;
+                return 64;
+            }
+
+            terminal.set_dimensions(override_height, override_width);
+        }
+
+        int screen_height = terminal.rows();
+        int screen_width = terminal.cols();
+
+        // Get valid ranges
+        double x_min = meta.valid_x_min.value_or(-10.0);
+        double x_max = meta.valid_x_max.value_or(10.0);
+        double y_min = meta.valid_y_min.value_or(-10.0);
+        double y_max = meta.valid_y_max.value_or(10.0);
+
+        // Create viewport
+        Viewport viewport(x_min, x_max, y_min, y_max,
+                         x_min, x_max, y_min, y_max,  // Valid ranges
+                         screen_height, screen_width);
+
+        // Create data table
+        DataTable data_table(db, args.table.value());
+
+        // Create unsaved changes tracker
+        UnsavedChanges unsaved_changes_tracker(db);
+
+        // Calculate screen layout
+        const int HEADER_ROWS = 3;
+        const int FOOTER_ROWS = 1;
+        const int edit_area_height = screen_height - HEADER_ROWS - FOOTER_ROWS;
+
+        // Create point editor
+        PointEditor editor(db, args.table.value());
+
+        // Calculate cell size for hit testing
+        // Use the viewport's data-per-pixel ratio
+        double data_width = viewport.data_x_max() - viewport.data_x_min();
+        double data_height = viewport.data_y_max() - viewport.data_y_min();
+        double cell_width = data_width / (screen_width - 2);  // Subtract 2 for borders
+        double cell_height = data_height / (edit_area_height - 2);
+        double cell_size = std::max(cell_width, cell_height);
+
+        // Simulate the keystroke
+        int affected_count = 0;
+        switch (key) {
+            case 'x':
+            case 'o':
+                affected_count = editor.create_point(point_x, point_y, key) ? 1 : 0;
+                break;
+            case ' ':
+                affected_count = editor.delete_points_at_cursor(point_x, point_y, cell_size);
+                break;
+            case 'X':
+                affected_count = editor.convert_points_at_cursor(point_x, point_y, cell_size, 'x');
+                break;
+            case 'O':
+                affected_count = editor.convert_points_at_cursor(point_x, point_y, cell_size, 'o');
+                break;
+            case 'g':
+                affected_count = editor.flip_points_at_cursor(point_x, point_y, cell_size);
+                break;
+        }
+
+        // Output the result (number of affected points)
+        std::cout << affected_count << std::endl;
+
+        return 0;
+    }
+
     // If we got here with a database but no recognized command, show TUI table selection menu
     if (!args.table.has_value()) {
         // Initialize terminal for TUI menu

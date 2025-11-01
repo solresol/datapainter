@@ -672,3 +672,253 @@ TEST_F(IntegrationTest, CompleteWorkflowLoadEditUndoRedoSave) {
         " --list-unsaved-changes --table workflow");
     EXPECT_NE(list_output.find("No unsaved changes"), std::string::npos);
 }
+
+// Test: --key-stroke-at-point creates point with 'x'
+TEST_F(IntegrationTest, KeyStrokeAtPointCreateX) {
+    // Create table
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --create-table --table test_table" +
+                 " --target-column-name target" +
+                 " --x-axis-name x --y-axis-name y" +
+                 " --x-meaning x_val --o-meaning o_val" +
+                 " --min-x -10.0 --max-x 10.0" +
+                 " --min-y -10.0 --max-y 10.0");
+
+    // Simulate keystroke 'x' at position (1.5, 2.5)
+    std::string cmd = exe_ + " --database " + test_db_ +
+                      " --key-stroke-at-point 1.5,2.5,x --table test_table";
+    std::string output = exec_command(cmd);
+
+    // Should output 1 (one point created)
+    EXPECT_NE(output.find("1"), std::string::npos);
+
+    // Verify point exists in database
+    datapainter::Database db(test_db_);
+    ASSERT_TRUE(db.is_open());
+    datapainter::UnsavedChanges changes(db);
+    auto change_list = changes.get_changes("test_table");
+    ASSERT_EQ(change_list.size(), 1u);
+    EXPECT_EQ(change_list[0].action, "insert");
+}
+
+// Test: --key-stroke-at-point creates point with 'o'
+TEST_F(IntegrationTest, KeyStrokeAtPointCreateO) {
+    // Create table
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --create-table --table test_table" +
+                 " --target-column-name target" +
+                 " --x-axis-name x --y-axis-name y" +
+                 " --x-meaning x_val --o-meaning o_val" +
+                 " --min-x -10.0 --max-x 10.0" +
+                 " --min-y -10.0 --max-y 10.0");
+
+    // Simulate keystroke 'o' at position (3.0, 4.0)
+    std::string cmd = exe_ + " --database " + test_db_ +
+                      " --key-stroke-at-point 3.0,4.0,o --table test_table";
+    std::string output = exec_command(cmd);
+
+    // Should output 1 (one point created)
+    EXPECT_NE(output.find("1"), std::string::npos);
+
+    // Verify point exists in database
+    datapainter::Database db(test_db_);
+    ASSERT_TRUE(db.is_open());
+    datapainter::UnsavedChanges changes(db);
+    auto change_list = changes.get_changes("test_table");
+    ASSERT_EQ(change_list.size(), 1u);
+    EXPECT_EQ(change_list[0].action, "insert");
+}
+
+// Test: --key-stroke-at-point deletes point with space
+TEST_F(IntegrationTest, KeyStrokeAtPointDelete) {
+    // Create table
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --create-table --table test_table" +
+                 " --target-column-name target" +
+                 " --x-axis-name x --y-axis-name y" +
+                 " --x-meaning x_val --o-meaning o_val" +
+                 " --min-x -10.0 --max-x 10.0" +
+                 " --min-y -10.0 --max-y 10.0");
+
+    // Add a point
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --add-point --table test_table --x 5.0 --y 5.0 --target x_val");
+
+    // Simulate keystroke space at same position (delete point)
+    std::string cmd = exe_ + " --database " + test_db_ +
+                      " --key-stroke-at-point '5.0,5.0, ' --table test_table";
+    std::string output = exec_command(cmd);
+
+    // Should output 1 (one point deleted)
+    EXPECT_NE(output.find("1"), std::string::npos);
+
+    // Verify delete was recorded in unsaved changes
+    datapainter::Database db(test_db_);
+    ASSERT_TRUE(db.is_open());
+    datapainter::UnsavedChanges changes(db);
+    auto change_list = changes.get_changes("test_table");
+    ASSERT_EQ(change_list.size(), 1u);
+    EXPECT_EQ(change_list[0].action, "delete");
+}
+
+// Test: --key-stroke-at-point converts point with 'X'
+TEST_F(IntegrationTest, KeyStrokeAtPointConvertToX) {
+    // Create table
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --create-table --table test_table" +
+                 " --target-column-name target" +
+                 " --x-axis-name x --y-axis-name y" +
+                 " --x-meaning x_val --o-meaning o_val" +
+                 " --min-x -10.0 --max-x 10.0" +
+                 " --min-y -10.0 --max-y 10.0");
+
+    // Add an 'o' point
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --add-point --table test_table --x 2.0 --y 3.0 --target o_val");
+
+    // Simulate keystroke 'X' to convert o -> x
+    std::string cmd = exe_ + " --database " + test_db_ +
+                      " --key-stroke-at-point 2.0,3.0,X --table test_table";
+    std::string output = exec_command(cmd);
+
+    // Should output 1 (one point converted)
+    EXPECT_NE(output.find("1"), std::string::npos);
+
+    // Verify conversion was recorded in unsaved changes
+    datapainter::Database db(test_db_);
+    ASSERT_TRUE(db.is_open());
+    datapainter::UnsavedChanges changes(db);
+    auto change_list = changes.get_changes("test_table");
+    ASSERT_EQ(change_list.size(), 1u);
+    EXPECT_EQ(change_list[0].action, "update");
+}
+
+// Test: --key-stroke-at-point converts point with 'O'
+TEST_F(IntegrationTest, KeyStrokeAtPointConvertToO) {
+    // Create table
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --create-table --table test_table" +
+                 " --target-column-name target" +
+                 " --x-axis-name x --y-axis-name y" +
+                 " --x-meaning x_val --o-meaning o_val" +
+                 " --min-x -10.0 --max-x 10.0" +
+                 " --min-y -10.0 --max-y 10.0");
+
+    // Add an 'x' point
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --add-point --table test_table --x 6.0 --y 7.0 --target x_val");
+
+    // Simulate keystroke 'O' to convert x -> o
+    std::string cmd = exe_ + " --database " + test_db_ +
+                      " --key-stroke-at-point 6.0,7.0,O --table test_table";
+    std::string output = exec_command(cmd);
+
+    // Should output 1 (one point converted)
+    EXPECT_NE(output.find("1"), std::string::npos);
+
+    // Verify conversion was recorded in unsaved changes
+    datapainter::Database db(test_db_);
+    ASSERT_TRUE(db.is_open());
+    datapainter::UnsavedChanges changes(db);
+    auto change_list = changes.get_changes("test_table");
+    ASSERT_EQ(change_list.size(), 1u);
+    EXPECT_EQ(change_list[0].action, "update");
+}
+
+// Test: --key-stroke-at-point flips point with 'g'
+TEST_F(IntegrationTest, KeyStrokeAtPointFlip) {
+    // Create table
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --create-table --table test_table" +
+                 " --target-column-name target" +
+                 " --x-axis-name x --y-axis-name y" +
+                 " --x-meaning x_val --o-meaning o_val" +
+                 " --min-x -10.0 --max-x 10.0" +
+                 " --min-y -10.0 --max-y 10.0");
+
+    // Add an 'x' point
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --add-point --table test_table --x 8.0 --y 9.0 --target x_val");
+
+    // Simulate keystroke 'g' to flip x -> o
+    std::string cmd = exe_ + " --database " + test_db_ +
+                      " --key-stroke-at-point 8.0,9.0,g --table test_table";
+    std::string output = exec_command(cmd);
+
+    // Should output 1 (one point flipped)
+    EXPECT_NE(output.find("1"), std::string::npos);
+
+    // Verify flip was recorded in unsaved changes
+    datapainter::Database db(test_db_);
+    ASSERT_TRUE(db.is_open());
+    datapainter::UnsavedChanges changes(db);
+    auto change_list = changes.get_changes("test_table");
+    ASSERT_EQ(change_list.size(), 1u);
+    EXPECT_EQ(change_list[0].action, "update");
+}
+
+// Test: --key-stroke-at-point missing table argument
+TEST_F(IntegrationTest, KeyStrokeAtPointMissingTable) {
+    std::string cmd = exe_ + " --database " + test_db_ +
+                      " --key-stroke-at-point 1.0,2.0,x";
+    std::string output = exec_command(cmd);
+
+    // Should indicate error about missing table
+    EXPECT_NE(output.find("--table is required"), std::string::npos);
+}
+
+// Test: --key-stroke-at-point invalid format
+TEST_F(IntegrationTest, KeyStrokeAtPointInvalidFormat) {
+    // Create table
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --create-table --table test_table" +
+                 " --target-column-name target" +
+                 " --x-axis-name x --y-axis-name y" +
+                 " --x-meaning x_val --o-meaning o_val");
+
+    // Try with invalid format (missing comma)
+    std::string cmd = exe_ + " --database " + test_db_ +
+                      " --key-stroke-at-point 1.02.0x --table test_table";
+    std::string output = exec_command(cmd);
+
+    // Should indicate format error
+    EXPECT_NE(output.find("format x,y,key"), std::string::npos);
+}
+
+// Test: --key-stroke-at-point invalid key
+TEST_F(IntegrationTest, KeyStrokeAtPointInvalidKey) {
+    // Create table
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --create-table --table test_table" +
+                 " --target-column-name target" +
+                 " --x-axis-name x --y-axis-name y" +
+                 " --x-meaning x_val --o-meaning o_val");
+
+    // Try with invalid key 'z'
+    std::string cmd = exe_ + " --database " + test_db_ +
+                      " --key-stroke-at-point 1.0,2.0,z --table test_table";
+    std::string output = exec_command(cmd);
+
+    // Should indicate key must be one of the supported keys
+    EXPECT_NE(output.find("key must be one of"), std::string::npos);
+}
+
+// Test: --key-stroke-at-point no points at cursor returns 0
+TEST_F(IntegrationTest, KeyStrokeAtPointNoPointsAtCursor) {
+    // Create table with no points
+    exec_command(exe_ + " --database " + test_db_ +
+                 " --create-table --table test_table" +
+                 " --target-column-name target" +
+                 " --x-axis-name x --y-axis-name y" +
+                 " --x-meaning x_val --o-meaning o_val" +
+                 " --min-x -10.0 --max-x 10.0" +
+                 " --min-y -10.0 --max-y 10.0");
+
+    // Try to delete at empty position
+    std::string cmd = exe_ + " --database " + test_db_ +
+                      " --key-stroke-at-point '5.0,5.0, ' --table test_table";
+    std::string output = exec_command(cmd);
+
+    // Should output 0 (no points deleted)
+    EXPECT_NE(output.find("0"), std::string::npos);
+}
