@@ -406,9 +406,9 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 
 ### Testing Commands
 - [ ] Test: --key-stroke-at-point simulates key press at coordinates
-- [ ] Test: --dump-screen outputs full screen rendering
-- [ ] Test: --dump-edit-area-contents outputs just edit area
-- [ ] Test: Works with --override-screen-height/width
+- [x] Test: --dump-screen outputs full screen rendering
+- [x] Test: --dump-edit-area-contents outputs just edit area
+- [x] Test: Works with --override-screen-height/width
 
 ---
 

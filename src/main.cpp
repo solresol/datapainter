@@ -365,6 +365,184 @@ int main(int argc, char** argv) {
         return 0;
     }
 
+    // --dump-screen or --dump-edit-area-contents
+    if (args.dump_screen || args.dump_edit_area_contents) {
+        if (!args.table.has_value()) {
+            std::cerr << "Error: --table is required for --dump-screen/--dump-edit-area-contents" << std::endl;
+            return 2;
+        }
+
+        // Load metadata
+        MetadataManager metadata_mgr(db);
+        auto meta_opt = metadata_mgr.read(args.table.value());
+        if (!meta_opt.has_value()) {
+            std::cerr << "Error: Table not found: " << args.table.value() << std::endl;
+            return 66;
+        }
+        Metadata meta = meta_opt.value();
+
+        // Check for conflicts
+        auto conflicts = ArgumentParser::detect_conflicts(args, meta);
+        if (!conflicts.empty()) {
+            std::cerr << "Error: Conflicts detected between CLI arguments and existing metadata:\n" << std::endl;
+            for (const auto& conflict : conflicts) {
+                std::cerr << conflict << "\n" << std::endl;
+            }
+            return 2;
+        }
+
+        // Initialize terminal
+        Terminal terminal;
+        if (!terminal.detect_size()) {
+            std::cerr << "Warning: Could not detect terminal size, using defaults" << std::endl;
+        }
+
+        // Apply overrides if specified
+        if (args.override_screen_height.has_value() && args.override_screen_width.has_value()) {
+            int override_height = args.override_screen_height.value();
+            int override_width = args.override_screen_width.value();
+
+            // Validate that overrides don't exceed actual terminal size
+            if (!terminal.validate_override_dimensions(override_height, override_width)) {
+                std::cerr << "Error: Override dimensions (" << override_height << "x" << override_width
+                          << ") exceed actual terminal size (" << terminal.actual_rows() << "x"
+                          << terminal.actual_cols() << ")" << std::endl;
+                return 64;
+            }
+
+            terminal.set_dimensions(override_height, override_width);
+        }
+
+        int screen_height = terminal.rows();
+        int screen_width = terminal.cols();
+
+        // Get valid ranges
+        double x_min = meta.valid_x_min.value_or(-10.0);
+        double x_max = meta.valid_x_max.value_or(10.0);
+        double y_min = meta.valid_y_min.value_or(-10.0);
+        double y_max = meta.valid_y_max.value_or(10.0);
+
+        // Create viewport
+        Viewport viewport(x_min, x_max, y_min, y_max,
+                         x_min, x_max, y_min, y_max,  // Valid ranges
+                         screen_height, screen_width);
+
+        // Create data table
+        DataTable data_table(db, args.table.value());
+
+        // Create unsaved changes tracker
+        UnsavedChanges unsaved_changes_tracker(db);
+
+        // Calculate screen layout
+        const int HEADER_ROWS = 3;
+        const int FOOTER_ROWS = 1;
+        const int edit_area_height = screen_height - HEADER_ROWS - FOOTER_ROWS;
+        const int edit_area_start_row = HEADER_ROWS;
+
+        // Calculate cursor position (centered)
+        int cursor_row = edit_area_start_row + 1 + (edit_area_height - 2) / 2;
+        int cursor_col = 1 + (screen_width - 2) / 2;
+
+        // Clear buffer
+        terminal.clear_buffer();
+
+        // Query all data points
+        auto all_points = data_table.query_viewport(
+            viewport.data_x_min(), viewport.data_x_max(),
+            viewport.data_y_min(), viewport.data_y_max()
+        );
+
+        // Count points
+        int total_count = all_points.size();
+        int x_count = 0;
+        int o_count = 0;
+        for (const auto& pt : all_points) {
+            if (pt.target == meta.x_meaning) {
+                x_count++;
+            } else if (pt.target == meta.o_meaning) {
+                o_count++;
+            }
+        }
+
+        // Create renderers
+        HeaderRenderer header_renderer;
+        FooterRenderer footer_renderer;
+        EditAreaRenderer edit_area_renderer;
+
+        // Get current cursor position in data coordinates
+        ScreenCoord cursor_content{cursor_row - edit_area_start_row - 1, cursor_col - 1};
+        DataCoord cursor_data = viewport.screen_to_data(cursor_content);
+
+        // Load unsaved changes for this table
+        std::vector<ChangeRecord> unsaved_changes = unsaved_changes_tracker.get_changes(args.table.value());
+
+        // Count active unsaved changes across all tables (for header display)
+        auto all_changes = unsaved_changes_tracker.get_all_changes();
+        int total_active_changes = 0;
+        for (const auto& change : all_changes) {
+            if (change.is_active) {
+                total_active_changes++;
+            }
+        }
+
+        // Count active unsaved changes for this table only (for footer display)
+        int table_active_changes = 0;
+        for (const auto& change : unsaved_changes) {
+            if (change.is_active) {
+                table_active_changes++;
+            }
+        }
+
+        // Render header
+        header_renderer.render(terminal, args.database.value(), meta.table_name,
+                              meta.target_col_name, meta.x_meaning, meta.o_meaning,
+                              total_count, x_count, o_count,
+                              x_min, x_max, y_min, y_max,
+                              viewport.data_x_min(), viewport.data_x_max(),
+                              viewport.data_y_min(), viewport.data_y_max(), 0, total_active_changes);
+
+        // Render edit area
+        edit_area_renderer.render(terminal, viewport, data_table, unsaved_changes,
+                                 edit_area_start_row, edit_area_height, screen_width,
+                                 cursor_row, cursor_col, meta.x_meaning, meta.o_meaning);
+
+        // Render footer
+        footer_renderer.render(terminal, cursor_data.x, cursor_data.y,
+                              x_min, x_max, y_min, y_max,
+                              viewport.data_x_min(), viewport.data_x_max(),
+                              viewport.data_y_min(), viewport.data_y_max(), 0, table_active_changes);
+
+        // Output the buffer to stdout
+        if (args.dump_screen) {
+            // Dump entire screen
+            for (int row = 0; row < screen_height; ++row) {
+                std::cout << terminal.get_row(row);
+                if (row < screen_height - 1) {
+                    std::cout << '\n';
+                }
+            }
+        } else {
+            // Dump only edit area contents (inside the border)
+            for (int row = edit_area_start_row + 1; row < edit_area_start_row + edit_area_height - 1; ++row) {
+                // Get the full row
+                std::string full_row = terminal.get_row(row);
+                // Extract only the content inside the border (columns 1 to width-2)
+                // Border is at column 0 (left) and column width-1 (right)
+                // Content is in columns 1 through width-2
+                if (full_row.length() > 1) {
+                    int content_length = std::min(screen_width - 2, static_cast<int>(full_row.length()) - 1);
+                    std::string content = full_row.substr(1, content_length);
+                    std::cout << content;
+                }
+                if (row < edit_area_start_row + edit_area_height - 2) {
+                    std::cout << '\n';
+                }
+            }
+        }
+
+        return 0;
+    }
+
     // If we got here with a database but no recognized command, show TUI table selection menu
     if (!args.table.has_value()) {
         // Initialize terminal for TUI menu
