@@ -374,13 +374,13 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ## Phase 12: Help System
 
 ### Help Overlay
-- [ ] Create HelpOverlay class
-- [ ] Test: Press '?' shows help overlay
-- [ ] Test: Display all keyboard shortcuts
+- [x] Create HelpOverlay class
+- [x] Test: Press '?' shows help overlay
+- [x] Test: Display all keyboard shortcuts
 - [ ] Test: Display current zoom level
 - [ ] Test: Display current pan step percentage
-- [ ] Test: Display hit-test behavior explanation
-- [ ] Test: Dismiss help to return to normal operation
+- [x] Test: Display hit-test behavior explanation
+- [x] Test: Dismiss help to return to normal operation
 
 ---
 
