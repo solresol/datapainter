@@ -30,13 +30,14 @@ public:
     //   vp_y_min: Current viewport minimum y
     //   vp_y_max: Current viewport maximum y
     //   focused_field: Which field has focus (for Tab navigation, 0-based)
+    //   unsaved_changes_count: Number of unsaved changes (0 if none)
     void render(Terminal& terminal, const std::string& db_path,
                 const std::string& table_name, const std::string& target_col,
                 const std::string& x_meaning, const std::string& o_meaning,
                 int total_count, int x_count, int o_count,
                 double x_min, double x_max, double y_min, double y_max,
                 double vp_x_min, double vp_x_max, double vp_y_min, double vp_y_max,
-                int focused_field);
+                int focused_field, int unsaved_changes_count = 0);
 
 private:
     // Extract just the filename from a full path

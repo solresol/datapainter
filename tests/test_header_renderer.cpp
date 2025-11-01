@@ -260,3 +260,78 @@ TEST_F(HeaderRendererTest, UsesMultipleRows) {
     }
     EXPECT_TRUE(has_content);
 }
+
+// Test: Display unsaved changes count when there are unsaved changes
+TEST_F(HeaderRendererTest, DisplayUnsavedChangesCount) {
+    HeaderRenderer renderer;
+
+    std::string db_path = "data.db";
+    std::string table_name = "test_table";
+    std::string target_col = "target";
+    std::string x_meaning = "positive";
+    std::string o_meaning = "negative";
+    int total_count = 100;
+    int x_count = 60;
+    int o_count = 40;
+    int unsaved_count = 5;
+
+    renderer.render(terminal_, db_path, table_name, target_col,
+                    x_meaning, o_meaning, total_count, x_count, o_count,
+                    -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 0, unsaved_count);
+
+    std::string row0 = terminal_.get_row(0);
+    // Should display [Unsaved: 5] in the header
+    EXPECT_NE(row0.find("Unsaved"), std::string::npos) << "Header should show 'Unsaved' indicator";
+    EXPECT_NE(row0.find("5"), std::string::npos) << "Header should show unsaved count";
+}
+
+// Test: Do NOT display unsaved changes when count is zero
+TEST_F(HeaderRendererTest, NoUnsavedIndicatorWhenZero) {
+    HeaderRenderer renderer;
+
+    std::string db_path = "data.db";
+    std::string table_name = "test_table";
+    std::string target_col = "target";
+    std::string x_meaning = "positive";
+    std::string o_meaning = "negative";
+    int total_count = 100;
+    int x_count = 60;
+    int o_count = 40;
+    int unsaved_count = 0;
+
+    renderer.render(terminal_, db_path, table_name, target_col,
+                    x_meaning, o_meaning, total_count, x_count, o_count,
+                    -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 0, unsaved_count);
+
+    std::string row0 = terminal_.get_row(0);
+    // Should NOT display [Unsaved] when count is zero
+    EXPECT_EQ(row0.find("Unsaved"), std::string::npos) << "Header should not show 'Unsaved' when count is 0";
+}
+
+// Test: Unsaved changes count appears on right side of header
+TEST_F(HeaderRendererTest, UnsavedCountRightAligned) {
+    HeaderRenderer renderer;
+
+    std::string db_path = "data.db";
+    std::string table_name = "test_table";
+    std::string target_col = "target";
+    std::string x_meaning = "positive";
+    std::string o_meaning = "negative";
+    int total_count = 100;
+    int x_count = 60;
+    int o_count = 40;
+    int unsaved_count = 12;
+
+    renderer.render(terminal_, db_path, table_name, target_col,
+                    x_meaning, o_meaning, total_count, x_count, o_count,
+                    -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 0, unsaved_count);
+
+    std::string row0 = terminal_.get_row(0);
+    size_t unsaved_pos = row0.find("Unsaved");
+    size_t table_pos = row0.find("test_table");
+
+    // Unsaved indicator should appear after (to the right of) the table name
+    ASSERT_NE(unsaved_pos, std::string::npos) << "Should find 'Unsaved' in row 0";
+    ASSERT_NE(table_pos, std::string::npos) << "Should find 'test_table' in row 0";
+    EXPECT_GT(unsaved_pos, table_pos) << "Unsaved indicator should be right-aligned (after table name)";
+}

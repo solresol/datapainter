@@ -327,7 +327,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Check for unsaved changes (count active changes)
 - [x] Test: Count unsaved changes across multiple tables
 - [x] **VERIFIED**: Flip functionality implementation is correct (tests pass, UI code is correct)
-- [ ] Display unsaved changes count in UI (header or footer) - show "[Unsaved: N]"
+- [x] Display unsaved changes count in UI (header or footer) - show "[Unsaved: N]"
 - [x] Test: Press 'q' quits immediately (if no unsaved changes) - implemented in main.cpp
 - [x] Test: Warn if unsaved changes exist - show confirmation dialog - implemented in main.cpp
 - [x] Implement warning dialog: "Save changes before quitting? (y/n/cancel)" - implemented

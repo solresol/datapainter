@@ -631,24 +631,33 @@ int main(int argc, char** argv) {
             ScreenCoord cursor_content = cursor_to_content_coords(cursor_row, cursor_col);
             DataCoord cursor_data = viewport.screen_to_data(cursor_content);
 
+            // Load unsaved changes for this table
+            std::vector<ChangeRecord> unsaved_changes = unsaved_changes_tracker.get_changes(table_name);
+
+            // Count active unsaved changes across all tables (for header display)
+            auto all_changes = unsaved_changes_tracker.get_all_changes();
+            int total_active_changes = 0;
+            for (const auto& change : all_changes) {
+                if (change.is_active) {
+                    total_active_changes++;
+                }
+            }
+
+            // Count active unsaved changes for this table only (for footer display)
+            int table_active_changes = 0;
+            for (const auto& change : unsaved_changes) {
+                if (change.is_active) {
+                    table_active_changes++;
+                }
+            }
+
             // Render header
             header_renderer.render(terminal, args.database.value(), meta.table_name,
                                   meta.target_col_name, meta.x_meaning, meta.o_meaning,
                                   total_count, x_count, o_count,
                                   x_min, x_max, y_min, y_max,
                                   viewport.data_x_min(), viewport.data_x_max(),
-                                  viewport.data_y_min(), viewport.data_y_max(), 0);
-
-            // Load unsaved changes for this table
-            std::vector<ChangeRecord> unsaved_changes = unsaved_changes_tracker.get_changes(table_name);
-
-            // Count active unsaved changes (for display in footer)
-            int active_changes = 0;
-            for (const auto& change : unsaved_changes) {
-                if (change.is_active) {
-                    active_changes++;
-                }
-            }
+                                  viewport.data_y_min(), viewport.data_y_max(), 0, total_active_changes);
 
             // Render edit area
             edit_area_renderer.render(terminal, viewport, data_table, unsaved_changes,
@@ -659,7 +668,7 @@ int main(int argc, char** argv) {
             footer_renderer.render(terminal, cursor_data.x, cursor_data.y,
                                   x_min, x_max, y_min, y_max,
                                   viewport.data_x_min(), viewport.data_x_max(),
-                                  viewport.data_y_min(), viewport.data_y_max(), 0, active_changes);
+                                  viewport.data_y_min(), viewport.data_y_max(), 0, table_active_changes);
 
             // Display to screen with cursor
             terminal.render_with_cursor(cursor_row, cursor_col);

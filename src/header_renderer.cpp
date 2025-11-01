@@ -11,33 +11,51 @@ void HeaderRenderer::render(Terminal& terminal, const std::string& db_path,
                            int total_count, int x_count, int o_count,
                            double x_min, double x_max, double y_min, double y_max,
                            double vp_x_min, double vp_x_max, double vp_y_min, double vp_y_max,
-                           int focused_field) {
+                           int focused_field, int unsaved_changes_count) {
     int cols = terminal.cols();
 
     // Extract filename from database path
     std::string db_filename = extract_filename(db_path);
 
-    // Row 0: Database and table name
-    std::ostringstream row0;
+    // Row 0: Database and table name, with unsaved changes indicator
+    std::ostringstream row0_left;
     if (focused_field == 0) {
-        row0 << "[" << db_filename << "]";
+        row0_left << "[" << db_filename << "]";
     } else {
-        row0 << db_filename;
+        row0_left << db_filename;
     }
-    row0 << " | ";
+    row0_left << " | ";
     if (focused_field == 1) {
-        row0 << "[" << table_name << "]";
+        row0_left << "[" << table_name << "]";
     } else {
-        row0 << table_name;
+        row0_left << table_name;
     }
 
-    std::string row0_str = row0.str();
-    // Truncate or pad to fit width
-    if (static_cast<int>(row0_str.length()) > cols) {
-        row0_str = row0_str.substr(0, cols);
+    std::string row0_left_str = row0_left.str();
+
+    // Add unsaved changes indicator on the right side if there are unsaved changes
+    std::string row0_right_str;
+    if (unsaved_changes_count > 0) {
+        std::ostringstream row0_right;
+        row0_right << "[Unsaved: " << unsaved_changes_count << "]";
+        row0_right_str = row0_right.str();
     }
-    for (size_t i = 0; i < row0_str.length(); ++i) {
-        terminal.write_char(0, i, row0_str[i]);
+
+    // Write left side
+    int left_len = std::min(static_cast<int>(row0_left_str.length()),
+                            cols - static_cast<int>(row0_right_str.length()) - 1);
+    for (int i = 0; i < left_len; ++i) {
+        terminal.write_char(0, i, row0_left_str[i]);
+    }
+
+    // Write right side (right-aligned) if there are unsaved changes
+    if (!row0_right_str.empty()) {
+        int right_start = cols - row0_right_str.length();
+        if (right_start > left_len) {
+            for (size_t i = 0; i < row0_right_str.length(); ++i) {
+                terminal.write_char(0, right_start + i, row0_right_str[i]);
+            }
+        }
     }
 
     // Row 1: Target column and meanings
