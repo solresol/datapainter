@@ -45,9 +45,9 @@ TEST_F(PointEditorTest, CreateXPoint) {
     bool result = editor.create_point(2.5, 3.5, 'x');
     EXPECT_TRUE(result);
 
-    // Verify point was created
-    DataTable dt(db_, "test_table");
-    auto points = dt.query_viewport(-10.0, 10.0, -10.0, 10.0);
+    // Verify point was created (in unsaved_changes)
+    // Use get_points_at_cursor which includes unsaved changes
+    auto points = editor.get_points_at_cursor(2.5, 3.5, 1.0);
     EXPECT_EQ(points.size(), 1);
     EXPECT_DOUBLE_EQ(points[0].x, 2.5);
     EXPECT_DOUBLE_EQ(points[0].y, 3.5);
@@ -61,9 +61,9 @@ TEST_F(PointEditorTest, CreateOPoint) {
     bool result = editor.create_point(2.5, 3.5, 'o');
     EXPECT_TRUE(result);
 
-    // Verify point was created
-    DataTable dt(db_, "test_table");
-    auto points = dt.query_viewport(-10.0, 10.0, -10.0, 10.0);
+    // Verify point was created (in unsaved_changes)
+    // Use get_points_at_cursor which includes unsaved changes
+    auto points = editor.get_points_at_cursor(2.5, 3.5, 1.0);
     EXPECT_EQ(points.size(), 1);
     EXPECT_DOUBLE_EQ(points[0].x, 2.5);
     EXPECT_DOUBLE_EQ(points[0].y, 3.5);
@@ -123,10 +123,14 @@ TEST_F(PointEditorTest, CreateMultiplePoints) {
     editor.create_point(2.0, 2.0, 'o');
     editor.create_point(3.0, 3.0, 'x');
 
-    // Verify all points were created
-    DataTable dt(db_, "test_table");
-    auto points = dt.query_viewport(-10.0, 10.0, -10.0, 10.0);
-    EXPECT_EQ(points.size(), 3);
+    // Verify all points were created (in unsaved_changes)
+    UnsavedChanges uc(db_);
+    auto changes = uc.get_changes("test_table");
+    EXPECT_EQ(changes.size(), 3);
+    // Verify all are insert actions
+    for (const auto& change : changes) {
+        EXPECT_EQ(change.action, "insert");
+    }
 }
 
 // Test: Delete all points at cursor position
@@ -143,10 +147,13 @@ TEST_F(PointEditorTest, DeletePointsAtCursor) {
     int deleted = editor.delete_points_at_cursor(2.5, 3.5, 1.0);
     EXPECT_EQ(deleted, 2);  // Should delete both nearby points
 
-    // Verify only distant point remains
-    auto points = dt.query_viewport(-10.0, 10.0, -10.0, 10.0);
-    EXPECT_EQ(points.size(), 1);
-    EXPECT_DOUBLE_EQ(points[0].x, 7.0);
+    // Verify only distant point remains (using get_points_at_cursor which includes unsaved deletions)
+    auto points_at_cursor = editor.get_points_at_cursor(2.5, 3.5, 1.0);
+    EXPECT_EQ(points_at_cursor.size(), 0);  // Both points should be gone
+
+    auto distant_points = editor.get_points_at_cursor(7.0, 8.0, 1.0);
+    EXPECT_EQ(distant_points.size(), 1);  // Distant point should still be there
+    EXPECT_DOUBLE_EQ(distant_points[0].x, 7.0);
 }
 
 // Test: Delete points rounds to screen cell
@@ -162,7 +169,8 @@ TEST_F(PointEditorTest, DeletePointsRoundsToCell) {
     int deleted = editor.delete_points_at_cursor(2.5, 3.5, 1.0);
     EXPECT_EQ(deleted, 2);
 
-    auto points = dt.query_viewport(-10.0, 10.0, -10.0, 10.0);
+    // Verify both points are gone (using get_points_at_cursor which includes unsaved deletions)
+    auto points = editor.get_points_at_cursor(2.5, 3.5, 1.0);
     EXPECT_EQ(points.size(), 0);
 }
 
@@ -217,8 +225,8 @@ TEST_F(PointEditorTest, ConvertOPointsToX) {
     int converted = editor.convert_points_at_cursor(2.5, 3.5, 1.0, 'x');
     EXPECT_EQ(converted, 2);
 
-    // Verify conversion
-    auto points = dt.query_viewport(-10.0, 10.0, -10.0, 10.0);
+    // Verify conversion (using get_points_at_cursor which includes unsaved updates)
+    auto points = editor.get_points_at_cursor(2.5, 3.5, 1.0);
     EXPECT_EQ(points.size(), 2);
     for (const auto& point : points) {
         EXPECT_EQ(point.target, "x_meaning");
@@ -238,8 +246,8 @@ TEST_F(PointEditorTest, ConvertXPointsToO) {
     int converted = editor.convert_points_at_cursor(2.5, 3.5, 1.0, 'o');
     EXPECT_EQ(converted, 2);
 
-    // Verify conversion
-    auto points = dt.query_viewport(-10.0, 10.0, -10.0, 10.0);
+    // Verify conversion (using get_points_at_cursor which includes unsaved updates)
+    auto points = editor.get_points_at_cursor(2.5, 3.5, 1.0);
     EXPECT_EQ(points.size(), 2);
     for (const auto& point : points) {
         EXPECT_EQ(point.target, "o_meaning");
@@ -315,8 +323,8 @@ TEST_F(PointEditorTest, ConversionOnlyAffectsSpecifiedType) {
     int converted = editor.convert_points_at_cursor(2.5, 3.5, 1.0, 'x');
     EXPECT_EQ(converted, 1);  // Only converted the o point
 
-    // Verify only o point was converted
-    auto points = dt.query_viewport(-10.0, 10.0, -10.0, 10.0);
+    // Verify only o point was converted (using get_points_at_cursor which includes unsaved updates)
+    auto points = editor.get_points_at_cursor(2.5, 3.5, 1.0);
     EXPECT_EQ(points.size(), 2);
     for (const auto& point : points) {
         EXPECT_EQ(point.target, "x_meaning");
@@ -346,7 +354,8 @@ TEST_F(PointEditorTest, CreatePointAtValidBoundaries) {
     EXPECT_TRUE(editor.create_point(-10.0, -10.0, 'x'));
     EXPECT_TRUE(editor.create_point(10.0, 10.0, 'o'));
 
-    DataTable dt(db_, "test_table");
-    auto points = dt.query_viewport(-10.0, 10.0, -10.0, 10.0);
-    EXPECT_EQ(points.size(), 2);
+    // Verify points were created (in unsaved_changes)
+    UnsavedChanges uc(db_);
+    auto changes = uc.get_changes("test_table");
+    EXPECT_EQ(changes.size(), 2);
 }
