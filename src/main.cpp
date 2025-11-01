@@ -13,6 +13,7 @@
 #include "point_editor.h"
 #include "unsaved_changes.h"
 #include "save_manager.h"
+#include "help_overlay.h"
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -854,6 +855,19 @@ int main(int argc, char** argv) {
                 if (flipped > 0) {
                     needs_redraw = true;
                 }
+            }
+            else if (key == '?') {
+                // Show help overlay
+                HelpOverlay help;
+                terminal.clear_buffer();
+                help.render(terminal, screen_height, screen_width);
+                terminal.render_with_cursor(cursor_row, cursor_col);
+
+                // Wait for any key press to dismiss
+                terminal.read_key();
+
+                // Redraw the main UI after dismissing help
+                needs_redraw = true;
             }
             else if (key == 127 || key == 8) {
                 // Delete all points at cursor (backspace or delete key)
