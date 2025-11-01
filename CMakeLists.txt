@@ -146,6 +146,8 @@ if(BUILD_TESTS)
         tests/test_save_resets_unsaved_count.cpp
         tests/test_footer_width.cpp
         tests/test_mouse_support.cpp
+        tests/test_quit_counts_only_active_changes.cpp
+        tests/test_quit_after_save_scenario.cpp
         # Implementation files needed by tests
         src/database.cpp
         src/argument_parser.cpp
