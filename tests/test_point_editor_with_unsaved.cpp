@@ -93,10 +93,8 @@ TEST_F(PointEditorWithUnsavedTest, ConvertUnsavedPoints) {
     double cell_size = 0.1;
     int converted = editor_->convert_points_at_cursor(3.0, 3.0, cell_size, 'o');
 
-    // Note: Converting unsaved inserts requires updating the original insert record
-    // Current implementation only converts DB points
-    // TODO: Support converting unsaved inserts
-    EXPECT_EQ(converted, 0);  // Currently doesn't support converting unsaved inserts
+    // Converting unsaved inserts is now supported via update_insert_target
+    EXPECT_EQ(converted, 1);  // Should successfully convert the unsaved insert
 }
 
 // Test: Flip points that only exist in unsaved_changes
