@@ -12,6 +12,7 @@
 #include "table_selection_menu.h"
 #include "point_editor.h"
 #include "unsaved_changes.h"
+#include "save_manager.h"
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -640,6 +641,14 @@ int main(int argc, char** argv) {
             // Load unsaved changes for this table
             std::vector<ChangeRecord> unsaved_changes = unsaved_changes_tracker.get_changes(table_name);
 
+            // Count active unsaved changes (for display in footer)
+            int active_changes = 0;
+            for (const auto& change : unsaved_changes) {
+                if (change.is_active) {
+                    active_changes++;
+                }
+            }
+
             // Render edit area
             edit_area_renderer.render(terminal, viewport, data_table, unsaved_changes,
                                      edit_area_start_row, edit_area_height, screen_width,
@@ -649,7 +658,7 @@ int main(int argc, char** argv) {
             footer_renderer.render(terminal, cursor_data.x, cursor_data.y,
                                   x_min, x_max, y_min, y_max,
                                   viewport.data_x_min(), viewport.data_x_max(),
-                                  viewport.data_y_min(), viewport.data_y_max(), 0);
+                                  viewport.data_y_min(), viewport.data_y_max(), 0, active_changes);
 
             // Display to screen with cursor
             terminal.render_with_cursor(cursor_row, cursor_col);
@@ -694,7 +703,65 @@ int main(int argc, char** argv) {
             }
             // Handle quit (q, Q, or ESC)
             else if (key == 'q' || key == 'Q' || key == 27) {
-                running = false;
+                // Check for unsaved changes
+                auto all_changes = unsaved_changes_tracker.get_all_changes();
+                int active_changes = 0;
+                for (const auto& change : all_changes) {
+                    if (change.is_active) {
+                        active_changes++;
+                    }
+                }
+
+                if (active_changes == 0) {
+                    // No unsaved changes, quit immediately
+                    running = false;
+                } else {
+                    // Unsaved changes exist, show confirmation dialog
+                    // Exit raw mode temporarily to show dialog
+                    terminal.exit_raw_mode();
+
+                    // Clear screen and show dialog
+                    std::cout << "\033[2J\033[H";  // Clear screen
+                    std::cout << "You have " << active_changes << " unsaved change";
+                    if (active_changes != 1) std::cout << "s";
+                    std::cout << "." << std::endl;
+                    std::cout << std::endl;
+                    std::cout << "Save changes before quitting?" << std::endl;
+                    std::cout << "  y - Save and quit" << std::endl;
+                    std::cout << "  n - Discard changes and quit" << std::endl;
+                    std::cout << "  c - Cancel (return to editor)" << std::endl;
+                    std::cout << std::endl;
+                    std::cout << "Your choice: ";
+                    std::cout.flush();
+
+                    // Read user's choice
+                    char choice;
+                    std::cin >> choice;
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+                    if (choice == 'y' || choice == 'Y') {
+                        // Save then quit
+                        SaveManager save_manager(db, table_name);
+                        bool save_success = save_manager.save();
+                        if (save_success) {
+                            running = false;
+                        } else {
+                            // Show error message
+                            std::cout << "\nError: Failed to save changes. Press Enter to return to editor.";
+                            std::cin.get();  // Wait for Enter
+                            // Re-enter raw mode and continue
+                            terminal.enter_raw_mode();
+                            needs_redraw = true;
+                        }
+                    } else if (choice == 'n' || choice == 'N') {
+                        // Discard and quit
+                        running = false;
+                    } else {
+                        // Cancel or any other input - return to editor
+                        terminal.enter_raw_mode();
+                        needs_redraw = true;
+                    }
+                }
             }
             // Handle zoom
             else if (key == '+' || key == '=') {

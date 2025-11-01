@@ -24,10 +24,11 @@ public:
     //   vp_y_max: Current viewport maximum y
     //   focused_button: Which button has focus (for Tab navigation, 0-based)
     //                   0=none (viewport focused), >0 = specific button
+    //   unsaved_changes_count: Number of active unsaved changes
     void render(Terminal& terminal, double cursor_x, double cursor_y,
                 double x_min, double x_max, double y_min, double y_max,
                 double vp_x_min, double vp_x_max, double vp_y_min, double vp_y_max,
-                int focused_button);
+                int focused_button, int unsaved_changes_count = 0);
 
 private:
     // Calculate appropriate precision for displaying coordinates

@@ -8,7 +8,7 @@ namespace datapainter {
 void FooterRenderer::render(Terminal& terminal, double cursor_x, double cursor_y,
                            double x_min, double x_max, double y_min, double y_max,
                            double vp_x_min, double vp_x_max, double vp_y_min, double vp_y_max,
-                           int focused_button) {
+                           int focused_button, int unsaved_changes_count) {
     int rows = terminal.rows();
     int cols = terminal.cols();
     int footer_row = rows - 1;
@@ -26,6 +26,11 @@ void FooterRenderer::render(Terminal& terminal, double cursor_x, double cursor_y
 
     // Build footer string
     std::ostringstream footer;
+
+    // Unsaved changes indicator (if any)
+    if (unsaved_changes_count > 0) {
+        footer << "[Unsaved: " << unsaved_changes_count << "] ";
+    }
 
     // Cursor position with dynamic precision
     footer << "(" << format_coord(cursor_x, cursor_precision)
