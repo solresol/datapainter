@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 #include "axis_renderer.h"
+#include "terminal.h"
+#include "viewport.h"
 #include <cmath>
 
 using namespace datapainter;
@@ -247,4 +249,301 @@ TEST(AxisRendererTest, TenthTicksAvoidMinorTicks) {
                                       << " coincides with minor tick";
         }
     }
+}
+
+// Test: Draw x-axis with tick marks and labels
+TEST(AxisRendererTest, DrawXAxisBasic) {
+    Terminal terminal;
+    terminal.set_dimensions(20, 80);
+
+    // Use Viewport constructor with all parameters
+    Viewport viewport(0.0, 10.0, 0.0, 10.0,  // data ranges
+                     0.0, 10.0, 0.0, 10.0,   // valid ranges
+                     10, 60);                 // screen size (height, width)
+
+    AxisRenderer renderer;
+    int axis_row = 9;  // Bottom row of content area
+    int start_col = 0;
+    int width = 60;
+
+    renderer.render_x_axis(terminal, viewport, axis_row, start_col, width, "x_axis");
+
+    // X-axis should have some tick marks
+    std::string axis_line = terminal.get_row(axis_row);
+    // Should contain at least some tick characters or numbers
+    EXPECT_NE(axis_line.find_first_not_of(' '), std::string::npos)
+        << "X-axis should not be empty";
+}
+
+// Test: Draw y-axis with tick marks and labels
+TEST(AxisRendererTest, DrawYAxisBasic) {
+    Terminal terminal;
+    terminal.set_dimensions(20, 80);
+
+    Viewport viewport(0.0, 10.0, 0.0, 10.0,  // data ranges
+                     0.0, 10.0, 0.0, 10.0,   // valid ranges
+                     10, 60);                 // screen size
+
+    AxisRenderer renderer;
+    int axis_col = 0;  // Left column of content area
+    int start_row = 0;
+    int height = 10;
+
+    renderer.render_y_axis(terminal, viewport, axis_col, start_row, height, "y_axis");
+
+    // Y-axis should have some tick marks or labels
+    bool has_content = false;
+    for (int row = start_row; row < start_row + height; ++row) {
+        std::string row_str = terminal.get_row(row);
+        if (!row_str.empty() && row_str.length() > static_cast<size_t>(axis_col) && row_str[axis_col] != ' ') {
+            has_content = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(has_content) << "Y-axis should have some visible content";
+}
+
+// Test: X-axis labels are aligned with tick marks
+TEST(AxisRendererTest, XAxisLabelAlignment) {
+    Terminal terminal;
+    terminal.set_dimensions(20, 80);
+
+    Viewport viewport(0.0, 10.0, 0.0, 10.0,  // data ranges
+                     0.0, 10.0, 0.0, 10.0,   // valid ranges
+                     10, 60);                 // screen size
+
+    AxisRenderer renderer;
+    int axis_row = 9;
+    int start_col = 0;
+    int width = 60;
+
+    renderer.render_x_axis(terminal, viewport, axis_row, start_col, width, "x_axis");
+
+    std::string axis_line = terminal.get_row(axis_row);
+
+    // Should have tick marks for values 0, 2, 4, 6, 8, 10 (or similar)
+    // The exact positions depend on viewport mapping
+    // Just verify that we have some numeric labels
+    bool has_numbers = false;
+    for (char c : axis_line) {
+        if (c >= '0' && c <= '9') {
+            has_numbers = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(has_numbers) << "X-axis should have numeric labels";
+}
+
+// Test: Do NOT show zero bars by default
+TEST(AxisRendererTest, NoZeroBarsByDefault) {
+    Terminal terminal;
+    terminal.set_dimensions(20, 80);
+
+    Viewport viewport(-10.0, 10.0, -10.0, 10.0,  // data ranges including 0
+                     -10.0, 10.0, -10.0, 10.0,   // valid ranges
+                     10, 60);                     // screen size
+
+    AxisRenderer renderer;
+    int start_row = 0;
+    int start_col = 0;
+    int height = 10;
+    int width = 60;
+
+    // Render without show_zero_bars flag (should not show zero bars)
+    renderer.render_zero_bars(terminal, viewport, start_row, start_col, height, width, false);
+
+    // Check that the screen is still empty (no zero bars drawn)
+    // Find the middle of the viewport (where x=0 and y=0 would be)
+    DataCoord zero{0.0, 0.0};
+    auto screen_opt = viewport.data_to_screen(zero);
+
+    if (screen_opt.has_value()) {
+        auto screen = screen_opt.value();
+        int zero_row = start_row + screen.row;
+        int zero_col = start_col + screen.col;
+
+        // Verify no special zero bar characters at origin
+        std::string row_str = terminal.get_row(zero_row);
+        if (!row_str.empty() && row_str.length() > static_cast<size_t>(zero_col)) {
+            char char_at_origin = row_str[zero_col];
+            // Should be empty or space (not a zero bar character)
+            EXPECT_TRUE(char_at_origin == ' ' || char_at_origin == '\0')
+                << "Should not show zero bars when disabled";
+        }
+    }
+}
+
+// Test: Show vertical line at x=0 when --show-zero-bars AND x=0 in viewport
+TEST(AxisRendererTest, ShowVerticalZeroBar) {
+    Terminal terminal;
+    terminal.set_dimensions(20, 80);
+
+    Viewport viewport(-10.0, 10.0, -10.0, 10.0,  // data ranges including 0
+                     -10.0, 10.0, -10.0, 10.0,   // valid ranges
+                     10, 60);                     // screen size
+
+    AxisRenderer renderer;
+    int start_row = 0;
+    int start_col = 0;
+    int height = 10;
+    int width = 60;
+
+    // Render with show_zero_bars flag
+    renderer.render_zero_bars(terminal, viewport, start_row, start_col, height, width, true);
+
+    // Find where x=0 is on screen
+    DataCoord zero{0.0, 0.0};
+    auto screen_opt = viewport.data_to_screen(zero);
+
+    if (screen_opt.has_value()) {
+        auto screen = screen_opt.value();
+        int zero_col = start_col + screen.col;
+
+        // Verify vertical line at x=0
+        bool has_vertical_line = false;
+        for (int row = start_row; row < start_row + height; ++row) {
+            std::string row_str = terminal.get_row(row);
+            if (!row_str.empty() && row_str.length() > static_cast<size_t>(zero_col)) {
+                char ch = row_str[zero_col];
+                if (ch == '|' || ch == '+') {
+                    has_vertical_line = true;
+                    break;
+                }
+            }
+        }
+        EXPECT_TRUE(has_vertical_line) << "Should show vertical line at x=0";
+    }
+}
+
+// Test: Show horizontal line at y=0 when --show-zero-bars AND y=0 in viewport
+TEST(AxisRendererTest, ShowHorizontalZeroBar) {
+    Terminal terminal;
+    terminal.set_dimensions(20, 80);
+
+    Viewport viewport(-10.0, 10.0, -10.0, 10.0,  // data ranges including 0
+                     -10.0, 10.0, -10.0, 10.0,   // valid ranges
+                     10, 60);                     // screen size
+
+    AxisRenderer renderer;
+    int start_row = 0;
+    int start_col = 0;
+    int height = 10;
+    int width = 60;
+
+    // Render with show_zero_bars flag
+    renderer.render_zero_bars(terminal, viewport, start_row, start_col, height, width, true);
+
+    // Find where y=0 is on screen
+    DataCoord zero{0.0, 0.0};
+    auto screen_opt = viewport.data_to_screen(zero);
+
+    if (screen_opt.has_value()) {
+        auto screen = screen_opt.value();
+        int zero_row = start_row + screen.row;
+
+        // Verify horizontal line at y=0
+        std::string row_str = terminal.get_row(zero_row);
+        bool has_horizontal_line = false;
+        for (int col = start_col; col < start_col + width && col < static_cast<int>(row_str.length()); ++col) {
+            char ch = row_str[col];
+            if (ch == '-' || ch == '+') {
+                has_horizontal_line = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(has_horizontal_line) << "Should show horizontal line at y=0";
+    }
+}
+
+// Test: Use distinct characters for zero bars (| and ─)
+TEST(AxisRendererTest, ZeroBarsUseDistinctCharacters) {
+    Terminal terminal;
+    terminal.set_dimensions(20, 80);
+
+    Viewport viewport(-5.0, 5.0, -5.0, 5.0,  // data ranges
+                     -5.0, 5.0, -5.0, 5.0,   // valid ranges
+                     10, 60);                 // screen size
+
+    AxisRenderer renderer;
+    int start_row = 0;
+    int start_col = 0;
+    int height = 10;
+    int width = 60;
+
+    renderer.render_zero_bars(terminal, viewport, start_row, start_col, height, width, true);
+
+    // Find origin
+    DataCoord zero{0.0, 0.0};
+    auto screen_opt = viewport.data_to_screen(zero);
+
+    if (screen_opt.has_value()) {
+        auto screen = screen_opt.value();
+        int zero_row = start_row + screen.row;
+        int zero_col = start_col + screen.col;
+
+        // Check vertical bar uses '|' (check row above origin)
+        if (zero_row > start_row) {
+            std::string row_str = terminal.get_row(zero_row - 1);
+            if (!row_str.empty() && row_str.length() > static_cast<size_t>(zero_col)) {
+                char above = row_str[zero_col];
+                if (above != ' ' && above != '\0') {
+                    EXPECT_EQ(above, '|') << "Vertical zero bar should use '|' character";
+                }
+            }
+        }
+
+        // Check horizontal bar uses '-' (check column left of origin)
+        if (zero_col > start_col) {
+            std::string row_str = terminal.get_row(zero_row);
+            if (!row_str.empty() && row_str.length() > static_cast<size_t>(zero_col - 1)) {
+                char left = row_str[zero_col - 1];
+                if (left != ' ' && left != '\0') {
+                    EXPECT_EQ(left, '-') << "Horizontal zero bar should use '-' character";
+                }
+            }
+        }
+    }
+}
+
+// Test: Zero bars only shown when x=0 or y=0 is in viewport
+TEST(AxisRendererTest, ZeroBarsOnlyWhenInViewport) {
+    Terminal terminal;
+    terminal.set_dimensions(20, 80);
+
+    // Viewport that doesn't include zero
+    Viewport viewport(5.0, 15.0, 5.0, 15.0,  // data ranges NOT including 0
+                     5.0, 15.0, 5.0, 15.0,   // valid ranges
+                     10, 60);                 // screen size
+
+    AxisRenderer renderer;
+    int start_row = 0;
+    int start_col = 0;
+    int height = 10;
+    int width = 60;
+
+    // Clear terminal first
+    for (int row = 0; row < 20; ++row) {
+        for (int col = 0; col < 80; ++col) {
+            terminal.write_char(row, col, ' ');
+        }
+    }
+
+    // Render zero bars (but they shouldn't appear since 0 is not in viewport)
+    renderer.render_zero_bars(terminal, viewport, start_row, start_col, height, width, true);
+
+    // Count non-space characters - should be minimal or zero
+    // since zero bars shouldn't be drawn when 0,0 is out of viewport
+    int non_space_count = 0;
+    for (int row = start_row; row < start_row + height; ++row) {
+        std::string row_str = terminal.get_row(row);
+        for (int col = start_col; col < start_col + width && col < static_cast<int>(row_str.length()); ++col) {
+            char ch = row_str[col];
+            if (ch != ' ' && ch != '\0') {
+                non_space_count++;
+            }
+        }
+    }
+
+    EXPECT_EQ(non_space_count, 0)
+        << "Zero bars should not appear when 0,0 is outside viewport";
 }

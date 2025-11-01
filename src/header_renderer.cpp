@@ -101,14 +101,14 @@ void HeaderRenderer::render(Terminal& terminal, const std::string& db_path,
     std::string right_str = row2_right.str();
 
     // Write left side
-    int left_len = std::min(static_cast<int>(left_str.length()), cols - static_cast<int>(right_str.length()) - 2);
-    for (int i = 0; i < left_len; ++i) {
+    int row2_left_len = std::min(static_cast<int>(left_str.length()), cols - static_cast<int>(right_str.length()) - 2);
+    for (int i = 0; i < row2_left_len; ++i) {
         terminal.write_char(2, i, left_str[i]);
     }
 
     // Write right side (right-aligned)
     int right_start = cols - right_str.length();
-    if (right_start > left_len) {
+    if (right_start > row2_left_len) {
         for (size_t i = 0; i < right_str.length(); ++i) {
             terminal.write_char(2, right_start + i, right_str[i]);
         }

@@ -1,4 +1,6 @@
 #include "axis_renderer.h"
+#include "terminal.h"
+#include "viewport.h"
 #include <cmath>
 #include <sstream>
 #include <iomanip>
@@ -188,6 +190,180 @@ double AxisRenderer::round_to_nice(double value) {
     }
 
     return nice_mantissa * power_of_10;
+}
+
+void AxisRenderer::render_x_axis(Terminal& terminal, const Viewport& viewport,
+                                 int axis_row, int start_col, int width,
+                                 const std::string& axis_name) {
+    // Suppress unused parameter warning
+    (void)axis_name;
+
+    // Calculate tick step for x-axis
+    double data_min = viewport.data_x_min();
+    double data_max = viewport.data_x_max();
+    double tick_step = calculate_tick_step(data_min, data_max, width);
+
+    // Generate major ticks
+    auto major_ticks = generate_major_ticks(data_min, data_max, tick_step);
+
+    // Draw a horizontal line for the axis
+    for (int col = start_col; col < start_col + width; ++col) {
+        terminal.write_char(axis_row, col, '-');
+    }
+
+    // Draw tick marks and labels
+    for (const auto& tick : major_ticks) {
+        // Convert data coordinate to screen coordinate
+        DataCoord data{tick.value, 0.0};  // y doesn't matter for x-axis
+        auto screen_opt = viewport.data_to_screen(data);
+
+        if (screen_opt.has_value()) {
+            auto screen = screen_opt.value();
+            int tick_col = start_col + screen.col;
+
+            // Check if tick is within axis bounds
+            if (tick_col >= start_col && tick_col < start_col + width) {
+                // Draw tick mark
+                terminal.write_char(axis_row, tick_col, '|');
+
+                // Draw label (centered on tick)
+                // Place label characters around the tick position
+                int label_len = tick.label.length();
+                int label_start = tick_col - label_len / 2;
+
+                for (size_t i = 0; i < tick.label.length(); ++i) {
+                    int label_col = label_start + i;
+                    if (label_col >= start_col && label_col < start_col + width &&
+                        label_col != tick_col) {  // Don't overwrite tick mark
+                        terminal.write_char(axis_row, label_col, tick.label[i]);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void AxisRenderer::render_y_axis(Terminal& terminal, const Viewport& viewport,
+                                 int axis_col, int start_row, int height,
+                                 const std::string& axis_name) {
+    // Suppress unused parameter warning
+    (void)axis_name;
+
+    // Calculate tick step for y-axis
+    double data_min = viewport.data_y_min();
+    double data_max = viewport.data_y_max();
+    double tick_step = calculate_tick_step(data_min, data_max, height);
+
+    // Generate major ticks
+    auto major_ticks = generate_major_ticks(data_min, data_max, tick_step);
+
+    // Draw a vertical line for the axis
+    for (int row = start_row; row < start_row + height; ++row) {
+        terminal.write_char(row, axis_col, '|');
+    }
+
+    // Draw tick marks and labels
+    for (const auto& tick : major_ticks) {
+        // Convert data coordinate to screen coordinate
+        DataCoord data{0.0, tick.value};  // x doesn't matter for y-axis
+        auto screen_opt = viewport.data_to_screen(data);
+
+        if (screen_opt.has_value()) {
+            auto screen = screen_opt.value();
+            int tick_row = start_row + screen.row;
+
+            // Check if tick is within axis bounds
+            if (tick_row >= start_row && tick_row < start_row + height) {
+                // Draw tick mark
+                terminal.write_char(tick_row, axis_col, '-');
+
+                // Draw label (to the left of the axis)
+                // Place label characters to the left of the tick
+                int label_len = tick.label.length();
+                int label_start = axis_col - label_len - 1;
+
+                if (label_start >= 0) {
+                    for (size_t i = 0; i < tick.label.length(); ++i) {
+                        int label_col = label_start + i;
+                        if (label_col >= 0) {
+                            terminal.write_char(tick_row, label_col, tick.label[i]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void AxisRenderer::render_zero_bars(Terminal& terminal, const Viewport& viewport,
+                                    int start_row, int start_col, int height, int width,
+                                    bool show_zero_bars) {
+    if (!show_zero_bars) {
+        return;  // Zero bars disabled
+    }
+
+    // Check if x=0 is within the viewport data range
+    double x_min = viewport.data_x_min();
+    double x_max = viewport.data_x_max();
+    bool x_zero_in_viewport = (x_min <= 0.0 && x_max >= 0.0);
+
+    // Check if y=0 is within the viewport data range
+    double y_min = viewport.data_y_min();
+    double y_max = viewport.data_y_max();
+    bool y_zero_in_viewport = (y_min <= 0.0 && y_max >= 0.0);
+
+    // Draw vertical line at x=0 if it's in the viewport
+    if (x_zero_in_viewport) {
+        DataCoord x_zero{0.0, 0.0};
+        auto screen_opt = viewport.data_to_screen(x_zero);
+
+        if (screen_opt.has_value()) {
+            auto screen = screen_opt.value();
+            int zero_col = start_col + screen.col;
+
+            // Draw vertical line through all rows
+            if (zero_col >= start_col && zero_col < start_col + width) {
+                for (int row = start_row; row < start_row + height; ++row) {
+                    terminal.write_char(row, zero_col, '|');
+                }
+            }
+        }
+    }
+
+    // Draw horizontal line at y=0 if it's in the viewport
+    if (y_zero_in_viewport) {
+        DataCoord y_zero{0.0, 0.0};
+        auto screen_opt = viewport.data_to_screen(y_zero);
+
+        if (screen_opt.has_value()) {
+            auto screen = screen_opt.value();
+            int zero_row = start_row + screen.row;
+
+            // Draw horizontal line through all columns
+            if (zero_row >= start_row && zero_row < start_row + height) {
+                for (int col = start_col; col < start_col + width; ++col) {
+                    terminal.write_char(zero_row, col, '-');
+                }
+            }
+        }
+    }
+
+    // If both x=0 and y=0 are in viewport, mark the origin with a special character
+    if (x_zero_in_viewport && y_zero_in_viewport) {
+        DataCoord origin{0.0, 0.0};
+        auto screen_opt = viewport.data_to_screen(origin);
+
+        if (screen_opt.has_value()) {
+            auto screen = screen_opt.value();
+            int zero_row = start_row + screen.row;
+            int zero_col = start_col + screen.col;
+
+            if (zero_row >= start_row && zero_row < start_row + height &&
+                zero_col >= start_col && zero_col < start_col + width) {
+                terminal.write_char(zero_row, zero_col, '+');
+            }
+        }
+    }
 }
 
 } // namespace datapainter

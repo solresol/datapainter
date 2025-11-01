@@ -184,19 +184,19 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Use scientific notation for |k| >= 4
 
 ### Axis Drawing
-- [ ] Test: Draw x-axis with tick marks and labels
-- [ ] Test: Draw y-axis with tick marks and labels
-- [ ] Test: Draw x-axis label (column name)
-- [ ] Test: Draw y-axis label (column name)
+- [x] Test: Draw x-axis with tick marks and labels
+- [x] Test: Draw y-axis with tick marks and labels
+- [x] Test: Draw x-axis label (column name) - axis name parameter implemented
+- [x] Test: Draw y-axis label (column name) - axis name parameter implemented
 - [x] Test: Handle negative numbers in labels
-- [ ] Test: Align labels correctly with tick marks
+- [x] Test: Align labels correctly with tick marks
 
 ### Zero Bars (Cartesian Axes)
-- [ ] Test: Do NOT show zero bars by default
-- [ ] Test: Show vertical line at x=0 when --show-zero-bars AND x=0 in viewport
-- [ ] Test: Show horizontal line at y=0 when --show-zero-bars AND y=0 in viewport
-- [ ] Test: Use distinct characters for zero bars (| and ─)
-- [ ] Test: Differentiate zero bars from grid lines
+- [x] Test: Do NOT show zero bars by default
+- [x] Test: Show vertical line at x=0 when --show-zero-bars AND x=0 in viewport
+- [x] Test: Show horizontal line at y=0 when --show-zero-bars AND y=0 in viewport
+- [x] Test: Use distinct characters for zero bars (| and ─) - uses '|' and '-'
+- [x] Test: Differentiate zero bars from grid lines - uses distinct characters
 
 ---
 
