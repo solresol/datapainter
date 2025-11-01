@@ -755,7 +755,8 @@ int main(int argc, char** argv) {
                             needs_redraw = true;
                         }
                     } else if (choice == 'n' || choice == 'N') {
-                        // Discard and quit
+                        // Discard and quit - clear all unsaved changes
+                        unsaved_changes_tracker.clear_all_changes();
                         running = false;
                     } else {
                         // Cancel or any other input - return to editor

@@ -148,6 +148,7 @@ if(BUILD_TESTS)
         tests/test_mouse_support.cpp
         tests/test_quit_counts_only_active_changes.cpp
         tests/test_quit_after_save_scenario.cpp
+        tests/test_discard_changes_on_quit.cpp
         # Implementation files needed by tests
         src/database.cpp
         src/argument_parser.cpp
