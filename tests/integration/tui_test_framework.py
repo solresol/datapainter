@@ -190,11 +190,30 @@ class DataPainterTest:
         Send keystrokes to datapainter.
 
         Args:
-            keys: String of keys to send (each character sent separately)
+            keys: String of keys to send. Can include special key names like
+                  'TAB', 'ESC', 'UP', 'DOWN', 'LEFT', 'RIGHT', 'ENTER', 'BACKSPACE', 'DELETE'.
+                  Regular characters are sent as-is.
             delay: Delay between keys in seconds
         """
-        for key in keys:
-            self._send_key(key)
+        # Special keys that need to be recognized as multi-character sequences
+        special_keys = ['UP', 'DOWN', 'LEFT', 'RIGHT', 'BACKSPACE', 'DELETE', 'ENTER', 'ESC', 'TAB']
+
+        i = 0
+        while i < len(keys):
+            # Check if we're at the start of a special key sequence
+            found_special = False
+            for special in special_keys:
+                if keys[i:i+len(special)] == special:
+                    self._send_key(special)
+                    i += len(special)
+                    found_special = True
+                    break
+
+            if not found_special:
+                # Regular character
+                self._send_key(keys[i])
+                i += 1
+
             time.sleep(delay)
             self._read_output()
 

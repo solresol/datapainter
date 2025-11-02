@@ -17,6 +17,7 @@
 #include "cursor_utils.h"
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <thread>
 #include <chrono>
@@ -922,6 +923,12 @@ int main(int argc, char** argv) {
     int cursor_row = edit_area_start_row + 1 + (edit_area_height - 2) / 2;
     int cursor_col = 1 + (screen_width - 2) / 2;
 
+    // Tab navigation state
+    // focused_field: -1 = viewport, 0 = database, 1 = table, 2 = target, 3 = x meaning, 4 = o meaning
+    // focused_button: 0 = none/viewport, 1 = Tabular, 2 = Undo, 3 = Save, 4 = Quit
+    int focused_field = -1;
+    int focused_button = 0;
+
     std::cout << "Starting DataPainter TUI..." << std::endl;
     std::cout << "Keys: q=quit, +/-=zoom, arrows=move, x/o=add point, backspace=delete" << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -984,7 +991,7 @@ int main(int argc, char** argv) {
                                   total_count, x_count, o_count,
                                   x_min, x_max, y_min, y_max,
                                   viewport.data_x_min(), viewport.data_x_max(),
-                                  viewport.data_y_min(), viewport.data_y_max(), 0, total_active_changes);
+                                  viewport.data_y_min(), viewport.data_y_max(), focused_field, total_active_changes);
 
             // Render edit area
             edit_area_renderer.render(terminal, viewport, data_table, unsaved_changes,
@@ -995,7 +1002,7 @@ int main(int argc, char** argv) {
             footer_renderer.render(terminal, cursor_data.x, cursor_data.y,
                                   x_min, x_max, y_min, y_max,
                                   viewport.data_x_min(), viewport.data_x_max(),
-                                  viewport.data_y_min(), viewport.data_y_max(), 0, table_active_changes);
+                                  viewport.data_y_min(), viewport.data_y_max(), focused_button, table_active_changes);
 
             // Display to screen with cursor
             terminal.render_with_cursor(cursor_row, cursor_col);
@@ -1090,8 +1097,38 @@ int main(int argc, char** argv) {
                     }
                 }
             }
-            // Handle quit (q, Q, or ESC)
-            else if (key == 'q' || key == 'Q' || key == 27) {
+            // Handle Tab key (navigate forward through fields and buttons)
+            else if (key == '\t' || key == 9) {
+                if (focused_button > 0) {
+                    // Currently on a button, move to next button or wrap to viewport
+                    if (focused_button < 4) {
+                        focused_button++;
+                    } else {
+                        // Wrap around to viewport
+                        focused_button = 0;
+                        focused_field = -1;
+                    }
+                } else {
+                    // Currently on a field or viewport
+                    if (focused_field < 4) {
+                        // Move to next field
+                        focused_field++;
+                    } else {
+                        // Move to first button
+                        focused_field = -1;
+                        focused_button = 1;
+                    }
+                }
+                needs_redraw = true;
+            }
+            // Handle ESC (return to viewport from any focused field/button)
+            else if (key == 27) {
+                focused_field = -1;
+                focused_button = 0;
+                needs_redraw = true;
+            }
+            // Handle quit (q or Q)
+            else if (key == 'q' || key == 'Q') {
                 // Check for unsaved changes
                 auto all_changes = unsaved_changes_tracker.get_all_changes();
                 int active_changes = 0;

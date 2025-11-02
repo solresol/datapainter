@@ -257,6 +257,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ### Tab Navigation
 - [x] Test: Tab cycles through header fields (left to right)
 - [x] Test: Tab order: database → table → target → meanings → ranges → buttons → viewport
+- [x] Implement: Tab navigation through all fields and buttons (8/10 integration tests pass)
 - [x] Test: Enter activates focused field/button
 - [ ] Test: Edit focused field inline
 
