@@ -251,7 +251,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Move cursor left within viewport
 - [x] Test: Move cursor up within viewport
 - [x] Test: Move cursor down within viewport
-- [ ] Test: Pan viewport when cursor reaches edge
+- [x] Test: Pan viewport when cursor reaches edge
 - [ ] Test: Prevent cursor movement beyond valid ranges
 
 ### Tab Navigation

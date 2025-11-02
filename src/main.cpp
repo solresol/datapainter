@@ -1011,6 +1011,15 @@ int main(int argc, char** argv) {
                 if (cursor_row > edit_area_start_row + 1) {
                     cursor_row--;
                     needs_redraw = true;
+                } else if (cursor_row == edit_area_start_row + 1) {
+                    // Cursor is at top edge, try to pan up
+                    // Pan up shifts viewport up (increases y_min and y_max)
+                    double old_y_max = viewport.data_y_max();
+                    viewport.pan_up();
+                    // If viewport actually panned, redraw
+                    if (viewport.data_y_max() != old_y_max) {
+                        needs_redraw = true;
+                    }
                 }
             }
             else if (key == Terminal::KEY_DOWN_ARROW) {
@@ -1021,6 +1030,15 @@ int main(int argc, char** argv) {
                 if (cursor_row < edit_area_end_row) {
                     cursor_row++;
                     needs_redraw = true;
+                } else if (cursor_row == edit_area_end_row) {
+                    // Cursor is at bottom edge, try to pan down
+                    // Pan down shifts viewport down (decreases y_min and y_max)
+                    double old_y_min = viewport.data_y_min();
+                    viewport.pan_down();
+                    // If viewport actually panned, redraw
+                    if (viewport.data_y_min() != old_y_min) {
+                        needs_redraw = true;
+                    }
                 }
             }
             else if (key == Terminal::KEY_LEFT_ARROW) {
@@ -1028,6 +1046,15 @@ int main(int argc, char** argv) {
                 if (cursor_col > 1) {
                     cursor_col--;
                     needs_redraw = true;
+                } else if (cursor_col == 1) {
+                    // Cursor is at left edge, try to pan left
+                    // Pan left shifts viewport left (decreases x_min and x_max)
+                    double old_x_min = viewport.data_x_min();
+                    viewport.pan_left();
+                    // If viewport actually panned, redraw
+                    if (viewport.data_x_min() != old_x_min) {
+                        needs_redraw = true;
+                    }
                 }
             }
             else if (key == Terminal::KEY_RIGHT_ARROW) {
@@ -1035,6 +1062,15 @@ int main(int argc, char** argv) {
                 if (cursor_col < screen_width - 2) {
                     cursor_col++;
                     needs_redraw = true;
+                } else if (cursor_col == screen_width - 2) {
+                    // Cursor is at right edge, try to pan right
+                    // Pan right shifts viewport right (increases x_min and x_max)
+                    double old_x_max = viewport.data_x_max();
+                    viewport.pan_right();
+                    // If viewport actually panned, redraw
+                    if (viewport.data_x_max() != old_x_max) {
+                        needs_redraw = true;
+                    }
                 }
             }
             // Handle quit (q, Q, or ESC)
