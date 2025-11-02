@@ -108,6 +108,14 @@ private:
 - **Test data**: Keep test databases in-memory (`:memory:`) when possible
 - **Coverage**: Test happy path, edge cases, and error conditions
 
+### Python Integration Testing
+- **Python tool**: Use `uv` for all Python operations
+- **Installing dependencies**: `uv add <package-name>` (e.g., `uv add pyte`)
+- **Running tests**: `uv run pytest <test-file>` or `uv run python <script>`
+- **Integration tests**: Located in `tests/integration/` directory
+- **Framework**: Uses `pyte` for terminal emulation to test actual TUI behavior
+- **Important**: Unit tests that don't use the VTE/pyte framework are not meaningful for UI behavior - always write integration tests for UI features
+
 ### Performance Considerations
 - **Viewport rendering**: Optimize for large datasets (1M+ rows)
 - **Database queries**: Use proper indexes (already in schema)

@@ -151,7 +151,6 @@ if(BUILD_TESTS)
         tests/test_quit_after_save_scenario.cpp
         tests/test_discard_changes_on_quit.cpp
         tests/test_cursor_boundary.cpp
-        tests/test_tab_order.cpp
         # Implementation files needed by tests
         src/database.cpp
         src/argument_parser.cpp

@@ -213,6 +213,7 @@ class DataPainterTest:
             'DELETE': b'\x1b[3~',
             'ENTER': b'\r',
             'ESC': b'\x1b',
+            'TAB': b'\t',
         }
 
         if key in key_codes:
