@@ -14,6 +14,7 @@
 #include "unsaved_changes.h"
 #include "save_manager.h"
 #include "help_overlay.h"
+#include "cursor_utils.h"
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -1009,8 +1010,12 @@ int main(int argc, char** argv) {
                 // Up arrow - move cursor up (within edit area content, inside border)
                 // Border is at edit_area_start_row, content starts at edit_area_start_row + 1
                 if (cursor_row > edit_area_start_row + 1) {
-                    cursor_row--;
-                    needs_redraw = true;
+                    // Check if new position would be within valid ranges
+                    int new_cursor_row = cursor_row - 1;
+                    if (is_cursor_position_valid(viewport, new_cursor_row, cursor_col, edit_area_start_row)) {
+                        cursor_row = new_cursor_row;
+                        needs_redraw = true;
+                    }
                 } else if (cursor_row == edit_area_start_row + 1) {
                     // Cursor is at top edge, try to pan up
                     // Pan up shifts viewport up (increases y_min and y_max)
@@ -1028,8 +1033,12 @@ int main(int argc, char** argv) {
                 // Content ends at edit_area_start_row + edit_area_height - 2
                 int edit_area_end_row = edit_area_start_row + edit_area_height - 2;
                 if (cursor_row < edit_area_end_row) {
-                    cursor_row++;
-                    needs_redraw = true;
+                    // Check if new position would be within valid ranges
+                    int new_cursor_row = cursor_row + 1;
+                    if (is_cursor_position_valid(viewport, new_cursor_row, cursor_col, edit_area_start_row)) {
+                        cursor_row = new_cursor_row;
+                        needs_redraw = true;
+                    }
                 } else if (cursor_row == edit_area_end_row) {
                     // Cursor is at bottom edge, try to pan down
                     // Pan down shifts viewport down (decreases y_min and y_max)
@@ -1044,8 +1053,12 @@ int main(int argc, char** argv) {
             else if (key == Terminal::KEY_LEFT_ARROW) {
                 // Left arrow - move cursor left (inside border at column 1)
                 if (cursor_col > 1) {
-                    cursor_col--;
-                    needs_redraw = true;
+                    // Check if new position would be within valid ranges
+                    int new_cursor_col = cursor_col - 1;
+                    if (is_cursor_position_valid(viewport, cursor_row, new_cursor_col, edit_area_start_row)) {
+                        cursor_col = new_cursor_col;
+                        needs_redraw = true;
+                    }
                 } else if (cursor_col == 1) {
                     // Cursor is at left edge, try to pan left
                     // Pan left shifts viewport left (decreases x_min and x_max)
@@ -1060,8 +1073,12 @@ int main(int argc, char** argv) {
             else if (key == Terminal::KEY_RIGHT_ARROW) {
                 // Right arrow - move cursor right (inside border at column screen_width - 2)
                 if (cursor_col < screen_width - 2) {
-                    cursor_col++;
-                    needs_redraw = true;
+                    // Check if new position would be within valid ranges
+                    int new_cursor_col = cursor_col + 1;
+                    if (is_cursor_position_valid(viewport, cursor_row, new_cursor_col, edit_area_start_row)) {
+                        cursor_col = new_cursor_col;
+                        needs_redraw = true;
+                    }
                 } else if (cursor_col == screen_width - 2) {
                     // Cursor is at right edge, try to pan right
                     // Pan right shifts viewport right (increases x_min and x_max)
