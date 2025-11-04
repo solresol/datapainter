@@ -204,8 +204,10 @@ std::vector<DataPoint> PointEditor::get_points_at_cursor(double cursor_x, double
             double x = change.x.value();
             double y = change.y.value();
 
-            // Check if inserted point is within cell bounds
-            if (x >= x_min && x <= x_max && y >= y_min && y <= y_max) {
+            // Check if inserted point is within cell bounds (with epsilon for floating-point tolerance)
+            constexpr double epsilon = 1e-9;
+            if (x >= x_min - epsilon && x <= x_max + epsilon &&
+                y >= y_min - epsilon && y <= y_max + epsilon) {
                 double point_cell_x = round_to_cell(x, cell_size);
                 double point_cell_y = round_to_cell(y, cell_size);
 
