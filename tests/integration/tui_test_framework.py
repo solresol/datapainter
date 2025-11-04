@@ -14,8 +14,54 @@ import select
 import signal
 import tempfile
 import time
+from pathlib import Path
 from typing import List, Optional, Tuple
+
 import pyte
+
+
+def resolve_datapainter_path(provided_path: Optional[str] = None) -> str:
+    """Return an absolute path to the datapainter executable."""
+
+    env_path = os.environ.get("DATAPAINTER_PATH")
+    if env_path and not provided_path:
+        candidate = Path(env_path).expanduser()
+        if candidate.exists():
+            return str(candidate.resolve())
+
+    repo_root = Path(__file__).resolve().parents[2]
+
+    def _resolve_candidate(path: Path) -> Optional[str]:
+        if path.exists():
+            return str(path.resolve())
+        return None
+
+    if provided_path:
+        candidate = Path(provided_path)
+        if not candidate.is_absolute():
+            candidate = Path(__file__).resolve().parent / candidate
+        resolved = _resolve_candidate(candidate)
+        if resolved:
+            return resolved
+        raise FileNotFoundError(
+            f"datapainter executable not found at provided path: {candidate}"
+        )
+
+    candidates = [
+        repo_root / "build" / "datapainter",
+        repo_root / "datapainter",
+        repo_root / "bin" / "datapainter",
+    ]
+
+    for candidate in candidates:
+        resolved = _resolve_candidate(candidate)
+        if resolved:
+            return resolved
+
+    raise FileNotFoundError(
+        "Could not locate the datapainter executable. Build the project or set "
+        "DATAPAINTER_PATH to the executable."
+    )
 
 
 class DataPainterTest:
@@ -30,7 +76,7 @@ class DataPainterTest:
     """
 
     def __init__(self, width: int = 80, height: int = 24,
-                 datapainter_path: str = "../../build/datapainter",
+                 datapainter_path: Optional[str] = None,
                  database_path: Optional[str] = None,
                  table_name: Optional[str] = None):
         """
@@ -45,7 +91,7 @@ class DataPainterTest:
         """
         self.width = width
         self.height = height
-        self.datapainter_path = datapainter_path
+        self.datapainter_path = resolve_datapainter_path(datapainter_path)
         self.database_path = database_path
         self.table_name = table_name or "test_table"
 

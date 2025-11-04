@@ -1,7 +1,8 @@
 #include "footer_renderer.h"
-#include <sstream>
-#include <iomanip>
+#include <algorithm>
 #include <cmath>
+#include <iomanip>
+#include <sstream>
 
 namespace datapainter {
 
@@ -75,10 +76,34 @@ void FooterRenderer::render(Terminal& terminal, double cursor_x, double cursor_y
 
     // Truncate if too long
     if (static_cast<int>(footer_str.length()) > cols) {
+        const std::string help_segment = " ?:Help";
+        auto help_pos = footer_str.rfind(help_segment);
+        if (help_pos != std::string::npos) {
+            footer_str.erase(help_pos, help_segment.length());
+        }
         footer_str = footer_str.substr(0, cols);
     }
 
+    auto ensure_visible = [&](int button_index, const std::string& label) {
+        if (focused_button == button_index && footer_str.find(label) == std::string::npos) {
+            if (static_cast<int>(footer_str.length()) < cols) {
+                footer_str.resize(cols, ' ');
+            }
+            int start = std::max(0, cols - static_cast<int>(label.length()));
+            footer_str.replace(start, std::min<int>(label.length(), cols - start), label);
+        }
+    };
+
+    ensure_visible(1, "[#:Tabular]");
+    ensure_visible(2, "[u:Undo]");
+    ensure_visible(3, "[s:Save]");
+    ensure_visible(4, "[q:Quit]");
+
     // Write to terminal
+    for (int col = 0; col < cols; ++col) {
+        terminal.write_char(footer_row, col, ' ');
+    }
+
     for (size_t i = 0; i < footer_str.length(); ++i) {
         terminal.write_char(footer_row, i, footer_str[i]);
     }

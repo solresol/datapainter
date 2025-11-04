@@ -318,6 +318,7 @@ bool Terminal::enter_raw_mode() {
         noecho();               // Don't echo typed characters
         keypad(stdscr, TRUE);   // Enable function keys, arrow keys, etc.
         timeout(50);            // 50ms timeout for getch() (non-blocking with timeout)
+        set_escdelay(25);       // Make ESC detection snappy for UI tests
         curs_set(0);            // Hide the default cursor (we'll draw our own)
 
         ncurses_initialized = true;

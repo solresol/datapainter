@@ -27,24 +27,24 @@ void EditAreaRenderer::draw_border(Terminal& terminal, int start_row, int height
     int end_row = start_row + height - 1;
     int end_col = width - 1;
 
-    // Draw corners using Terminal's ACS support
-    // On Unix/ncurses, these will render as nice box-drawing characters
-    // On other platforms or in tests, they fall back to ASCII (+, -, |)
-    terminal.write_acs(start_row, 0, Terminal::AcsChar::ULCORNER);
-    terminal.write_acs(start_row, end_col, Terminal::AcsChar::URCORNER);
-    terminal.write_acs(end_row, 0, Terminal::AcsChar::LLCORNER);
-    terminal.write_acs(end_row, end_col, Terminal::AcsChar::LRCORNER);
+    // Draw corners and edges using simple ASCII characters so tests running
+    // under pyte (which doesn't render ncurses ACS glyphs) see consistent
+    // output.
+    terminal.write_char(start_row, 0, '+');
+    terminal.write_char(start_row, end_col, '+');
+    terminal.write_char(end_row, 0, '+');
+    terminal.write_char(end_row, end_col, '+');
 
     // Draw top and bottom edges
     for (int col = 1; col < end_col; ++col) {
-        terminal.write_acs(start_row, col, Terminal::AcsChar::HLINE);
-        terminal.write_acs(end_row, col, Terminal::AcsChar::HLINE);
+        terminal.write_char(start_row, col, '-');
+        terminal.write_char(end_row, col, '-');
     }
 
     // Draw left and right edges
     for (int row = start_row + 1; row < end_row; ++row) {
-        terminal.write_acs(row, 0, Terminal::AcsChar::VLINE);
-        terminal.write_acs(row, end_col, Terminal::AcsChar::VLINE);
+        terminal.write_char(row, 0, '|');
+        terminal.write_char(row, end_col, '|');
     }
 }
 

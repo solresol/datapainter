@@ -929,10 +929,6 @@ int main(int argc, char** argv) {
     int focused_field = -1;
     int focused_button = 0;
 
-    std::cout << "Starting DataPainter TUI..." << std::endl;
-    std::cout << "Keys: q=quit, +/-=zoom, arrows=move, x/o=add point, backspace=delete" << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-
     while (running) {
         if (needs_redraw) {
             // Clear buffer
@@ -1097,36 +1093,6 @@ int main(int argc, char** argv) {
                     }
                 }
             }
-            // Handle Tab key (navigate forward through fields and buttons)
-            else if (key == '\t' || key == 9) {
-                if (focused_button > 0) {
-                    // Currently on a button, move to next button or wrap to viewport
-                    if (focused_button < 4) {
-                        focused_button++;
-                    } else {
-                        // Wrap around to viewport
-                        focused_button = 0;
-                        focused_field = -1;
-                    }
-                } else {
-                    // Currently on a field or viewport
-                    if (focused_field < 4) {
-                        // Move to next field
-                        focused_field++;
-                    } else {
-                        // Move to first button
-                        focused_field = -1;
-                        focused_button = 1;
-                    }
-                }
-                needs_redraw = true;
-            }
-            // Handle ESC (return to viewport from any focused field/button)
-            else if (key == 27) {
-                focused_field = -1;
-                focused_button = 0;
-                needs_redraw = true;
-            }
             // Handle quit (q or Q)
             else if (key == 'q' || key == 'Q') {
                 // Check for unsaved changes
@@ -1235,6 +1201,32 @@ int main(int argc, char** argv) {
 
                 needs_redraw = true;
             }
+            else if (key == '\t') {
+                // Cycle focus through header fields and footer buttons
+                if (focused_field >= 0 && focused_field < 4) {
+                    focused_field += 1;
+                    focused_button = 0;
+                } else if (focused_field == 4) {
+                    focused_field = -1;
+                    focused_button = 1;
+                } else if (focused_button >= 1 && focused_button < 4) {
+                    focused_button += 1;
+                } else if (focused_button == 4) {
+                    focused_field = -1;
+                    focused_button = 0;
+                } else {
+                    focused_field = 0;
+                    focused_button = 0;
+                }
+
+                needs_redraw = true;
+            }
+            else if (key == 27) {
+                // Escape returns focus to viewport
+                focused_field = -1;
+                focused_button = 0;
+                needs_redraw = true;
+            }
             // Handle point creation and editing
             else if (key == 'x' || key == 'o') {
                 // Create a point at cursor position
@@ -1250,8 +1242,11 @@ int main(int argc, char** argv) {
                 // Convert all 'o' points at cursor to 'x'
                 ScreenCoord cursor_content = cursor_to_content_coords(cursor_row, cursor_col);
                 DataCoord cursor_data = viewport.screen_to_data(cursor_content);
-                double cell_size_x = (viewport.data_x_max() - viewport.data_x_min()) / (screen_width - 2);
-                double cell_size = cell_size_x;  // Use x cell size for hit testing
+                int usable_width = std::max(1, screen_width - 2);
+                int usable_height = std::max(1, edit_area_height - 2);
+                double cell_width = (viewport.data_x_max() - viewport.data_x_min()) / usable_width;
+                double cell_height = (viewport.data_y_max() - viewport.data_y_min()) / usable_height;
+                double cell_size = std::max(cell_width, cell_height);
 
                 int converted = point_editor.convert_points_at_cursor(cursor_data.x, cursor_data.y, cell_size, 'x');
                 if (converted > 0) {
@@ -1262,8 +1257,11 @@ int main(int argc, char** argv) {
                 // Convert all 'x' points at cursor to 'o'
                 ScreenCoord cursor_content = cursor_to_content_coords(cursor_row, cursor_col);
                 DataCoord cursor_data = viewport.screen_to_data(cursor_content);
-                double cell_size_x = (viewport.data_x_max() - viewport.data_x_min()) / (screen_width - 2);
-                double cell_size = cell_size_x;
+                int usable_width = std::max(1, screen_width - 2);
+                int usable_height = std::max(1, edit_area_height - 2);
+                double cell_width = (viewport.data_x_max() - viewport.data_x_min()) / usable_width;
+                double cell_height = (viewport.data_y_max() - viewport.data_y_min()) / usable_height;
+                double cell_size = std::max(cell_width, cell_height);
 
                 int converted = point_editor.convert_points_at_cursor(cursor_data.x, cursor_data.y, cell_size, 'o');
                 if (converted > 0) {
@@ -1274,8 +1272,11 @@ int main(int argc, char** argv) {
                 // Flip all points at cursor (x ↔ o)
                 ScreenCoord cursor_content = cursor_to_content_coords(cursor_row, cursor_col);
                 DataCoord cursor_data = viewport.screen_to_data(cursor_content);
-                double cell_size_x = (viewport.data_x_max() - viewport.data_x_min()) / (screen_width - 2);
-                double cell_size = cell_size_x;
+                int usable_width = std::max(1, screen_width - 2);
+                int usable_height = std::max(1, edit_area_height - 2);
+                double cell_width = (viewport.data_x_max() - viewport.data_x_min()) / usable_width;
+                double cell_height = (viewport.data_y_max() - viewport.data_y_min()) / usable_height;
+                double cell_size = std::max(cell_width, cell_height);
 
                 int flipped = point_editor.flip_points_at_cursor(cursor_data.x, cursor_data.y, cell_size);
                 if (flipped > 0) {
