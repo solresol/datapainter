@@ -7,11 +7,17 @@ Tests commands that don't require TUI interaction:
 - --delete-point
 """
 
-import pytest
-import subprocess
-import tempfile
 import os
 import sqlite3
+import subprocess
+import tempfile
+
+import pytest
+
+from tui_test_framework import resolve_datapainter_path
+
+
+DATAPAINTER_BIN = resolve_datapainter_path()
 
 
 def run_datapainter(args, input_text=None):
@@ -20,7 +26,7 @@ def run_datapainter(args, input_text=None):
 
     Returns: (returncode, stdout, stderr)
     """
-    cmd = ['./datapainter'] + args
+    cmd = [DATAPAINTER_BIN] + args
     result = subprocess.run(
         cmd,
         input=input_text,
@@ -37,15 +43,18 @@ def create_test_db():
     os.close(fd)
 
     # Use datapainter to create the table
-    run_datapainter([
+    rc, _, stderr = run_datapainter([
         '--database', db_path,
-        '--create-table', 'test_table',
+        '--create-table',
+        '--table', 'test_table',
         '--x-axis-name', 'x_axis',
         '--y-axis-name', 'y_axis',
         '--target-column-name', 'target',
         '--x-meaning', 'positive',
         '--o-meaning', 'negative'
     ])
+    if rc != 0:
+        raise RuntimeError(f"Failed to create test table: {stderr}")
 
     return db_path
 
