@@ -503,15 +503,15 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [ ] Test: InputHandler works with FileInputSource
 
 ### Screen Dump Commands
-- [ ] Add 'k' keystroke handler (dump full screen)
-- [ ] Add 'K' keystroke handler (dump edit area only)
-- [ ] Test: 'k' outputs full screen buffer to stdout
-- [ ] Test: 'K' outputs only edit area to stdout
-- [ ] Test: Screen dumps include current cursor position
-- [ ] Test: 'k' works in normal interactive mode
-- [ ] Test: 'K' works in normal interactive mode
-- [ ] Test: 'k' works in automated mode (--keystroke-file)
-- [ ] Test: 'K' works in automated mode (--keystroke-file)
+- [x] Add 'k' keystroke handler (dump full screen)
+- [x] Add 'K' keystroke handler (dump edit area only)
+- [x] Test: 'k' outputs full screen buffer to stdout
+- [x] Test: 'K' outputs only edit area to stdout
+- [x] Test: Screen dumps include current cursor position (implicit in output)
+- [x] Test: 'k' works in normal interactive mode
+- [x] Test: 'K' works in normal interactive mode
+- [ ] Test: 'k' works in automated mode (--keystroke-file) - requires keystroke file support
+- [ ] Test: 'K' works in automated mode (--keystroke-file) - requires keystroke file support
 
 ### Argument Parser Integration
 - [ ] Add --keystroke-file argument to ArgumentParser
