@@ -378,6 +378,60 @@ class TestScreenResizing:
         pass
 
 
+class TestScreenDump:
+    """Test screen dump functionality (k and K keys)."""
+
+    def test_k_key_dumps_screen_without_crash(self):
+        """Verify 'k' key triggers screen dump without crashing."""
+        with DataPainterTest(width=80, height=24) as test:
+            time.sleep(0.2)
+
+            # Create a point for visual verification
+            test.send_keys('x')
+            time.sleep(0.1)
+
+            # Send 'k' to dump full screen
+            # Note: Output goes to stdout but is redirected through PTY
+            # The application should continue running after dump
+            test.send_keys('k')
+            time.sleep(0.5)  # Give time for dump and redraw
+
+            # Verify application is still responsive by creating another point
+            test.send_keys('o')
+            time.sleep(0.1)
+
+            # Check that both points exist
+            screen = '\n'.join(test.get_display_lines())
+            has_x = 'x' in screen or 'X' in screen
+            has_o = 'o' in screen or 'O' in screen
+
+            assert has_x and has_o, "Application should remain functional after screen dump"
+
+    def test_K_key_dumps_edit_area_without_crash(self):
+        """Verify 'K' key triggers edit area dump without crashing."""
+        with DataPainterTest(width=80, height=24) as test:
+            time.sleep(0.2)
+
+            # Create a point
+            test.send_keys('x')
+            time.sleep(0.1)
+
+            # Send 'K' to dump edit area only
+            test.send_keys('K')
+            time.sleep(0.5)  # Give time for dump and redraw
+
+            # Verify application is still responsive
+            test.send_keys('o')
+            time.sleep(0.1)
+
+            # Check that both points exist
+            screen = '\n'.join(test.get_display_lines())
+            has_x = 'x' in screen or 'X' in screen
+            has_o = 'o' in screen or 'O' in screen
+
+            assert has_x and has_o, "Application should remain functional after edit area dump"
+
+
 class TestEdgeCases:
     """Test edge cases and boundary conditions."""
 
