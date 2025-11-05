@@ -225,7 +225,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Display x and o meanings
 - [x] Test: Display counts (total, x count, o count)
 - [x] Test: Display valid x/y ranges
-- [ ] Test: Display current zoom info
+- [x] Test: Display current zoom info
 - [x] Test: Highlight focused field (for Tab navigation)
 
 ### Footer Rendering
