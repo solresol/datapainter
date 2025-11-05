@@ -3,6 +3,7 @@
 #include "metadata.h"
 #include "data_table.h"
 #include "table_view.h"
+#include "unsaved_changes.h"
 
 using namespace datapainter;
 
@@ -209,4 +210,215 @@ TEST_F(TableViewTest, NavigateToSpecificRow) {
 
     view.set_current_row(-1);
     EXPECT_EQ(view.current_row(), 0);  // First valid row
+}
+
+// Test: Add new row
+TEST_F(TableViewTest, AddNewRow) {
+    TableView view(db_, "test_table");
+
+    EXPECT_EQ(view.row_count(), 3);
+
+    // Add a new row with default values (0, 0, first meaning)
+    ASSERT_TRUE(view.add_row(7.0, 8.0, "x_val"));
+
+    // Should have 4 rows now
+    EXPECT_EQ(view.row_count(), 4);
+
+    // New row should be visible
+    auto rows = view.get_visible_rows();
+    EXPECT_EQ(rows.size(), 4);
+
+    // Find the new row (should be last by id)
+    bool found = false;
+    for (const auto& row : rows) {
+        if (row.x == 7.0 && row.y == 8.0) {
+            found = true;
+            EXPECT_EQ(row.target, "x_val");
+        }
+    }
+    EXPECT_TRUE(found);
+}
+
+// Test: Delete row
+TEST_F(TableViewTest, DeleteRow) {
+    TableView view(db_, "test_table");
+
+    EXPECT_EQ(view.row_count(), 3);
+
+    // Get the first row's ID
+    auto row = view.get_row(0);
+    ASSERT_TRUE(row.has_value());
+    int row_id = row->id;
+
+    // Delete the row
+    ASSERT_TRUE(view.delete_row(row_id));
+
+    // Should have 2 rows now
+    EXPECT_EQ(view.row_count(), 2);
+
+    // Verify the row is gone
+    auto rows = view.get_visible_rows();
+    EXPECT_EQ(rows.size(), 2);
+    for (const auto& r : rows) {
+        EXPECT_NE(r.id, row_id);
+    }
+}
+
+// Test: Edit x value
+TEST_F(TableViewTest, EditXValue) {
+    TableView view(db_, "test_table");
+
+    // Get first row
+    auto row = view.get_row(0);
+    ASSERT_TRUE(row.has_value());
+    int row_id = row->id;
+    double old_y = row->y;
+    std::string old_target = row->target;
+
+    // Edit x value
+    ASSERT_TRUE(view.update_cell(row_id, "x", 99.0));
+
+    // After x/y edit, the row is deleted and a new one is inserted
+    // The updated row should exist with new coordinates
+    auto rows = view.get_visible_rows();
+
+    // Find the row with updated x value
+    bool found = false;
+    for (const auto& r : rows) {
+        if (r.x == 99.0 && r.y == old_y && r.target == old_target) {
+            found = true;
+            // ID should be negative (unsaved insert)
+            EXPECT_LT(r.id, 0);
+        }
+    }
+    EXPECT_TRUE(found);
+
+    // Original row should be deleted
+    for (const auto& r : rows) {
+        EXPECT_NE(r.id, row_id);
+    }
+}
+
+// Test: Edit y value
+TEST_F(TableViewTest, EditYValue) {
+    TableView view(db_, "test_table");
+
+    auto row = view.get_row(1);
+    ASSERT_TRUE(row.has_value());
+    int row_id = row->id;
+    double old_x = row->x;
+    std::string old_target = row->target;
+
+    ASSERT_TRUE(view.update_cell(row_id, "y", 88.0));
+
+    // Find the row with updated y value
+    auto rows = view.get_visible_rows();
+    bool found = false;
+    for (const auto& r : rows) {
+        if (r.x == old_x && r.y == 88.0 && r.target == old_target) {
+            found = true;
+            EXPECT_LT(r.id, 0);  // Should be unsaved insert
+        }
+    }
+    EXPECT_TRUE(found);
+
+    // Original row should be deleted
+    for (const auto& r : rows) {
+        EXPECT_NE(r.id, row_id);
+    }
+}
+
+// Test: Edit target value
+TEST_F(TableViewTest, EditTargetValue) {
+    TableView view(db_, "test_table");
+
+    auto row = view.get_row(0);
+    ASSERT_TRUE(row.has_value());
+    int row_id = row->id;
+    std::string old_target = row->target;
+
+    // Change target
+    std::string new_target = (old_target == "x_val") ? "o_val" : "x_val";
+    ASSERT_TRUE(view.update_cell(row_id, "target", new_target));
+
+    auto updated_row = view.get_row(0);
+    ASSERT_TRUE(updated_row.has_value());
+    EXPECT_EQ(updated_row->target, new_target);
+    EXPECT_NE(updated_row->target, old_target);
+}
+
+// Test: Changes are recorded in unsaved_changes
+TEST_F(TableViewTest, ChangesRecordedInUnsavedChanges) {
+    TableView view(db_, "test_table");
+
+    // Get first row
+    auto row = view.get_row(0);
+    ASSERT_TRUE(row.has_value());
+    int row_id = row->id;
+
+    // Make a change to x coordinate (recorded as delete + insert)
+    ASSERT_TRUE(view.update_cell(row_id, "x", 100.0));
+
+    // Check unsaved_changes table
+    UnsavedChanges uc(db_);
+    auto changes = uc.get_changes("test_table");
+
+    // Should have at least two changes (delete + insert)
+    EXPECT_GE(changes.size(), 2);
+
+    // Find the delete and insert changes
+    bool found_delete = false;
+    bool found_insert = false;
+    for (const auto& change : changes) {
+        if (change.action == "delete" && change.data_id == row_id) {
+            found_delete = true;
+        }
+        if (change.action == "insert") {
+            found_insert = true;
+        }
+    }
+    EXPECT_TRUE(found_delete);
+    EXPECT_TRUE(found_insert);
+}
+
+// Test: Add row records in unsaved_changes
+TEST_F(TableViewTest, AddRowRecordedInUnsavedChanges) {
+    TableView view(db_, "test_table");
+
+    ASSERT_TRUE(view.add_row(10.0, 20.0, "x_val"));
+
+    UnsavedChanges uc(db_);
+    auto changes = uc.get_changes("test_table");
+
+    // Should have an insert change
+    bool found_insert = false;
+    for (const auto& change : changes) {
+        if (change.action == "insert") {
+            found_insert = true;
+        }
+    }
+    EXPECT_TRUE(found_insert);
+}
+
+// Test: Delete row records in unsaved_changes
+TEST_F(TableViewTest, DeleteRowRecordedInUnsavedChanges) {
+    TableView view(db_, "test_table");
+
+    auto row = view.get_row(0);
+    ASSERT_TRUE(row.has_value());
+    int row_id = row->id;
+
+    ASSERT_TRUE(view.delete_row(row_id));
+
+    UnsavedChanges uc(db_);
+    auto changes = uc.get_changes("test_table");
+
+    // Should have a delete change
+    bool found_delete = false;
+    for (const auto& change : changes) {
+        if (change.action == "delete" && change.data_id == row_id) {
+            found_delete = true;
+        }
+    }
+    EXPECT_TRUE(found_delete);
 }

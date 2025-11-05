@@ -58,6 +58,14 @@ public:
     // Get bounds of filtered data (for returning to viewport)
     std::optional<ViewportBounds> get_filter_bounds() const;
 
+    // Row editing operations
+    bool add_row(double x, double y, const std::string& target);
+    bool delete_row(int row_id);
+
+    // Cell editing operations (template for overloading with double and string)
+    bool update_cell(int row_id, const std::string& column, double value);
+    bool update_cell(int row_id, const std::string& column, const std::string& value);
+
 private:
     Database& db_;
     std::string table_name_;
