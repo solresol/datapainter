@@ -86,16 +86,28 @@ void HeaderRenderer::render(Terminal& terminal, const std::string& db_path,
         terminal.write_char(1, i, row1_str[i]);
     }
 
-    // Row 2: Counts on left, viewport range on right
+    // Row 2: Counts on left, viewport range and zoom on right
     std::ostringstream row2_left;
     row2_left << "Total: " << total_count;
     row2_left << " (x: " << x_count << ", o: " << o_count << ")";
     row2_left << " Valid X: [" << format_value(x_min) << ", " << format_value(x_max) << "]";
     row2_left << " Y: [" << format_value(y_min) << ", " << format_value(y_max) << "]";
 
+    // Calculate zoom percentage based on viewport size vs valid range size
+    double valid_x_range = x_max - x_min;
+    double valid_y_range = y_max - y_min;
+    double vp_x_range = vp_x_max - vp_x_min;
+    double vp_y_range = vp_y_max - vp_y_min;
+
+    // Use the smaller of the two percentages (most zoomed axis)
+    double x_pct = (valid_x_range > 0) ? (vp_x_range / valid_x_range * 100.0) : 100.0;
+    double y_pct = (valid_y_range > 0) ? (vp_y_range / valid_y_range * 100.0) : 100.0;
+    double zoom_pct = std::min(x_pct, y_pct);
+
     std::ostringstream row2_right;
     row2_right << "View X: [" << format_value(vp_x_min) << ", " << format_value(vp_x_max) << "]";
     row2_right << " Y: [" << format_value(vp_y_min) << ", " << format_value(vp_y_max) << "]";
+    row2_right << " Zoom: " << std::fixed << std::setprecision(0) << zoom_pct << "%";
 
     std::string left_str = row2_left.str();
     std::string right_str = row2_right.str();

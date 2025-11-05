@@ -335,3 +335,49 @@ TEST_F(HeaderRendererTest, UnsavedCountRightAligned) {
     ASSERT_NE(table_pos, std::string::npos) << "Should find 'test_table' in row 0";
     EXPECT_GT(unsaved_pos, table_pos) << "Unsaved indicator should be right-aligned (after table name)";
 }
+
+// Test: Display current zoom info
+TEST_F(HeaderRendererTest, DisplayZoomInfo) {
+    HeaderRenderer renderer;
+
+    std::string db_path = "data.db";
+    std::string table_name = "test_table";
+    std::string target_col = "target";
+    std::string x_meaning = "positive";
+    std::string o_meaning = "negative";
+    int total_count = 100;
+    int x_count = 60;
+    int o_count = 40;
+
+    // Set up scenario where viewport is 25% of the valid range
+    // Valid range: X [-100, 100], Y [-50, 50]
+    // Viewport: X [-25, 25], Y [-12.5, 12.5]
+    double valid_x_min = -100.0;
+    double valid_x_max = 100.0;
+    double valid_y_min = -50.0;
+    double valid_y_max = 50.0;
+    double vp_x_min = -25.0;
+    double vp_x_max = 25.0;
+    double vp_y_min = -12.5;
+    double vp_y_max = 12.5;
+
+    renderer.render(terminal_, db_path, table_name, target_col,
+                    x_meaning, o_meaning, total_count, x_count, o_count,
+                    valid_x_min, valid_x_max, valid_y_min, valid_y_max,
+                    vp_x_min, vp_x_max, vp_y_min, vp_y_max, 0);
+
+    // Check header rows for zoom info
+    std::string header;
+    for (int row = 0; row < 3; ++row) {
+        header += terminal_.get_row(row);
+    }
+
+    // Should display some zoom indicator (e.g., "Zoom: 25%" or "4x zoom")
+    // The exact format is flexible, but it should show the zoom level
+    bool has_zoom_indicator = (header.find("Zoom") != std::string::npos ||
+                               header.find("zoom") != std::string::npos ||
+                               header.find("25%") != std::string::npos ||
+                               header.find("4x") != std::string::npos);
+
+    EXPECT_TRUE(has_zoom_indicator) << "Header should display zoom information";
+}
