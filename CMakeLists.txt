@@ -80,6 +80,7 @@ set(DATAPAINTER_SOURCES
     src/table_selection_menu.cpp
     src/help_overlay.cpp
     src/cursor_utils.cpp
+    src/study_mode.cpp
     # More UI components will go here
 )
 
@@ -151,6 +152,7 @@ if(BUILD_TESTS)
         tests/test_quit_after_save_scenario.cpp
         tests/test_discard_changes_on_quit.cpp
         tests/test_cursor_boundary.cpp
+        tests/test_study_mode.cpp
         # Implementation files needed by tests
         src/database.cpp
         src/argument_parser.cpp
@@ -173,6 +175,7 @@ if(BUILD_TESTS)
         src/table_selection_menu.cpp
         src/help_overlay.cpp
         src/cursor_utils.cpp
+        src/study_mode.cpp
         # More test files will be added as we build
     )
 
