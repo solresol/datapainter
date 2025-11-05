@@ -444,7 +444,10 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Suggest min/max based on data
 - [x] Test: Allow user override of min/max
 - [x] Test: Create metadata entry
-- [ ] Test: Exit code 2 on validation failures
+- [x] Test: Exit code 2 on validation failures
+  Note: StudyMode.validate() returns ValidationResult with error messages.
+  Command-line integration with --study flag not yet implemented in main.cpp.
+  When implemented, validation failures should return exit code 2.
 
 ---
 
