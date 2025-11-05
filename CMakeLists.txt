@@ -81,6 +81,7 @@ set(DATAPAINTER_SOURCES
     src/help_overlay.cpp
     src/cursor_utils.cpp
     src/study_mode.cpp
+    src/random_initializer.cpp
     # More UI components will go here
 )
 
@@ -153,6 +154,7 @@ if(BUILD_TESTS)
         tests/test_discard_changes_on_quit.cpp
         tests/test_cursor_boundary.cpp
         tests/test_study_mode.cpp
+        tests/test_random_initializer.cpp
         # Implementation files needed by tests
         src/database.cpp
         src/argument_parser.cpp
@@ -176,6 +178,7 @@ if(BUILD_TESTS)
         src/help_overlay.cpp
         src/cursor_utils.cpp
         src/study_mode.cpp
+        src/random_initializer.cpp
         # More test files will be added as we build
     )
 
