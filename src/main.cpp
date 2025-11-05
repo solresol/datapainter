@@ -1298,6 +1298,37 @@ int main(int argc, char** argv) {
                 // Redraw the main UI after dismissing help
                 needs_redraw = true;
             }
+            else if (key == 'k') {
+                // Dump full screen to stdout
+                // Exit raw mode to output cleanly
+                terminal.exit_raw_mode();
+
+                std::cout << "=== FULL SCREEN DUMP ===" << std::endl;
+                for (int row = 0; row < screen_height; ++row) {
+                    std::cout << terminal.get_row(row) << std::endl;
+                }
+                std::cout << "=== END SCREEN DUMP ===" << std::endl;
+
+                // Re-enter raw mode
+                terminal.enter_raw_mode();
+                needs_redraw = true;
+            }
+            else if (key == 'K') {
+                // Dump edit area only to stdout
+                // Exit raw mode to output cleanly
+                terminal.exit_raw_mode();
+
+                std::cout << "=== EDIT AREA DUMP ===" << std::endl;
+                // Edit area is from edit_area_start_row to edit_area_start_row + edit_area_height
+                for (int row = edit_area_start_row; row < edit_area_start_row + edit_area_height && row < screen_height; ++row) {
+                    std::cout << terminal.get_row(row) << std::endl;
+                }
+                std::cout << "=== END EDIT AREA DUMP ===" << std::endl;
+
+                // Re-enter raw mode
+                terminal.enter_raw_mode();
+                needs_redraw = true;
+            }
             else if (key == 's' || key == 'S') {
                 // Save unsaved changes to database
                 SaveManager save_manager(db, table_name);
