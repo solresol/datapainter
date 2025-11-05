@@ -430,17 +430,17 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ## Phase 15: Study Mode
 
 ### Import & Configure
-- [ ] Create StudyMode class
-- [ ] Test: Check if metadata already exists (error if yes)
-- [ ] Test: Validate exactly 3 columns exist
-- [ ] Test: Validate 2 columns are REAL type
-- [ ] Test: Validate third column has exactly 2 distinct values
-- [ ] Test: Validate no nulls in any column
-- [ ] Test: Prompt for which value is 'x' and which is 'o'
-- [ ] Test: Prompt for which column is x-axis and y-axis
-- [ ] Test: Suggest min/max based on data
-- [ ] Test: Allow user override of min/max
-- [ ] Test: Create metadata entry
+- [x] Create StudyMode class
+- [x] Test: Check if metadata already exists (error if yes)
+- [x] Test: Validate exactly 3 columns exist
+- [x] Test: Validate 2 columns are REAL type
+- [x] Test: Validate third column has exactly 2 distinct values
+- [x] Test: Validate no nulls in any column
+- [x] Test: Prompt for which value is 'x' and which is 'o'
+- [x] Test: Prompt for which column is x-axis and y-axis
+- [x] Test: Suggest min/max based on data
+- [x] Test: Allow user override of min/max
+- [x] Test: Create metadata entry
 - [ ] Test: Exit code 2 on validation failures
 
 ---
@@ -448,29 +448,31 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ## Phase 16: Random Initialization
 
 ### Random Point Generation
-- [ ] Create RandomInitializer class
-- [ ] Test: --random-count generates N points
-- [ ] Test: --random-target sets target value
-- [ ] Test: --mean-x, --mean-y centers distribution
-- [ ] Test: --normal-x/y with --std-x/y generates normal distribution
-- [ ] Test: --uniform-x/y with --range-x/y generates uniform distribution
-- [ ] Test: Insert generated points into table
-- [ ] Test: Respect valid ranges during generation
+- [x] Create RandomInitializer class
+- [x] Test: --random-count generates N points
+- [x] Test: --random-target sets target value
+- [x] Test: --mean-x, --mean-y centers distribution
+- [x] Test: --normal-x/y with --std-x/y generates normal distribution
+- [x] Test: --uniform-x/y with --range-x/y generates uniform distribution
+- [x] Test: Insert generated points into table
+- [x] Test: Respect valid ranges during generation
+- [x] Create RandomDialog for TUI-based random generation (bound to 'r' key)
 
 ---
 
 ## Phase 17: Table Selection Dialog
 
 ### Interactive Table Selection
-- [ ] Create TableSelectionDialog class
-- [ ] Test: Show dialog when only --database provided
-- [ ] Test: List all tables from metadata
-- [ ] Test: Allow selection of existing table
-- [ ] Test: Option to create new blank table
-- [ ] Test: Option to copy existing table to new name
-- [ ] Test: Option to delete table
-- [ ] Test: Option to rename table
-- [ ] Test: Navigate dialog with arrow keys and Enter
+- [x] Create TableSelectionDialog class (implemented as TableSelectionMenu)
+- [x] Test: Show dialog when only --database provided
+- [x] Test: List all tables from metadata
+- [x] Test: Allow selection of existing table
+- [x] Test: Option to create new blank table
+- [x] Test: Option to copy existing table to new name
+- [x] Test: Option to delete table
+- [x] Test: Option to rename table
+- [x] Test: Navigate dialog with arrow keys and Enter
+- [x] Integrated in main.cpp with 10 passing tests
 
 ---
 
