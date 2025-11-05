@@ -36,10 +36,12 @@ class TestApplicationStartup:
             lines = test.get_display_lines()
 
             # Check for vertical axis (left border) - should have box drawing chars or '|'
+            # Note: pyte renders ACS characters as specific ASCII chars:
+            # 'x' = VLINE, 'l' = ULCORNER, 'm' = LLCORNER, 'k' = URCORNER, 'j' = LRCORNER
             for row_idx in range(4, 23):  # Skip header rows (0-3)
                 first_char = lines[row_idx][0] if lines[row_idx] else ' '
-                # Should be some kind of border character
-                assert first_char in ['|', '│', '+', '┤', '├', '┼'], \
+                # Should be some kind of border character (Unicode, ASCII, or pyte ACS)
+                assert first_char in ['|', '│', '+', '┤', '├', '┼', 'x', 'l', 'm', 'k', 'j'], \
                     f"Row {row_idx} should have left border, got '{first_char}'"
 
     def test_initial_viewport_empty(self):
@@ -47,13 +49,15 @@ class TestApplicationStartup:
         with DataPainterTest(width=80, height=24) as test:
             lines = test.get_display_lines()
 
-            # Content area (excluding header and borders)
-            content = '\n'.join(lines[4:23])  # Skip header rows
+            # Content area (excluding header, borders, and edge columns)
+            # Check middle area only (columns 2-77) to exclude vertical borders
+            # which appear as 'x' in pyte's ACS representation
+            middle_content = '\n'.join(line[2:77] for line in lines[5:22])
 
             # Should not contain any 'x' or 'o' points initially
-            assert 'x' not in content and 'X' not in content, \
+            assert 'x' not in middle_content and 'X' not in middle_content, \
                 "Should not have x points initially"
-            assert 'o' not in content and 'O' not in content, \
+            assert 'o' not in middle_content and 'O' not in middle_content, \
                 "Should not have o points initially"
 
 
