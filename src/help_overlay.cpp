@@ -59,6 +59,7 @@ std::vector<std::string> HelpOverlay::get_help_lines() const {
         "|    q         - Quit (prompts if unsaved changes)     |",
         "|                                                      |",
         "|  OTHER:                                              |",
+        "|    r         - Generate random points                |",
         "|    ?         - Show this help                        |",
         "|    k         - Dump full screen to stdout            |",
         "|    Shift+K   - Dump edit area to stdout              |",

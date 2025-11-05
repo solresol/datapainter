@@ -82,6 +82,7 @@ set(DATAPAINTER_SOURCES
     src/cursor_utils.cpp
     src/study_mode.cpp
     src/random_initializer.cpp
+    src/random_dialog.cpp
     # More UI components will go here
 )
 

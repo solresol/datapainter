@@ -15,6 +15,8 @@
 #include "save_manager.h"
 #include "help_overlay.h"
 #include "cursor_utils.h"
+#include "random_dialog.h"
+#include "random_initializer.h"
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -1313,6 +1315,59 @@ int main(int argc, char** argv) {
                     terminal.enter_raw_mode();
                     needs_redraw = true;
                 }
+            }
+            else if (key == 'r' || key == 'R') {
+                // Random point generation
+                terminal.exit_raw_mode();
+
+                // Get metadata for meanings
+                MetadataManager mgr(db);
+                auto meta = mgr.read(table_name);
+                if (!meta.has_value()) {
+                    std::cerr << "Error: Could not read metadata" << std::endl;
+                    std::cerr << "Press Enter to continue..." << std::endl;
+                    std::cin.get();
+                    terminal.enter_raw_mode();
+                    needs_redraw = true;
+                    continue;
+                }
+
+                // Show dialog
+                auto dialog_result = RandomDialog::show(meta->x_meaning, meta->o_meaning);
+
+                if (dialog_result.has_value() && !dialog_result->cancelled) {
+                    // Generate random points
+                    RandomInitializer ri(db, table_name);
+                    RandomConfig config;
+                    config.count = dialog_result->count;
+                    config.target = dialog_result->target;
+                    config.mean_x = 0.0;  // Center at current viewport center
+                    config.mean_y = 0.0;
+
+                    if (dialog_result->use_normal_dist) {
+                        config.normal_x = true;
+                        config.normal_y = true;
+                        config.std_x = dialog_result->std_dev;
+                        config.std_y = dialog_result->std_dev;
+                    } else {
+                        config.uniform_x = true;
+                        config.uniform_y = true;
+                        config.range_x = dialog_result->range;
+                        config.range_y = dialog_result->range;
+                    }
+
+                    bool success = ri.generate(config);
+                    if (success) {
+                        std::cout << "Successfully generated " << config.count << " points." << std::endl;
+                    } else {
+                        std::cout << "Error: Failed to generate points." << std::endl;
+                    }
+                    std::cout << "Press Enter to continue..." << std::endl;
+                    std::cin.get();
+                }
+
+                terminal.enter_raw_mode();
+                needs_redraw = true;
             }
             else if (key == 127 || key == 8) {
                 // Delete all points at cursor (backspace or delete key)
