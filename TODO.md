@@ -168,7 +168,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Write character at (row, col)
 - [x] Test: Clear screen buffer
 - [x] Test: Render buffer to stdout
-- [ ] Test: Block wide characters (emoji, multi-byte)
+- [x] Test: Block wide characters (emoji, multi-byte)
 
 ---
 
