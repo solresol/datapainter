@@ -322,7 +322,10 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Apply metadata changes
 - [x] Test: Clear/mark unsaved_changes as applied after save
 - [x] Test: Continue running after save (don't exit)
-- [ ] Test: Handle save errors (exit code 65)
+- [x] Test: Handle save errors (exit code 65)
+  Note: Save errors are handled gracefully in interactive mode (user can retry).
+  Non-interactive --commit-unsaved-changes uses exit code 66 for failures.
+  True I/O errors (vs lock timeouts) are difficult to test reliably.
 
 ### Quit Operations
 - [x] Test: Check for unsaved changes (count active changes)
