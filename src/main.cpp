@@ -339,6 +339,12 @@ int main(int argc, char** argv) {
         // Output CSV header
         std::cout << "x,y,target\n";
 
+        // Check for write error after header
+        if (std::cout.fail()) {
+            std::cerr << "Error: Failed to write CSV header" << std::endl;
+            return 67;
+        }
+
         // Output data rows
         for (const auto& point : points) {
             std::cout << point.x << "," << point.y << ",";
@@ -364,6 +370,12 @@ int main(int argc, char** argv) {
             }
 
             std::cout << "\n";
+
+            // Check for write error after each row
+            if (std::cout.fail()) {
+                std::cerr << "Error: Failed to write CSV data" << std::endl;
+                return 67;
+            }
         }
 
         return 0;

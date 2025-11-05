@@ -426,7 +426,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Rows ordered by id
 - [x] Test: UTF-8 encoding - uses std::cout (UTF-8 compatible)
 - [x] Test: Proper quote escaping for text values
-- [ ] Test: Exit code 67 on write error
+- [x] Test: Exit code 67 on write error (checks std::cout.fail() after writes)
 
 ---
 
