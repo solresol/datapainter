@@ -381,8 +381,8 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Create HelpOverlay class
 - [x] Test: Press '?' shows help overlay
 - [x] Test: Display all keyboard shortcuts
-- [ ] Test: Display current zoom level
-- [ ] Test: Display current pan step percentage
+- [x] Test: Display current zoom level
+- [x] Test: Display current pan step percentage
 - [x] Test: Display hit-test behavior explanation
 - [x] Test: Dismiss help to return to normal operation
 

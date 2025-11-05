@@ -1,9 +1,11 @@
 #include "help_overlay.h"
 #include <algorithm>
+#include <sstream>
+#include <iomanip>
 
 namespace datapainter {
 
-void HelpOverlay::render(Terminal& terminal, int rows, int cols) {
+void HelpOverlay::render(Terminal& terminal, int rows, int cols, double zoom_percent, double pan_step_percent) {
     // Clear the entire screen
     for (int row = 0; row < rows; ++row) {
         for (int col = 0; col < cols; ++col) {
@@ -12,7 +14,7 @@ void HelpOverlay::render(Terminal& terminal, int rows, int cols) {
     }
 
     // Get help content
-    auto help_lines = get_help_lines();
+    auto help_lines = get_help_lines(zoom_percent, pan_step_percent);
 
     // Calculate starting row to center vertically
     int content_height = static_cast<int>(help_lines.size());
@@ -29,11 +31,31 @@ void HelpOverlay::render(Terminal& terminal, int rows, int cols) {
     }
 }
 
-std::vector<std::string> HelpOverlay::get_help_lines() const {
+std::vector<std::string> HelpOverlay::get_help_lines(double zoom_percent, double pan_step_percent) const {
+    // Format zoom and pan step info
+    std::ostringstream zoom_line;
+    zoom_line << "|  Current Zoom: " << std::fixed << std::setprecision(0) << zoom_percent << "%";
+    // Pad to 54 chars (to match border width)
+    while (zoom_line.str().length() < 54) {
+        zoom_line << " ";
+    }
+    zoom_line << "|";
+
+    std::ostringstream pan_line;
+    pan_line << "|  Pan Step: " << std::fixed << std::setprecision(0) << pan_step_percent << "% of viewport";
+    // Pad to 54 chars
+    while (pan_line.str().length() < 54) {
+        pan_line << " ";
+    }
+    pan_line << "|";
+
     return {
         "+======================================================+",
         "|                  DATAPAINTER HELP                    |",
         "+======================================================+",
+        "|                                                      |",
+        zoom_line.str(),
+        pan_line.str(),
         "|                                                      |",
         "|  NAVIGATION:                                         |",
         "|    Arrow keys - Move cursor                          |",

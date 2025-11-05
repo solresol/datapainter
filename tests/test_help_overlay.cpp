@@ -20,7 +20,7 @@ protected:
 TEST_F(HelpOverlayTest, Create) {
     HelpOverlay overlay;
     // Just verify it compiles and constructs without crashing
-    overlay.render(*terminal, 24, 80);
+    overlay.render(*terminal, 24, 80, 100.0, 10.0);
     EXPECT_TRUE(true);
 }
 
@@ -29,7 +29,7 @@ TEST_F(HelpOverlayTest, Render) {
     HelpOverlay overlay;
 
     // Render should not crash
-    overlay.render(*terminal, 24, 80);
+    overlay.render(*terminal, 24, 80, 100.0, 10.0);
 
     // Verify something was written to the terminal
     // We can check that certain keywords appear in the buffer
@@ -47,7 +47,7 @@ TEST_F(HelpOverlayTest, Render) {
 // Test: Help shows keyboard shortcuts
 TEST_F(HelpOverlayTest, ShowsKeyboardShortcuts) {
     HelpOverlay overlay;
-    overlay.render(*terminal, 24, 80);
+    overlay.render(*terminal, 24, 80, 100.0, 10.0);
 
     std::string buffer_content;
     for (int row = 0; row < 24; ++row) {
@@ -67,7 +67,7 @@ TEST_F(HelpOverlayTest, ShowsKeyboardShortcuts) {
 // Test: Help shows arrow key navigation
 TEST_F(HelpOverlayTest, ShowsArrowKeys) {
     HelpOverlay overlay;
-    overlay.render(*terminal, 24, 80);
+    overlay.render(*terminal, 24, 80, 100.0, 10.0);
 
     std::string buffer_content;
     for (int row = 0; row < 24; ++row) {
@@ -87,10 +87,14 @@ TEST_F(HelpOverlayTest, ShowsArrowKeys) {
 // Test: Help shows quit/save shortcuts
 TEST_F(HelpOverlayTest, ShowsQuitSave) {
     HelpOverlay overlay;
-    overlay.render(*terminal, 24, 80);
+
+    // Use taller terminal to fit all help content (help is now ~37 lines with zoom/pan info)
+    terminal->set_dimensions(40, 80);
+    terminal->clear_buffer();
+    overlay.render(*terminal, 40, 80, 100.0, 10.0);
 
     std::string buffer_content;
-    for (int row = 0; row < 24; ++row) {
+    for (int row = 0; row < 40; ++row) {
         for (int col = 0; col < 80; ++col) {
             buffer_content += terminal->read_char(row, col);
         }
@@ -106,7 +110,7 @@ TEST_F(HelpOverlayTest, ShowsQuitSave) {
 // Test: Help shows how to dismiss
 TEST_F(HelpOverlayTest, ShowsDismissInstructions) {
     HelpOverlay overlay;
-    overlay.render(*terminal, 24, 80);
+    overlay.render(*terminal, 24, 80, 100.0, 10.0);
 
     std::string buffer_content;
     for (int row = 0; row < 24; ++row) {
@@ -137,14 +141,14 @@ TEST_F(HelpOverlayTest, FitsInSmallTerminal) {
     terminal->clear_buffer();
 
     // Should not crash even with limited space
-    overlay.render(*terminal, 20, 60);
+    overlay.render(*terminal, 20, 60, 100.0, 10.0);
     EXPECT_TRUE(true);
 }
 
 // Test: Help centers content
 TEST_F(HelpOverlayTest, CentersContent) {
     HelpOverlay overlay;
-    overlay.render(*terminal, 24, 80);
+    overlay.render(*terminal, 24, 80, 100.0, 10.0);
 
     // Content should be centered - check that there's padding at the start
     // Our content is 55 chars wide, in an 80-char terminal, so there should be
@@ -159,4 +163,41 @@ TEST_F(HelpOverlayTest, CentersContent) {
     // Around column 12-13 should be the start of content (the border)
     char ch_col12 = terminal->read_char(5, 12);
     EXPECT_TRUE(ch_col12 == '+' || ch_col12 == '|');
+}
+
+// Test: Help displays current zoom level
+TEST_F(HelpOverlayTest, DisplaysZoomLevel) {
+    HelpOverlay overlay;
+    double zoom_percent = 50.0;
+    overlay.render(*terminal, 24, 80, zoom_percent, 10.0);
+
+    std::string buffer_content;
+    for (int row = 0; row < 24; ++row) {
+        for (int col = 0; col < 80; ++col) {
+            buffer_content += terminal->read_char(row, col);
+        }
+    }
+
+    // Should display zoom percentage
+    EXPECT_NE(buffer_content.find("Zoom"), std::string::npos);
+    EXPECT_NE(buffer_content.find("50"), std::string::npos);
+}
+
+// Test: Help displays current pan step percentage
+TEST_F(HelpOverlayTest, DisplaysPanStep) {
+    HelpOverlay overlay;
+    double zoom_percent = 100.0;
+    double pan_step_percent = 15.0;
+    overlay.render(*terminal, 24, 80, zoom_percent, pan_step_percent);
+
+    std::string buffer_content;
+    for (int row = 0; row < 24; ++row) {
+        for (int col = 0; col < 80; ++col) {
+            buffer_content += terminal->read_char(row, col);
+        }
+    }
+
+    // Should display pan step percentage
+    EXPECT_NE(buffer_content.find("Pan"), std::string::npos);
+    EXPECT_NE(buffer_content.find("15"), std::string::npos);
 }

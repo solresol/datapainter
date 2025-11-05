@@ -1301,7 +1301,20 @@ int main(int argc, char** argv) {
                 // Show help overlay
                 HelpOverlay help;
                 terminal.clear_buffer();
-                help.render(terminal, screen_height, screen_width);
+
+                // Calculate current zoom percentage
+                double valid_x_range = x_max - x_min;
+                double valid_y_range = y_max - y_min;
+                double vp_x_range = viewport.data_x_max() - viewport.data_x_min();
+                double vp_y_range = viewport.data_y_max() - viewport.data_y_min();
+                double x_pct = (valid_x_range > 0) ? (vp_x_range / valid_x_range * 100.0) : 100.0;
+                double y_pct = (valid_y_range > 0) ? (vp_y_range / valid_y_range * 100.0) : 100.0;
+                double zoom_percent = std::min(x_pct, y_pct);
+
+                // Pan step is always 25% of viewport
+                double pan_step_percent = 25.0;
+
+                help.render(terminal, screen_height, screen_width, zoom_percent, pan_step_percent);
                 terminal.render_with_cursor(cursor_row, cursor_col);
 
                 // Wait for any key press to dismiss
