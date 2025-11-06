@@ -573,12 +573,12 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Edit area dump accuracy (K command produces correct output) - TestScreenDump
 
 ### Error Handling & Edge Cases
-- [ ] Test: Database lock timeout (exit code 66)
+- [ ] Test: Database lock timeout (exit code 66) - Feature not yet implemented
 - [ ] Test: Corrupted database file
 - [ ] Test: Invalid SQL in filter
-- [ ] Test: Extremely large/small coordinate values
-- [ ] Test: Empty table operations
-- [ ] Test: Single point operations
+- [x] Test: Extremely large/small coordinate values - TestExtremeCoordinateValues (5 tests)
+- [x] Test: Empty table operations - TestEmptyTableOperations (5 tests)
+- [x] Test: Single point operations - TestSinglePointOperations (4 tests)
 - [ ] Test: Viewport at extreme zoom levels
 
 ### User Experience Polish

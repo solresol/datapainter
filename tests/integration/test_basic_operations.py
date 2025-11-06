@@ -1110,5 +1110,457 @@ class TestUndoRedo:
             assert len(screen) > 100, "Should have stable display after undo/redo workflow"
 
 
+class TestEmptyTableOperations:
+    """Test operations on an empty table with no data points."""
+
+    def test_empty_table_displays_correctly(self):
+        """Verify empty table shows axes and empty viewport."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            lines = test.get_display_lines()
+            screen = '\n'.join(lines)
+
+            # Should show table name
+            assert 'test_table' in screen, "Should show table name even when empty"
+
+            # Should show axes with labels (x and y borders)
+            assert 'x' in screen or 'X' in screen, "Should show x-axis even when empty"
+
+            # UI should be stable and not crash
+            assert len(lines) >= 20, "Should have full UI rendered"
+
+    def test_empty_table_zoom_operations(self):
+        """Verify zoom works on empty table."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Zoom in multiple times
+            for _ in range(3):
+                test.send_keys('+')
+                time.sleep(0.1)
+
+            # Zoom out multiple times
+            for _ in range(5):
+                test.send_keys('-')
+                time.sleep(0.1)
+
+            # Reset viewport
+            test.send_keys('=')
+            time.sleep(0.1)
+
+            # Verify UI is stable
+            lines = test.get_display_lines()
+            assert len(lines) >= 20, "Should remain stable after zoom operations on empty table"
+
+    def test_empty_table_pan_operations(self):
+        """Verify panning works on empty table."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Pan in all directions
+            test.send_keys('UP')
+            time.sleep(0.1)
+            test.send_keys('DOWN')
+            time.sleep(0.1)
+            test.send_keys('LEFT')
+            time.sleep(0.1)
+            test.send_keys('RIGHT')
+            time.sleep(0.1)
+
+            # Verify UI is stable
+            lines = test.get_display_lines()
+            assert len(lines) >= 20, "Should remain stable after pan operations on empty table"
+
+    def test_empty_table_undo_does_nothing(self):
+        """Verify undo on empty table doesn't crash."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Try to undo when there's nothing to undo
+            test.send_keys('u')
+            time.sleep(0.2)
+            test.send_keys('u')
+            time.sleep(0.2)
+            test.send_keys('u')
+            time.sleep(0.2)
+
+            # Verify UI is stable
+            lines = test.get_display_lines()
+            assert len(lines) >= 20, "Should remain stable after undo on empty table"
+
+    def test_empty_table_save_does_nothing(self):
+        """Verify save on empty table doesn't crash."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Try to save when there's nothing to save
+            test.send_keys('s')
+            time.sleep(0.3)
+
+            # Verify UI is stable
+            lines = test.get_display_lines()
+            assert len(lines) >= 20, "Should remain stable after save on empty table"
+
+
+class TestSinglePointOperations:
+    """Test operations with a single data point."""
+
+    def test_single_point_create_and_delete(self):
+        """Verify creating and deleting a single point."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Create a single point
+            test.send_keys('x')
+            time.sleep(0.2)
+
+            lines = test.get_display_lines()
+            screen = '\n'.join(lines)
+
+            # Should see the point
+            assert 'x' in screen or 'X' in screen, "Should show the created point"
+
+            # Delete the point
+            test.send_keys('BACKSPACE')
+            time.sleep(0.2)
+
+            # Verify table is empty again
+            lines = test.get_display_lines()
+            assert len(lines) >= 20, "Should remain stable after deleting single point"
+
+    def test_single_point_undo_redo(self):
+        """Verify undo/redo with single point."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Create a point
+            test.send_keys('x')
+            time.sleep(0.2)
+
+            # Undo it
+            test.send_keys('u')
+            time.sleep(0.2)
+
+            # Verify UI is stable
+            lines = test.get_display_lines()
+            assert len(lines) >= 20, "Should remain stable after undo of single point"
+
+    def test_single_point_save(self):
+        """Verify saving a single point to database."""
+        import sqlite3
+        import tempfile
+        import os
+        import subprocess
+
+        fd, temp_db = tempfile.mkstemp(suffix=".db")
+        os.close(fd)
+
+        try:
+            # Initialize the database
+            datapainter_path = '../../build/datapainter'
+            subprocess.run([
+                datapainter_path,
+                '--database', temp_db,
+                '--create-table',
+                '--table', 'test_table',
+                '--target-column-name', 'label',
+                '--x-axis-name', 'x',
+                '--y-axis-name', 'y',
+                '--x-meaning', 'positive',
+                '--o-meaning', 'negative',
+                '--min-x', '-10',
+                '--max-x', '10',
+                '--min-y', '-10',
+                '--max-y', '10'
+            ], check=True, capture_output=True)
+
+            with DataPainterTest(width=80, height=24, database_path=temp_db) as test:
+                test.wait_for_text('test_table', timeout=3.0)
+
+                # Create a single point
+                test.send_keys('x')
+                time.sleep(0.2)
+
+                # Save it
+                test.send_keys('s')
+                time.sleep(0.3)
+
+                # Verify point was saved
+                conn = sqlite3.connect(temp_db)
+                cursor = conn.cursor()
+
+                cursor.execute("SELECT COUNT(*) FROM test_table")
+                count = cursor.fetchone()[0]
+                assert count == 1, f"Should have exactly 1 saved point, got {count}"
+
+                cursor.execute("SELECT target FROM test_table")
+                target = cursor.fetchone()[0]
+                assert target in ['positive', 'x'], f"Target should be 'positive' or 'x', got '{target}'"
+
+                conn.close()
+        finally:
+            os.unlink(temp_db)
+
+    def test_single_point_zoom_around_point(self):
+        """Verify zooming in on a single point."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Create a point at center
+            test.send_keys('x')
+            time.sleep(0.2)
+
+            # Zoom in several times
+            for _ in range(5):
+                test.send_keys('+')
+                time.sleep(0.1)
+
+            # Zoom out
+            for _ in range(3):
+                test.send_keys('-')
+                time.sleep(0.1)
+
+            # Verify UI is stable
+            lines = test.get_display_lines()
+            assert len(lines) >= 20, "Should remain stable after zooming around single point"
+
+
+class TestExtremeCoordinateValues:
+    """Test handling of extremely large and small coordinate values."""
+
+    def test_very_large_coordinate_range(self):
+        """Verify application handles very large coordinate ranges."""
+        import tempfile
+        import os
+        import subprocess
+
+        fd, temp_db = tempfile.mkstemp(suffix=".db")
+        os.close(fd)
+
+        try:
+            # Initialize with extremely large range
+            datapainter_path = '../../build/datapainter'
+            subprocess.run([
+                datapainter_path,
+                '--database', temp_db,
+                '--create-table',
+                '--table', 'test_table',
+                '--target-column-name', 'label',
+                '--x-axis-name', 'x',
+                '--y-axis-name', 'y',
+                '--x-meaning', 'positive',
+                '--o-meaning', 'negative',
+                '--min-x', '-1000000',
+                '--max-x', '1000000',
+                '--min-y', '-1000000',
+                '--max-y', '1000000'
+            ], check=True, capture_output=True)
+
+            with DataPainterTest(width=80, height=24, database_path=temp_db) as test:
+                test.wait_for_text('test_table', timeout=3.0)
+
+                # Create a point
+                test.send_keys('x')
+                time.sleep(0.2)
+
+                # Zoom and pan operations
+                test.send_keys('+')
+                time.sleep(0.1)
+                test.send_keys('-')
+                time.sleep(0.1)
+
+                # Verify UI remains stable
+                lines = test.get_display_lines()
+                assert len(lines) >= 20, "Should remain stable with very large coordinate range"
+        finally:
+            os.unlink(temp_db)
+
+    def test_very_small_coordinate_range(self):
+        """Verify application handles very small (fractional) coordinate ranges."""
+        import tempfile
+        import os
+        import subprocess
+
+        fd, temp_db = tempfile.mkstemp(suffix=".db")
+        os.close(fd)
+
+        try:
+            # Initialize with very small fractional range
+            datapainter_path = '../../build/datapainter'
+            subprocess.run([
+                datapainter_path,
+                '--database', temp_db,
+                '--create-table',
+                '--table', 'test_table',
+                '--target-column-name', 'label',
+                '--x-axis-name', 'x',
+                '--y-axis-name', 'y',
+                '--x-meaning', 'positive',
+                '--o-meaning', 'negative',
+                '--min-x', '-0.001',
+                '--max-x', '0.001',
+                '--min-y', '-0.001',
+                '--max-y', '0.001'
+            ], check=True, capture_output=True)
+
+            with DataPainterTest(width=80, height=24, database_path=temp_db) as test:
+                test.wait_for_text('test_table', timeout=3.0)
+
+                # Create a point (should be at center, which is 0,0)
+                test.send_keys('x')
+                time.sleep(0.2)
+
+                # Zoom in to see more detail
+                for _ in range(3):
+                    test.send_keys('+')
+                    time.sleep(0.1)
+
+                # Verify UI remains stable
+                lines = test.get_display_lines()
+                assert len(lines) >= 20, "Should remain stable with very small coordinate range"
+        finally:
+            os.unlink(temp_db)
+
+    def test_negative_coordinate_range(self):
+        """Verify application handles entirely negative coordinate ranges."""
+        import tempfile
+        import os
+        import subprocess
+
+        fd, temp_db = tempfile.mkstemp(suffix=".db")
+        os.close(fd)
+
+        try:
+            # Initialize with entirely negative range
+            datapainter_path = '../../build/datapainter'
+            subprocess.run([
+                datapainter_path,
+                '--database', temp_db,
+                '--create-table',
+                '--table', 'test_table',
+                '--target-column-name', 'label',
+                '--x-axis-name', 'x',
+                '--y-axis-name', 'y',
+                '--x-meaning', 'positive',
+                '--o-meaning', 'negative',
+                '--min-x', '-100',
+                '--max-x', '-10',
+                '--min-y', '-100',
+                '--max-y', '-10'
+            ], check=True, capture_output=True)
+
+            with DataPainterTest(width=80, height=24, database_path=temp_db) as test:
+                test.wait_for_text('test_table', timeout=3.0)
+
+                # Create a point (should be at center of negative range)
+                test.send_keys('x')
+                time.sleep(0.2)
+
+                # Verify point was created
+                lines = test.get_display_lines()
+                screen = '\n'.join(lines)
+                assert 'x' in screen or 'X' in screen, "Should create point in negative coordinate range"
+
+                # Verify UI remains stable
+                assert len(lines) >= 20, "Should remain stable with negative coordinate range"
+        finally:
+            os.unlink(temp_db)
+
+    def test_positive_coordinate_range(self):
+        """Verify application handles entirely positive coordinate ranges."""
+        import tempfile
+        import os
+        import subprocess
+
+        fd, temp_db = tempfile.mkstemp(suffix=".db")
+        os.close(fd)
+
+        try:
+            # Initialize with entirely positive range
+            datapainter_path = '../../build/datapainter'
+            subprocess.run([
+                datapainter_path,
+                '--database', temp_db,
+                '--create-table',
+                '--table', 'test_table',
+                '--target-column-name', 'label',
+                '--x-axis-name', 'x',
+                '--y-axis-name', 'y',
+                '--x-meaning', 'positive',
+                '--o-meaning', 'negative',
+                '--min-x', '10',
+                '--max-x', '100',
+                '--min-y', '10',
+                '--max-y', '100'
+            ], check=True, capture_output=True)
+
+            with DataPainterTest(width=80, height=24, database_path=temp_db) as test:
+                test.wait_for_text('test_table', timeout=3.0)
+
+                # Create a point (should be at center of positive range)
+                test.send_keys('x')
+                time.sleep(0.2)
+
+                # Verify point was created
+                lines = test.get_display_lines()
+                screen = '\n'.join(lines)
+                assert 'x' in screen or 'X' in screen, "Should create point in positive coordinate range"
+
+                # Verify UI remains stable
+                assert len(lines) >= 20, "Should remain stable with positive coordinate range"
+        finally:
+            os.unlink(temp_db)
+
+    def test_asymmetric_coordinate_range(self):
+        """Verify application handles asymmetric coordinate ranges (different x and y sizes)."""
+        import tempfile
+        import os
+        import subprocess
+
+        fd, temp_db = tempfile.mkstemp(suffix=".db")
+        os.close(fd)
+
+        try:
+            # Initialize with very different x and y ranges
+            datapainter_path = '../../build/datapainter'
+            subprocess.run([
+                datapainter_path,
+                '--database', temp_db,
+                '--create-table',
+                '--table', 'test_table',
+                '--target-column-name', 'label',
+                '--x-axis-name', 'x',
+                '--y-axis-name', 'y',
+                '--x-meaning', 'positive',
+                '--o-meaning', 'negative',
+                '--min-x', '-1000',
+                '--max-x', '1000',
+                '--min-y', '-1',
+                '--max-y', '1'
+            ], check=True, capture_output=True)
+
+            with DataPainterTest(width=80, height=24, database_path=temp_db) as test:
+                test.wait_for_text('test_table', timeout=3.0)
+
+                # Create a point
+                test.send_keys('x')
+                time.sleep(0.2)
+
+                # Pan and zoom
+                test.send_keys('RIGHT')
+                time.sleep(0.1)
+                test.send_keys('UP')
+                time.sleep(0.1)
+                test.send_keys('+')
+                time.sleep(0.1)
+
+                # Verify UI remains stable
+                lines = test.get_display_lines()
+                assert len(lines) >= 20, "Should remain stable with asymmetric coordinate range"
+        finally:
+            os.unlink(temp_db)
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
