@@ -562,7 +562,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Zoom workflow (create points, zoom in with +, zoom out with -, full with =) - TestZoomOperations
 - [x] Test: Pan workflow (move cursor to edges, verify viewport shifts) - TestPanOperations
 - [x] Test: Undo/redo workflow (create point, undo with u, redo, verify) - TestUndoRedo
-- [ ] Test: Save workflow (create points, save with s, verify database)
+- [x] Test: Save workflow (create points, save with s, verify database) - TestSaveWorkflow
 - [ ] Test: Table view switching (viewport → # → table → # → viewport) - '#' key not implemented
 - [x] Test: Multiple points at same coordinates (create X and O at same position, verify #) - TestPointCreation::test_multiple_points_same_cell
 - [ ] Test: Valid range enforcement (try to move beyond valid ranges, verify walls)
