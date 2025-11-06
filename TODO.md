@@ -240,7 +240,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 
 ### Keyboard Input
 - [x] Create InputHandler class
-- [ ] Test: Read single keypress (blocking)
+- [x] Test: Read single keypress (blocking)
 - [x] Test: Parse arrow keys
 - [x] Test: Parse letter keys (x, o, g, X, O, etc.)
 - [x] Test: Parse special keys (Tab, Enter, Space, Esc)
