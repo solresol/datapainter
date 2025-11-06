@@ -1,0 +1,337 @@
+.TH DATAPAINTER 1 "November 2024" "DataPainter 0.1.0" "User Commands"
+.SH NAME
+datapainter \- TUI for creating and editing two-dimensional labeled datasets
+.SH SYNOPSIS
+.B datapainter
+[\fIOPTIONS\fR]
+.SH DESCRIPTION
+.B datapainter
+is an interactive terminal user interface (TUI) application for creating, editing, and visualizing two-dimensional labeled datasets stored in SQLite databases. It provides a visual grid where users can place labeled data points using keyboard controls, with support for zoom, pan, undo, and tabular editing modes.
+
+The application stores data points as (x, y, label) tuples in SQLite tables, with full support for undo/redo through an unsaved changes log. All edits are tracked and can be committed or rolled back.
+
+.SH GENERAL OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Display help message and exit.
+.TP
+.BR \-\-version
+Display version information and exit.
+.TP
+.BR \-\-database " " \fIPATH\fR
+Path to SQLite database file. If the file does not exist, it will be created when a table is created.
+.TP
+.BR \-\-table " " \fINAME\fR
+Name of the table to work with. Required for most operations.
+
+.SH TABLE MANAGEMENT
+.TP
+.BR \-\-list\-tables
+List all tables in the database and exit.
+.TP
+.BR \-\-create\-table
+Create a new table. Requires \fB\-\-table\fR and additional table configuration options (see TABLE CREATION OPTIONS).
+.TP
+.BR \-\-delete\-table
+Delete the specified table. Requires \fB\-\-table\fR.
+.TP
+.BR \-\-rename\-table
+Rename a table (not yet implemented).
+.TP
+.BR \-\-copy\-table
+Copy a table (not yet implemented).
+.TP
+.BR \-\-show\-metadata
+Display metadata for the specified table. Requires \fB\-\-table\fR.
+
+.SH TABLE CREATION OPTIONS
+These options are required when using \fB\-\-create\-table\fR:
+.TP
+.BR \-\-target\-column\-name " " \fINAME\fR
+Name for the target/label column.
+.TP
+.BR \-\-x\-axis\-name " " \fINAME\fR
+Name for the X axis.
+.TP
+.BR \-\-y\-axis\-name " " \fINAME\fR
+Name for the Y axis.
+.TP
+.BR \-\-x\-meaning " " \fICHAR\fR
+Character or string representing one class of labeled points (traditionally 'x' or 'X').
+.TP
+.BR \-\-o\-meaning " " \fICHAR\fR
+Character or string representing the other class of labeled points (traditionally 'o' or 'O').
+.TP
+.BR \-\-min\-x " " \fIVALUE\fR
+Minimum valid X coordinate value. Default: \-10.0
+.TP
+.BR \-\-max\-x " " \fIVALUE\fR
+Maximum valid X coordinate value. Default: 10.0
+.TP
+.BR \-\-min\-y " " \fIVALUE\fR
+Minimum valid Y coordinate value. Default: \-10.0
+.TP
+.BR \-\-max\-y " " \fIVALUE\fR
+Maximum valid Y coordinate value. Default: 10.0
+.TP
+.BR \-\-show\-zero\-bars
+Display axis lines at x=0 and y=0 in the viewport.
+
+.SH POINT OPERATIONS
+.TP
+.BR \-\-add\-point
+Add a point to the table. Requires \fB\-\-table\fR, \fB\-\-x\fR, \fB\-\-y\fR, and \fB\-\-target\fR.
+.TP
+.BR \-\-delete\-point
+Delete a point from the table. Requires \fB\-\-table\fR and \fB\-\-point\-id\fR.
+.TP
+.BR \-\-x " " \fIVALUE\fR
+X coordinate for point operations.
+.TP
+.BR \-\-y " " \fIVALUE\fR
+Y coordinate for point operations.
+.TP
+.BR \-\-target " " \fILABEL\fR
+Target/label value for the point.
+.TP
+.BR \-\-point\-id " " \fIID\fR
+Database ID of the point to operate on.
+
+.SH DATA EXPORT
+.TP
+.BR \-\-to\-csv
+Export table data to CSV format on stdout. Requires \fB\-\-table\fR.
+
+.SH UNDO LOG MANAGEMENT
+.TP
+.BR \-\-list\-unsaved\-changes
+List all unsaved changes for the specified table. Requires \fB\-\-table\fR.
+.TP
+.BR \-\-commit\-unsaved\-changes
+Commit all unsaved changes for the specified table to the main data table. Requires \fB\-\-table\fR.
+.TP
+.BR \-\-clear\-undo\-log
+Clear the undo log for the specified table. Requires \fB\-\-table\fR.
+.TP
+.BR \-\-clear\-all\-undo\-log
+Clear undo logs for all tables in the database.
+
+.SH UI OPTIONS
+These options affect the interactive mode:
+.TP
+.BR \-\-start\-tabular
+Start in tabular view mode instead of graphical viewport mode.
+.TP
+.BR \-\-override\-screen\-width " " \fICOLS\fR
+Override detected terminal width (for testing).
+.TP
+.BR \-\-override\-screen\-height " " \fIROWS\fR
+Override detected terminal height (for testing).
+
+.SH DEBUG OPTIONS
+These options are primarily for testing and debugging:
+.TP
+.BR \-\-dump\-screen
+Dump the entire screen buffer contents to stdout and exit.
+.TP
+.BR \-\-dump\-edit\-area\-contents
+Dump only the edit area contents to stdout and exit.
+.TP
+.BR \-\-list\-x\-axis\-marks
+List X axis tick mark positions and exit.
+.TP
+.BR \-\-list\-y\-axis\-marks
+List Y axis tick mark positions and exit.
+.TP
+.BR \-\-zoom\-in
+Zoom in (for testing).
+.TP
+.BR \-\-zoom\-out
+Zoom out (for testing).
+
+.SH INTERACTIVE MODE KEYBOARD SHORTCUTS
+When running in interactive mode (no non-interactive command flags), the following keyboard shortcuts are available:
+
+.SS Navigation
+.TP
+.B Arrow keys
+Move the cursor within the viewport.
+.TP
+.B Tab
+Navigate between header fields and buttons.
+
+.SS Point Editing
+.TP
+.B x
+Create an 'x' point at the cursor position.
+.TP
+.B o
+Create an 'o' point at the cursor position.
+.TP
+.B Space
+Delete all points under the cursor.
+.TP
+.B Shift+X
+Convert all 'o' points under the cursor to 'x' points.
+.TP
+.B Shift+O
+Convert all 'x' points under the cursor to 'o' points.
+.TP
+.B g
+Flip all points under the cursor (x becomes o, o becomes x).
+
+.SS Zoom & View
+.TP
+.B +
+Zoom in (magnify the viewport).
+.TP
+.B \-
+Zoom out.
+.TP
+.B =
+Reset to full viewport (fit all valid ranges).
+.TP
+.B #
+Toggle between graphical viewport and tabular view modes.
+
+.SS Undo/Save/Quit
+.TP
+.B u
+Undo the last action.
+.TP
+.B s
+Save all changes to the database (commit unsaved changes).
+.TP
+.B q
+Quit the application. If there are unsaved changes, prompts for confirmation.
+.TP
+.B ESC
+Same as 'q' - quit with unsaved changes prompt.
+
+.SS Other
+.TP
+.B r
+Open dialog to generate random points.
+.TP
+.B ?
+Show help overlay with keyboard shortcuts.
+.TP
+.B k
+Dump full screen contents to stdout (for debugging).
+.TP
+.B Shift+K
+Dump edit area contents to stdout (for debugging).
+
+.SH DATABASE SCHEMA
+DataPainter uses SQLite databases with the following schema:
+
+.SS Data Tables
+Each table created by DataPainter contains:
+.RS
+.IP \(bu 2
+.B id
+(INTEGER PRIMARY KEY) - Unique row identifier
+.IP \(bu 2
+.B <x_axis_name>
+(REAL) - X coordinate
+.IP \(bu 2
+.B <y_axis_name>
+(REAL) - Y coordinate
+.IP \(bu 2
+.B <target_column_name>
+(TEXT) - Label/target value
+.RE
+
+.SS System Tables
+.TP
+.B metadata
+Stores configuration for each table (axis names, valid ranges, meanings, etc.).
+.TP
+.B <table>_unsaved_changes
+Tracks unsaved edits (creates, deletes, updates) for undo/redo functionality.
+
+.SH EXAMPLES
+.TP
+Create a new table for classifying iris data:
+.EX
+datapainter --database iris.db --create-table --table iris_data \\
+  --target-column-name species --x-axis-name petal_length \\
+  --y-axis-name petal_width --x-meaning setosa --o-meaning versicolor \\
+  --min-x 0 --max-x 7 --min-y 0 --max-y 3
+.EE
+
+.TP
+Open the table in interactive mode:
+.EX
+datapainter --database iris.db --table iris_data
+.EE
+
+.TP
+Add a point programmatically:
+.EX
+datapainter --database iris.db --table iris_data --add-point \\
+  --x 1.5 --y 0.3 --target setosa
+.EE
+
+.TP
+Export data to CSV:
+.EX
+datapainter --database iris.db --table iris_data --to-csv > iris.csv
+.EE
+
+.TP
+List all tables in a database:
+.EX
+datapainter --database iris.db --list-tables
+.EE
+
+.TP
+View metadata for a table:
+.EX
+datapainter --database iris.db --table iris_data --show-metadata
+.EE
+
+.SH EXIT STATUS
+.TP
+.B 0
+Success
+.TP
+.B 2
+Invalid arguments
+.TP
+.B 65
+Failed to open database
+.TP
+.B 66
+Database operation failed (corruption, lock timeout, write to read-only)
+.TP
+.B 67
+CSV write error
+
+.SH FILES
+.TP
+.I *.db
+SQLite database files containing tables and metadata
+
+.SH NOTES
+.IP \(bu 2
+Multiple points can exist at the same (x,y) coordinate.
+.IP \(bu 2
+Points are displayed on a discretized grid - the visual position is an approximation.
+.IP \(bu 2
+When multiple points of the same type exist under the cursor, they are shown as uppercase (X or O).
+.IP \(bu 2
+When both 'x' and 'o' points exist at the same screen position, they are shown as '#'.
+.IP \(bu 2
+All edits are tracked in an unsaved_changes table until explicitly saved or committed.
+.IP \(bu 2
+Quitting with unsaved changes will prompt for confirmation to prevent data loss.
+
+.SH BUGS
+Report bugs at: https://github.com/solresol/datapainter/issues
+
+.SH AUTHOR
+Written by Greg Baker.
+
+.SH SEE ALSO
+.BR sqlite3 (1)

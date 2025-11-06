@@ -594,11 +594,11 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ## Phase 19: Documentation
 
 ### User Documentation
-- [ ] Write man page for datapainter
-- [ ] Document all CLI arguments
-- [ ] Document keyboard shortcuts
-- [ ] Create usage examples
-- [ ] Document database schema
+- [x] Write man page for datapainter - docs/datapainter.1 (comprehensive man page with all sections)
+- [x] Document all CLI arguments - Included in man page
+- [x] Document keyboard shortcuts - Included in man page
+- [x] Create usage examples - Included in man page
+- [x] Document database schema - Included in man page
 
 ### Developer Documentation
 - [ ] Document architecture overview
