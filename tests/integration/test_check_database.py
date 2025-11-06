@@ -16,6 +16,25 @@ def test_check_unsaved_changes_table():
     os.close(fd)
 
     try:
+        # Initialize the database first (required when passing custom database_path)
+        import subprocess
+        datapainter_path = '../../build/datapainter'
+        subprocess.run([
+            datapainter_path,
+            '--database', temp_db,
+            '--create-table',
+            '--table', 'test_table',
+            '--target-column-name', 'label',
+            '--x-axis-name', 'x',
+            '--y-axis-name', 'y',
+            '--x-meaning', 'positive',
+            '--o-meaning', 'negative',
+            '--min-x', '-10',
+            '--max-x', '10',
+            '--min-y', '-10',
+            '--max-y', '10'
+        ], check=True, capture_output=True)
+
         with DataPainterTest(width=80, height=24, database_path=temp_db) as test:
             # Wait for UI
             test.wait_for_text('test_table', timeout=3.0)
