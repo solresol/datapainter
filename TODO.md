@@ -555,22 +555,22 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: End-to-end workflow
 
 ### Automated TUI Tests Using Keystroke Playback
-- [ ] Test: Basic point creation workflow (move cursor, add x, add o, verify screen)
-- [ ] Test: Point deletion workflow (create points, delete with space, verify)
-- [ ] Test: Point conversion workflow (create x, convert to o with Shift-O, verify)
-- [ ] Test: Point flipping workflow (create mixed points, flip with g, verify)
-- [ ] Test: Zoom workflow (create points, zoom in with +, zoom out with -, full with =)
-- [ ] Test: Pan workflow (move cursor to edges, verify viewport shifts)
+- [x] Test: Basic point creation workflow (move cursor, add x, add o, verify screen) - TestPointCreation
+- [x] Test: Point deletion workflow (create points, delete with space, verify) - TestPointDeletion
+- [x] Test: Point conversion workflow (create x, convert to o with Shift-O, verify) - TestPointConversion
+- [x] Test: Point flipping workflow (create mixed points, flip with g, verify) - TestPointConversion::test_flip_point_with_g
+- [x] Test: Zoom workflow (create points, zoom in with +, zoom out with -, full with =) - TestZoomOperations
+- [x] Test: Pan workflow (move cursor to edges, verify viewport shifts) - TestPanOperations
 - [ ] Test: Undo/redo workflow (create point, undo with u, redo, verify)
 - [ ] Test: Save workflow (create points, save with s, verify database)
-- [ ] Test: Table view switching (viewport → # → table → # → viewport)
-- [ ] Test: Multiple points at same coordinates (create X and O at same position, verify #)
+- [ ] Test: Table view switching (viewport → # → table → # → viewport) - '#' key not implemented
+- [x] Test: Multiple points at same coordinates (create X and O at same position, verify #) - TestPointCreation::test_multiple_points_same_cell
 - [ ] Test: Valid range enforcement (try to move beyond valid ranges, verify walls)
-- [ ] Test: Help overlay (press ?, verify help shown, dismiss)
-- [ ] Test: Tab navigation (tab through header fields, verify focus)
+- [ ] Test: Help overlay (press ?, verify help shown, dismiss) - Can't test blocking UI with PTY framework
+- [x] Test: Tab navigation (tab through header fields, verify focus) - test_tab_navigation.py
 - [ ] Test: Complex workflow: create 10 points, zoom, pan, undo 3, redo 1, save
-- [ ] Test: Screen dump accuracy (k command produces correct output)
-- [ ] Test: Edit area dump accuracy (K command produces correct output)
+- [x] Test: Screen dump accuracy (k command produces correct output) - TestScreenDump
+- [x] Test: Edit area dump accuracy (K command produces correct output) - TestScreenDump
 
 ### Error Handling & Edge Cases
 - [ ] Test: Database lock timeout (exit code 66)
