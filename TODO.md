@@ -579,7 +579,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Extremely large/small coordinate values - TestExtremeCoordinateValues (5 tests)
 - [x] Test: Empty table operations - TestEmptyTableOperations (5 tests)
 - [x] Test: Single point operations - TestSinglePointOperations (4 tests)
-- [ ] Test: Viewport at extreme zoom levels
+- [x] Test: Viewport at extreme zoom levels - TestExtremeZoomLevels (6 tests)
 
 ### User Experience Polish
 - [ ] Optimize rendering performance

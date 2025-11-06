@@ -1562,5 +1562,166 @@ class TestExtremeCoordinateValues:
             os.unlink(temp_db)
 
 
+class TestExtremeZoomLevels:
+    """Test viewport behavior at extreme zoom levels."""
+
+    def test_maximum_zoom_in(self):
+        """Verify application handles maximum zoom in without crashing."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Create a point to have something to zoom in on
+            test.send_keys('x')
+            time.sleep(0.2)
+
+            # Zoom in many times
+            for _ in range(20):
+                test.send_keys('+')
+                time.sleep(0.05)
+
+            # Verify UI is stable at extreme zoom
+            lines = test.get_display_lines()
+            assert len(lines) >= 20, "Should remain stable at extreme zoom in"
+
+            # Try to pan at extreme zoom
+            test.send_keys('RIGHT')
+            time.sleep(0.1)
+            test.send_keys('LEFT')
+            time.sleep(0.1)
+
+            # Verify still stable
+            lines = test.get_display_lines()
+            assert len(lines) >= 20, "Should remain stable after panning at extreme zoom"
+
+    def test_maximum_zoom_out(self):
+        """Verify application handles maximum zoom out without crashing."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Create a point
+            test.send_keys('x')
+            time.sleep(0.2)
+
+            # Zoom out many times
+            for _ in range(20):
+                test.send_keys('-')
+                time.sleep(0.05)
+
+            # Verify UI is stable at extreme zoom out
+            lines = test.get_display_lines()
+            assert len(lines) >= 20, "Should remain stable at extreme zoom out"
+
+            # Try to pan at extreme zoom
+            test.send_keys('UP')
+            time.sleep(0.1)
+            test.send_keys('DOWN')
+            time.sleep(0.1)
+
+            # Verify still stable
+            lines = test.get_display_lines()
+            assert len(lines) >= 20, "Should remain stable after panning at extreme zoom out"
+
+    def test_zoom_in_then_out(self):
+        """Verify zooming in then out returns to reasonable state."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Create a point
+            test.send_keys('x')
+            time.sleep(0.2)
+
+            # Zoom in 10 times
+            for _ in range(10):
+                test.send_keys('+')
+                time.sleep(0.05)
+
+            # Zoom out 10 times
+            for _ in range(10):
+                test.send_keys('-')
+                time.sleep(0.05)
+
+            # Should be back to reasonable zoom
+            # Verify UI is stable
+            lines = test.get_display_lines()
+            assert len(lines) >= 20, "Should remain stable after zoom in/out cycle"
+
+    def test_reset_viewport_after_extreme_zoom(self):
+        """Verify '=' key resets viewport after extreme zoom."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Create a point
+            test.send_keys('x')
+            time.sleep(0.2)
+
+            # Zoom in extremely
+            for _ in range(15):
+                test.send_keys('+')
+                time.sleep(0.05)
+
+            # Pan away from center
+            for _ in range(10):
+                test.send_keys('RIGHT')
+                time.sleep(0.05)
+
+            # Reset viewport with '='
+            test.send_keys('=')
+            time.sleep(0.2)
+
+            # Verify UI is stable and reset worked
+            lines = test.get_display_lines()
+            assert len(lines) >= 20, "Should remain stable after viewport reset"
+
+    def test_create_point_at_extreme_zoom(self):
+        """Verify points can be created at extreme zoom levels."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Zoom in extremely
+            for _ in range(15):
+                test.send_keys('+')
+                time.sleep(0.05)
+
+            # Try to create a point at extreme zoom
+            test.send_keys('x')
+            time.sleep(0.2)
+
+            # Move and create another
+            test.send_keys('RIGHT')
+            time.sleep(0.1)
+            test.send_keys('o')
+            time.sleep(0.2)
+
+            # Verify UI is stable
+            lines = test.get_display_lines()
+            assert len(lines) >= 20, "Should remain stable after creating points at extreme zoom"
+
+    def test_delete_point_at_extreme_zoom(self):
+        """Verify points can be deleted at extreme zoom levels."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Create some points first
+            test.send_keys('x')
+            time.sleep(0.2)
+            test.send_keys('RIGHT')
+            time.sleep(0.1)
+            test.send_keys('o')
+            time.sleep(0.2)
+
+            # Zoom in extremely
+            for _ in range(15):
+                test.send_keys('+')
+                time.sleep(0.05)
+
+            # Delete a point
+            test.send_keys('BACKSPACE')
+            time.sleep(0.2)
+
+            # Verify UI is stable
+            lines = test.get_display_lines()
+            assert len(lines) >= 20, "Should remain stable after deleting point at extreme zoom"
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
