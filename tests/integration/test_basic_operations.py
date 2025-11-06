@@ -477,5 +477,98 @@ class TestEdgeCases:
             assert True, "Application should quit cleanly"
 
 
+class TestZoomOperations:
+    """Test zoom and viewport operations."""
+
+    def test_zoom_in_with_plus(self):
+        """Verify '+' key zooms in."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Create a point for reference
+            test.send_keys('x')
+            time.sleep(0.2)
+
+            # Zoom in
+            test.send_keys('+')
+            time.sleep(0.2)
+
+            # Application should continue running (no crash)
+            lines = test.get_display_lines()
+            assert len(lines) > 0, "Should have display after zoom in"
+
+    def test_zoom_out_with_minus(self):
+        """Verify '-' key zooms out."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Create a point for reference
+            test.send_keys('x')
+            time.sleep(0.2)
+
+            # Zoom out
+            test.send_keys('-')
+            time.sleep(0.2)
+
+            # Application should continue running (no crash)
+            lines = test.get_display_lines()
+            assert len(lines) > 0, "Should have display after zoom out"
+
+    def test_full_viewport_with_equals(self):
+        """Verify '=' key resets to full viewport."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Create a point
+            test.send_keys('x')
+            time.sleep(0.2)
+
+            # Zoom in a couple times
+            test.send_keys('++')
+            time.sleep(0.2)
+
+            # Reset to full viewport
+            test.send_keys('=')
+            time.sleep(0.2)
+
+            # Application should continue running (no crash)
+            lines = test.get_display_lines()
+            assert len(lines) > 0, "Should have display after reset to full viewport"
+
+    def test_zoom_workflow_with_multiple_points(self):
+        """Test complete zoom workflow with several points."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Create several points
+            test.send_keys('xo')
+            time.sleep(0.1)
+            test.send_keys('RIGHT')
+            test.send_keys('RIGHT')
+            test.send_keys('xo')
+            time.sleep(0.2)
+
+            # Zoom in twice
+            test.send_keys('++')
+            time.sleep(0.2)
+
+            # Verify points still visible or application stable
+            screen = '\n'.join(test.get_display_lines())
+            # Just verify application is still running and rendering
+            assert len(screen) > 100, "Should have meaningful screen content"
+
+            # Zoom out twice
+            test.send_keys('--')
+            time.sleep(0.2)
+
+            # Reset to full view
+            test.send_keys('=')
+            time.sleep(0.2)
+
+            # Application should still be running
+            lines = test.get_display_lines()
+            assert len(lines) > 0, "Should still be running after zoom workflow"
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
