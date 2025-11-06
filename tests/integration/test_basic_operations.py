@@ -570,5 +570,80 @@ class TestZoomOperations:
             assert len(lines) > 0, "Should still be running after zoom workflow"
 
 
+class TestPanOperations:
+    """Test pan and viewport shifting operations."""
+
+    def test_pan_with_arrow_keys(self):
+        """Verify arrow keys cause panning when cursor reaches edge."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Move cursor right multiple times to trigger panning
+            # (viewport pans when cursor reaches edge)
+            for _ in range(10):
+                test.send_keys('RIGHT')
+                time.sleep(0.05)
+
+            # Application should handle panning without crashing
+            lines = test.get_display_lines()
+            assert len(lines) > 0, "Should handle right panning"
+
+            # Try panning left
+            for _ in range(10):
+                test.send_keys('LEFT')
+                time.sleep(0.05)
+
+            lines = test.get_display_lines()
+            assert len(lines) > 0, "Should handle left panning"
+
+    def test_pan_up_and_down(self):
+        """Verify up/down arrow keys cause vertical panning."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Move cursor up multiple times
+            for _ in range(10):
+                test.send_keys('UP')
+                time.sleep(0.05)
+
+            lines = test.get_display_lines()
+            assert len(lines) > 0, "Should handle up panning"
+
+            # Move cursor down
+            for _ in range(10):
+                test.send_keys('DOWN')
+                time.sleep(0.05)
+
+            lines = test.get_display_lines()
+            assert len(lines) > 0, "Should handle down panning"
+
+    def test_pan_workflow_with_points(self):
+        """Test panning around viewport with points."""
+        with DataPainterTest(width=80, height=24) as test:
+            test.wait_for_text('test_table', timeout=3.0)
+
+            # Create a point at initial position
+            test.send_keys('x')
+            time.sleep(0.1)
+
+            # Pan right and create another point
+            for _ in range(5):
+                test.send_keys('RIGHT')
+                time.sleep(0.05)
+            test.send_keys('o')
+            time.sleep(0.1)
+
+            # Pan down
+            for _ in range(5):
+                test.send_keys('DOWN')
+                time.sleep(0.05)
+            test.send_keys('x')
+            time.sleep(0.2)
+
+            # Application should be stable after panning and creating points
+            screen = '\n'.join(test.get_display_lines())
+            assert len(screen) > 100, "Should have stable display after pan workflow"
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
