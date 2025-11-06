@@ -565,10 +565,10 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Save workflow (create points, save with s, verify database) - TestSaveWorkflow
 - [ ] Test: Table view switching (viewport → # → table → # → viewport) - '#' key not implemented
 - [x] Test: Multiple points at same coordinates (create X and O at same position, verify #) - TestPointCreation::test_multiple_points_same_cell
-- [ ] Test: Valid range enforcement (try to move beyond valid ranges, verify walls)
+- [x] Test: Valid range enforcement (try to move beyond valid ranges, verify walls) - TestValidRangeEnforcement
 - [ ] Test: Help overlay (press ?, verify help shown, dismiss) - Can't test blocking UI with PTY framework
 - [x] Test: Tab navigation (tab through header fields, verify focus) - test_tab_navigation.py
-- [ ] Test: Complex workflow: create 10 points, zoom, pan, undo 3, redo 1, save
+- [x] Test: Complex workflow: create 10 points, zoom, pan, undo, save - TestComplexWorkflow
 - [x] Test: Screen dump accuracy (k command produces correct output) - TestScreenDump
 - [x] Test: Edit area dump accuracy (K command produces correct output) - TestScreenDump
 
