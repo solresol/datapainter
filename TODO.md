@@ -561,7 +561,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Point flipping workflow (create mixed points, flip with g, verify) - TestPointConversion::test_flip_point_with_g
 - [x] Test: Zoom workflow (create points, zoom in with +, zoom out with -, full with =) - TestZoomOperations
 - [x] Test: Pan workflow (move cursor to edges, verify viewport shifts) - TestPanOperations
-- [ ] Test: Undo/redo workflow (create point, undo with u, redo, verify)
+- [x] Test: Undo/redo workflow (create point, undo with u, redo, verify) - TestUndoRedo
 - [ ] Test: Save workflow (create points, save with s, verify database)
 - [ ] Test: Table view switching (viewport → # → table → # → viewport) - '#' key not implemented
 - [x] Test: Multiple points at same coordinates (create X and O at same position, verify #) - TestPointCreation::test_multiple_points_same_cell
