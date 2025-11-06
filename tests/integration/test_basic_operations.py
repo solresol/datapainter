@@ -645,6 +645,146 @@ class TestPanOperations:
             assert len(screen) > 100, "Should have stable display after pan workflow"
 
 
+class TestSaveWorkflow:
+    """Test saving unsaved changes to the database."""
+
+    def test_save_with_s_key(self):
+        """Verify 's' key saves points to database."""
+        import sqlite3
+        import tempfile
+        import os
+        import subprocess
+
+        # Create a persistent temp database
+        fd, temp_db = tempfile.mkstemp(suffix=".db")
+        os.close(fd)
+
+        try:
+            # Initialize the database first
+            datapainter_path = '../../build/datapainter'
+            subprocess.run([
+                datapainter_path,
+                '--database', temp_db,
+                '--create-table',
+                '--table', 'test_table',
+                '--target-column-name', 'label',
+                '--x-axis-name', 'x',
+                '--y-axis-name', 'y',
+                '--x-meaning', 'positive',
+                '--o-meaning', 'negative',
+                '--min-x', '-10',
+                '--max-x', '10',
+                '--min-y', '-10',
+                '--max-y', '10'
+            ], check=True, capture_output=True)
+
+            with DataPainterTest(width=80, height=24, database_path=temp_db) as test:
+                test.wait_for_text('test_table', timeout=3.0)
+
+                # Create two points
+                test.send_keys('x')
+                time.sleep(0.2)
+                test.send_keys('RIGHT')
+                time.sleep(0.1)
+                test.send_keys('o')
+                time.sleep(0.2)
+
+                # Verify points are in unsaved_changes but not in data
+                conn = sqlite3.connect(temp_db)
+                cursor = conn.cursor()
+
+                cursor.execute("SELECT COUNT(*) FROM unsaved_changes WHERE is_active = 1")
+                unsaved_count_before = cursor.fetchone()[0]
+                assert unsaved_count_before >= 2, "Should have at least 2 unsaved changes"
+
+                cursor.execute("SELECT COUNT(*) FROM test_table")
+                data_count_before = cursor.fetchone()[0]
+                conn.close()
+
+                # Save with 's' key
+                test.send_keys('s')
+                time.sleep(0.5)
+
+                # Verify points moved from unsaved_changes to test_table
+                conn = sqlite3.connect(temp_db)
+                cursor = conn.cursor()
+
+                cursor.execute("SELECT COUNT(*) FROM unsaved_changes WHERE is_active = 1")
+                unsaved_count_after = cursor.fetchone()[0]
+                assert unsaved_count_after == 0, "Should have no active unsaved changes after save"
+
+                cursor.execute("SELECT COUNT(*) FROM test_table")
+                data_count_after = cursor.fetchone()[0]
+                assert data_count_after > data_count_before, "Should have more data points after save"
+                assert data_count_after >= 2, "Should have at least 2 saved points"
+
+                conn.close()
+        finally:
+            os.unlink(temp_db)
+
+    def test_save_multiple_times(self):
+        """Verify multiple save operations work correctly."""
+        import sqlite3
+        import tempfile
+        import os
+        import subprocess
+
+        fd, temp_db = tempfile.mkstemp(suffix=".db")
+        os.close(fd)
+
+        try:
+            # Initialize database
+            datapainter_path = '../../build/datapainter'
+            subprocess.run([
+                datapainter_path,
+                '--database', temp_db,
+                '--create-table',
+                '--table', 'test_table',
+                '--target-column-name', 'label',
+                '--x-axis-name', 'x',
+                '--y-axis-name', 'y',
+                '--x-meaning', 'positive',
+                '--o-meaning', 'negative',
+                '--min-x', '-10',
+                '--max-x', '10',
+                '--min-y', '-10',
+                '--max-y', '10'
+            ], check=True, capture_output=True)
+
+            with DataPainterTest(width=80, height=24, database_path=temp_db) as test:
+                test.wait_for_text('test_table', timeout=3.0)
+
+                # Create and save first point
+                test.send_keys('x')
+                time.sleep(0.2)
+                test.send_keys('s')
+                time.sleep(0.3)
+
+                # Create and save second point
+                test.send_keys('RIGHT')
+                time.sleep(0.1)
+                test.send_keys('o')
+                time.sleep(0.2)
+                test.send_keys('s')
+                time.sleep(0.3)
+
+                # Verify both saves worked
+                conn = sqlite3.connect(temp_db)
+                cursor = conn.cursor()
+
+                cursor.execute("SELECT COUNT(*) FROM test_table")
+                data_count = cursor.fetchone()[0]
+                assert data_count >= 2, "Should have at least 2 saved points after multiple saves"
+
+                cursor.execute("SELECT COUNT(*) FROM unsaved_changes WHERE is_active = 1")
+                unsaved_count = cursor.fetchone()[0]
+                assert unsaved_count == 0, "Should have no unsaved changes after saves"
+
+                conn.close()
+        finally:
+            os.unlink(temp_db)
+
+
 class TestUndoRedo:
     """Test undo and redo operations."""
 
