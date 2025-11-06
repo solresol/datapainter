@@ -574,8 +574,8 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 
 ### Error Handling & Edge Cases
 - [ ] Test: Database lock timeout (exit code 66) - Feature not yet implemented
-- [ ] Test: Corrupted database file
-- [ ] Test: Invalid SQL in filter
+- [x] Test: Corrupted database file - TestCorruptedDatabase (3 tests: corrupted, nonexistent, readonly)
+- [ ] Test: Invalid SQL in filter - Feature not yet implemented (no filter feature exists)
 - [x] Test: Extremely large/small coordinate values - TestExtremeCoordinateValues (5 tests)
 - [x] Test: Empty table operations - TestEmptyTableOperations (5 tests)
 - [x] Test: Single point operations - TestSinglePointOperations (4 tests)

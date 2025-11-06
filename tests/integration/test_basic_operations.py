@@ -7,6 +7,8 @@ using pyte terminal emulation.
 
 import pytest
 import time
+import os
+import tempfile
 from tui_test_framework import DataPainterTest
 
 
@@ -1721,6 +1723,125 @@ class TestExtremeZoomLevels:
             # Verify UI is stable
             lines = test.get_display_lines()
             assert len(lines) >= 20, "Should remain stable after deleting point at extreme zoom"
+
+
+class TestCorruptedDatabase:
+    """Test handling of corrupted database files."""
+
+    def test_corrupted_database_file(self):
+        """Verify application handles corrupted database gracefully with exit code 66."""
+        import subprocess
+
+        # Create a corrupted database file (not a valid SQLite database)
+        fd, temp_db = tempfile.mkstemp(suffix=".db")
+        try:
+            # Write garbage data to create a corrupted database
+            os.write(fd, b"This is not a valid SQLite database file!")
+            os.close(fd)
+
+            # Try to open the corrupted database
+            datapainter_path = '../../build/datapainter'
+            result = subprocess.run([
+                datapainter_path,
+                '--database', temp_db,
+                '--list-tables'
+            ], capture_output=True, text=True)
+
+            # Should exit with code 66 (failed to create system tables due to corruption)
+            # SQLite can "open" a corrupted file but fails when trying to use it
+            assert result.returncode == 66, f"Expected exit code 66, got {result.returncode}"
+            assert 'file is not a database' in result.stderr or 'Failed to create system tables' in result.stderr, \
+                f"Expected database corruption error message, got: {result.stderr}"
+        finally:
+            os.unlink(temp_db)
+
+    def test_nonexistent_database_file(self):
+        """Verify application handles nonexistent database file gracefully."""
+        import subprocess
+
+        # Use a database path that doesn't exist
+        nonexistent_db = '/tmp/this_database_does_not_exist_12345.db'
+
+        # Ensure it really doesn't exist
+        if os.path.exists(nonexistent_db):
+            os.unlink(nonexistent_db)
+
+        # Try to list tables in a nonexistent database
+        datapainter_path = '../../build/datapainter'
+        result = subprocess.run([
+            datapainter_path,
+            '--database', nonexistent_db,
+            '--list-tables'
+        ], capture_output=True, text=True)
+
+        # SQLite will create a new database file if it doesn't exist,
+        # but it should not have any tables
+        assert result.returncode == 0, f"Expected exit code 0, got {result.returncode}"
+
+        # Clean up the created database if it exists
+        if os.path.exists(nonexistent_db):
+            os.unlink(nonexistent_db)
+
+    def test_readonly_database_file(self):
+        """Verify application can open read-only database but handles write errors."""
+        import subprocess
+        import stat
+
+        # Create a valid database first
+        fd, temp_db = tempfile.mkstemp(suffix=".db")
+        os.close(fd)
+
+        try:
+            # Initialize a valid database
+            datapainter_path = '../../build/datapainter'
+            subprocess.run([
+                datapainter_path,
+                '--database', temp_db,
+                '--create-table',
+                '--table', 'test_table',
+                '--target-column-name', 'label',
+                '--x-axis-name', 'x',
+                '--y-axis-name', 'y',
+                '--x-meaning', 'positive',
+                '--o-meaning', 'negative',
+                '--min-x', '-10',
+                '--max-x', '10',
+                '--min-y', '-10',
+                '--max-y', '10'
+            ], check=True, capture_output=True)
+
+            # Make database read-only
+            os.chmod(temp_db, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+
+            # Try to list tables (should work - read-only operation)
+            result = subprocess.run([
+                datapainter_path,
+                '--database', temp_db,
+                '--list-tables'
+            ], capture_output=True, text=True)
+
+            # Should be able to read
+            assert result.returncode == 0, f"Expected exit code 0 for read operation, got {result.returncode}"
+            assert 'test_table' in result.stdout, "Should be able to list tables in read-only database"
+
+            # Try to add a point (should fail - write operation)
+            result = subprocess.run([
+                datapainter_path,
+                '--database', temp_db,
+                '--add-point',
+                '--table', 'test_table',
+                '--x', '5.0',
+                '--y', '5.0',
+                '--target', 'positive'
+            ], capture_output=True, text=True)
+
+            # Should fail with database error (exit code 66)
+            assert result.returncode == 66, f"Expected exit code 66 for write to read-only database, got {result.returncode}"
+
+        finally:
+            # Restore write permissions so we can delete the file
+            os.chmod(temp_db, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+            os.unlink(temp_db)
 
 
 if __name__ == '__main__':
