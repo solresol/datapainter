@@ -546,7 +546,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Complete workflow: load → edit → undo → redo → save
 - [x] Test: Complete workflow: viewport ↔ table view switching (test_table_view.py)
 - [x] Test: Complete workflow: zoom/pan with many points
-- [ ] Test: Handle 1M row dataset (performance check)
+- [x] Test: Handle 1M row dataset (performance check) - test_performance.py (3 tests: creation, viewport, CSV export)
 - [x] Test: Multiple table workflow in same database
 - [x] Test: List tables (empty and with data)
 - [x] Test: Add point via command line
