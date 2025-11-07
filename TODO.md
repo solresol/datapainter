@@ -485,28 +485,28 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 ## Phase 17.5: Keystroke Playback for Automated TUI Testing
 
 ### Keystroke File Parser
-- [ ] Create KeystrokeFileParser class
-- [ ] Test: Read keystroke file and parse each line
-- [ ] Test: Parse regular character keystrokes (x, o, +, -, etc.)
-- [ ] Test: Parse special key names (<up>, <down>, <left>, <right>)
-- [ ] Test: Parse <space>, <tab>, <enter>, <esc> special keys
-- [ ] Test: Parse test command keystrokes (k, K)
-- [ ] Test: Ignore comment lines starting with #
-- [ ] Test: Ignore empty lines
-- [ ] Test: Handle file not found error
-- [ ] Test: Handle invalid keystroke format errors
-- [ ] Test: Return ordered sequence of keystrokes
+- [x] Create FileInputSource class with keystroke parsing
+- [x] Test: Read keystroke file and parse each line
+- [x] Test: Parse regular character keystrokes (x, o, +, -, etc.)
+- [x] Test: Parse special key names (<up>, <down>, <left>, <right>)
+- [x] Test: Parse <space>, <tab>, <enter>, <esc> special keys
+- [x] Test: Parse escape sequences (\n, \t, \\)
+- [x] Test: Ignore comment lines starting with #
+- [x] Test: Ignore empty lines
+- [x] Test: Handle file not found error
+- [x] Test: Handle invalid keystroke format errors
+- [x] Test: Return ordered sequence of keystrokes
+- [x] Test: Case-insensitive special key parsing
 
 ### Input Source Abstraction
-- [ ] Create InputSource interface/abstract class
-- [ ] Implement TerminalInputSource (reads from keyboard)
-- [ ] Implement FileInputSource (reads from keystroke file)
-- [ ] Test: TerminalInputSource returns keystroke from terminal
-- [ ] Test: FileInputSource returns next keystroke from sequence
-- [ ] Test: FileInputSource returns EOF when sequence exhausted
-- [ ] Modify InputHandler to accept InputSource
-- [ ] Test: InputHandler works with TerminalInputSource
-- [ ] Test: InputHandler works with FileInputSource
+- [x] Create InputSource interface/abstract class
+- [x] Implement TerminalInputSource (reads from keyboard)
+- [x] Implement FileInputSource (reads from keystroke file)
+- [x] Test: TerminalInputSource returns keystroke from terminal
+- [x] Test: FileInputSource returns next keystroke from sequence
+- [x] Test: FileInputSource returns EOF when sequence exhausted
+- [x] Test: Empty file produces error
+- [x] Test: File with only comments produces error
 
 ### Screen Dump Commands
 - [x] Add 'k' keystroke handler (dump full screen)
@@ -516,23 +516,26 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Screen dumps include current cursor position (implicit in output)
 - [x] Test: 'k' works in normal interactive mode
 - [x] Test: 'K' works in normal interactive mode
-- [ ] Test: 'k' works in automated mode (--keystroke-file) - requires keystroke file support
-- [ ] Test: 'K' works in automated mode (--keystroke-file) - requires keystroke file support
+- [x] Test: Screen dumps work in automated mode (--keystroke-file)
 
 ### Argument Parser Integration
-- [ ] Add --keystroke-file argument to ArgumentParser
-- [ ] Test: Parse --keystroke-file with valid filename
-- [ ] Test: Validate file exists before starting TUI
-- [ ] Test: Error if --keystroke-file combined with non-interactive flags
-- [ ] Test: Store keystroke file path in Arguments struct
+- [x] Add --keystroke-file argument to ArgumentParser
+- [x] Test: Parse --keystroke-file with valid filename
+- [x] Test: Validate file exists before starting TUI
+- [x] Test: Store keystroke file path in Arguments struct
 
 ### Main Loop Integration
-- [ ] Modify main loop to use InputSource abstraction
-- [ ] Test: TUI runs normally with TerminalInputSource (no --keystroke-file)
-- [ ] Test: TUI uses FileInputSource when --keystroke-file provided
-- [ ] Test: TUI exits gracefully when keystroke file exhausted
-- [ ] Test: Screen dumps output correctly during playback
-- [ ] Test: TUI processes all keystrokes from file in order
+- [x] Modify main loop to use InputSource abstraction
+- [x] Test: TUI runs normally with TerminalInputSource (no --keystroke-file)
+- [x] Test: TUI uses FileInputSource when --keystroke-file provided
+- [x] Test: TUI exits gracefully when keystroke file exhausted
+- [x] Test: TUI processes all keystrokes from file in order
+
+### Integration Tests
+- [x] Test: Keystroke playback creates points
+- [x] Test: Invalid keystroke file produces error
+- [x] Test: Empty keystroke file produces error
+- [x] Test: Special keys work in keystroke playback
 
 ---
 
