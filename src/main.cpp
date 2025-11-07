@@ -18,6 +18,7 @@
 #include "random_dialog.h"
 #include "random_initializer.h"
 #include "table_view.h"
+#include "input_source.h"
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -25,6 +26,7 @@
 #include <thread>
 #include <chrono>
 #include <limits>
+#include <memory>
 
 using namespace datapainter;
 
@@ -980,6 +982,21 @@ int main(int argc, char** argv) {
     // Create unsaved changes tracker
     UnsavedChanges unsaved_changes_tracker(db);
 
+    // Create input source (either from file or terminal)
+    std::unique_ptr<InputSource> input_source;
+    if (args.keystroke_file.has_value()) {
+        // Use file-based input source for automated testing
+        auto file_source = std::make_unique<FileInputSource>(args.keystroke_file.value());
+        if (!file_source->has_input()) {
+            std::cerr << "Error: " << file_source->get_error() << std::endl;
+            return 2;
+        }
+        input_source = std::move(file_source);
+    } else {
+        // Use terminal input source for interactive mode
+        input_source = std::make_unique<TerminalInputSource>(terminal);
+    }
+
     // Enter raw mode
     if (!terminal.enter_raw_mode()) {
         std::cerr << "Error: Could not enter raw terminal mode" << std::endl;
@@ -1106,7 +1123,12 @@ int main(int argc, char** argv) {
         }
 
         // Read keyboard input
-        int key = terminal.read_key();
+        int key = input_source->read_key();
+        if (key == -1) {
+            // EOF from file source - exit gracefully
+            running = false;
+            continue;
+        }
         if (key >= 0) {
             // Handle arrow keys (from ncurses or our own codes)
             if (key == Terminal::KEY_UP_ARROW) {
