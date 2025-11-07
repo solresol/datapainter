@@ -122,14 +122,19 @@ class DataPainterTest:
         Start datapainter process in a pseudo-terminal.
         Creates a temporary database if none specified.
         """
+        # Track whether we created the database
+        created_temp_db = False
+
         # Create temporary database if needed
         if self.database_path is None:
             fd, self.temp_db = tempfile.mkstemp(suffix=".db")
             os.close(fd)
             self.database_path = self.temp_db
             self._cleanup_handlers.append(lambda: os.unlink(self.temp_db))
+            created_temp_db = True
 
-            # Initialize database with test table
+        # Initialize database with test table if it doesn't exist or is empty
+        if created_temp_db or not os.path.exists(self.database_path) or os.path.getsize(self.database_path) == 0:
             self._init_test_database()
 
         # Set up environment for clean terminal
@@ -274,6 +279,10 @@ class DataPainterTest:
             'DOWN': b'\x1b[B',
             'LEFT': b'\x1b[C',
             'RIGHT': b'\x1b[D',
+            'KEY_UP': b'\x1b[A',      # Alternative format
+            'KEY_DOWN': b'\x1b[B',    # Alternative format
+            'KEY_LEFT': b'\x1b[C',    # Alternative format
+            'KEY_RIGHT': b'\x1b[D',   # Alternative format
             'BACKSPACE': b'\x7f',
             'DELETE': b'\x1b[3~',
             'ENTER': b'\r',
