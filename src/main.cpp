@@ -17,6 +17,7 @@
 #include "cursor_utils.h"
 #include "random_dialog.h"
 #include "random_initializer.h"
+#include "table_view.h"
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -26,6 +27,77 @@
 #include <limits>
 
 using namespace datapainter;
+
+// View modes for the main TUI
+enum class ViewMode {
+    VIEWPORT,  // Default viewport mode with cursor and axes
+    TABLE      // Tabular data editing mode
+};
+
+// Render table view to terminal buffer
+void render_table_view(Terminal& term, const TableView& table_view,
+                       int height) {
+    int row = 1;  // Start below top border
+
+    // Display filter at top
+    std::string filter = table_view.get_filter();
+    std::string filter_line = filter.empty() ? "Filter: (all rows)" : "Filter: " + filter;
+    int col = 1;
+    for (char ch : filter_line) {
+        term.write_char(row, col++, ch);
+    }
+    row += 2;  // Filter line + blank line
+
+    // Display column headers
+    std::string header = "  x          y          target";
+    col = 1;
+    for (char ch : header) {
+        term.write_char(row, col++, ch);
+    }
+    row++;
+
+    std::string separator = "─────────────────────────────────";
+    col = 1;
+    for (char ch : separator) {
+        term.write_char(row, col++, ch);
+    }
+    row++;
+
+    // Display rows
+    auto rows = table_view.get_visible_rows();
+    int current_row_idx = table_view.current_row();
+
+    for (size_t i = 0; i < rows.size() && row < height - 1; i++) {
+        char buf[100];
+        snprintf(buf, sizeof(buf), "  %-10.4f %-10.4f %s",
+                 rows[i].x, rows[i].y, rows[i].target.c_str());
+
+        // Note: Highlighting would require color support in Terminal class
+        // For now, just mark current row with '>'
+        col = 1;
+        if (static_cast<int>(i) == current_row_idx) {
+            term.write_char(row, col++, '>');
+        } else {
+            term.write_char(row, col++, ' ');
+        }
+
+        for (const char* p = buf; *p != '\0'; ++p) {
+            term.write_char(row, col++, *p);
+        }
+
+        row++;
+    }
+
+    // Display status line at bottom
+    char status[100];
+    snprintf(status, sizeof(status),
+             "Table View | Row %d/%d | Press # to return to viewport",
+             current_row_idx + 1, static_cast<int>(rows.size()));
+    col = 1;
+    for (const char* p = status; *p != '\0'; ++p) {
+        term.write_char(height, col++, *p);
+    }
+}
 
 int main(int argc, char** argv) {
     // Parse arguments
@@ -943,79 +1015,93 @@ int main(int argc, char** argv) {
     int focused_field = -1;
     int focused_button = 0;
 
+    // View mode state
+    ViewMode view_mode = ViewMode::VIEWPORT;
+    TableView* table_view = nullptr;  // Lazy initialize when needed
+
     while (running) {
         if (needs_redraw) {
             // Clear buffer
             terminal.clear_buffer();
 
-            // Query all data points
-            auto all_points = data_table.query_viewport(
-                viewport.data_x_min(), viewport.data_x_max(),
-                viewport.data_y_min(), viewport.data_y_max()
-            );
+            if (view_mode == ViewMode::VIEWPORT) {
+                // Viewport mode - render the normal UI
+                // Query all data points
+                auto all_points = data_table.query_viewport(
+                    viewport.data_x_min(), viewport.data_x_max(),
+                    viewport.data_y_min(), viewport.data_y_max()
+                );
 
-            // Count points
-            int total_count = all_points.size();
-            int x_count = 0;
-            int o_count = 0;
-            for (const auto& pt : all_points) {
-                if (pt.target == meta.x_meaning) {
-                    x_count++;
-                } else if (pt.target == meta.o_meaning) {
-                    o_count++;
+                // Count points
+                int total_count = all_points.size();
+                int x_count = 0;
+                int o_count = 0;
+                for (const auto& pt : all_points) {
+                    if (pt.target == meta.x_meaning) {
+                        x_count++;
+                    } else if (pt.target == meta.o_meaning) {
+                        o_count++;
+                    }
+                }
+
+                // Create renderers
+                HeaderRenderer header_renderer;
+                FooterRenderer footer_renderer;
+                EditAreaRenderer edit_area_renderer;
+
+                // Get current cursor position in data coordinates
+                ScreenCoord cursor_content = cursor_to_content_coords(cursor_row, cursor_col);
+                DataCoord cursor_data = viewport.screen_to_data(cursor_content);
+
+                // Load unsaved changes for this table
+                std::vector<ChangeRecord> unsaved_changes = unsaved_changes_tracker.get_changes(table_name);
+
+                // Count active unsaved changes across all tables (for header display)
+                auto all_changes = unsaved_changes_tracker.get_all_changes();
+                int total_active_changes = 0;
+                for (const auto& change : all_changes) {
+                    if (change.is_active) {
+                        total_active_changes++;
+                    }
+                }
+
+                // Count active unsaved changes for this table only (for footer display)
+                int table_active_changes = 0;
+                for (const auto& change : unsaved_changes) {
+                    if (change.is_active) {
+                        table_active_changes++;
+                    }
+                }
+
+                // Render header
+                header_renderer.render(terminal, args.database.value(), meta.table_name,
+                                      meta.target_col_name, meta.x_meaning, meta.o_meaning,
+                                      total_count, x_count, o_count,
+                                      x_min, x_max, y_min, y_max,
+                                      viewport.data_x_min(), viewport.data_x_max(),
+                                      viewport.data_y_min(), viewport.data_y_max(), focused_field, total_active_changes);
+
+                // Render edit area
+                edit_area_renderer.render(terminal, viewport, data_table, unsaved_changes,
+                                         edit_area_start_row, edit_area_height, screen_width,
+                                         cursor_row, cursor_col, meta.x_meaning, meta.o_meaning);
+
+                // Render footer
+                footer_renderer.render(terminal, cursor_data.x, cursor_data.y,
+                                      x_min, x_max, y_min, y_max,
+                                      viewport.data_x_min(), viewport.data_x_max(),
+                                      viewport.data_y_min(), viewport.data_y_max(), focused_button, table_active_changes);
+
+                // Display to screen with cursor
+                terminal.render_with_cursor(cursor_row, cursor_col);
+            } else {
+                // Table view mode - render table view
+                if (table_view != nullptr) {
+                    render_table_view(terminal, *table_view, screen_height);
+                    terminal.render_with_cursor(cursor_row, cursor_col);
                 }
             }
 
-            // Create renderers
-            HeaderRenderer header_renderer;
-            FooterRenderer footer_renderer;
-            EditAreaRenderer edit_area_renderer;
-
-            // Get current cursor position in data coordinates
-            ScreenCoord cursor_content = cursor_to_content_coords(cursor_row, cursor_col);
-            DataCoord cursor_data = viewport.screen_to_data(cursor_content);
-
-            // Load unsaved changes for this table
-            std::vector<ChangeRecord> unsaved_changes = unsaved_changes_tracker.get_changes(table_name);
-
-            // Count active unsaved changes across all tables (for header display)
-            auto all_changes = unsaved_changes_tracker.get_all_changes();
-            int total_active_changes = 0;
-            for (const auto& change : all_changes) {
-                if (change.is_active) {
-                    total_active_changes++;
-                }
-            }
-
-            // Count active unsaved changes for this table only (for footer display)
-            int table_active_changes = 0;
-            for (const auto& change : unsaved_changes) {
-                if (change.is_active) {
-                    table_active_changes++;
-                }
-            }
-
-            // Render header
-            header_renderer.render(terminal, args.database.value(), meta.table_name,
-                                  meta.target_col_name, meta.x_meaning, meta.o_meaning,
-                                  total_count, x_count, o_count,
-                                  x_min, x_max, y_min, y_max,
-                                  viewport.data_x_min(), viewport.data_x_max(),
-                                  viewport.data_y_min(), viewport.data_y_max(), focused_field, total_active_changes);
-
-            // Render edit area
-            edit_area_renderer.render(terminal, viewport, data_table, unsaved_changes,
-                                     edit_area_start_row, edit_area_height, screen_width,
-                                     cursor_row, cursor_col, meta.x_meaning, meta.o_meaning);
-
-            // Render footer
-            footer_renderer.render(terminal, cursor_data.x, cursor_data.y,
-                                  x_min, x_max, y_min, y_max,
-                                  viewport.data_x_min(), viewport.data_x_max(),
-                                  viewport.data_y_min(), viewport.data_y_max(), focused_button, table_active_changes);
-
-            // Display to screen with cursor
-            terminal.render_with_cursor(cursor_row, cursor_col);
             needs_redraw = false;
         }
 
@@ -1024,46 +1110,58 @@ int main(int argc, char** argv) {
         if (key >= 0) {
             // Handle arrow keys (from ncurses or our own codes)
             if (key == Terminal::KEY_UP_ARROW) {
-                // Up arrow - move cursor up (within edit area content, inside border)
-                // Border is at edit_area_start_row, content starts at edit_area_start_row + 1
-                if (cursor_row > edit_area_start_row + 1) {
-                    // Check if new position would be within valid ranges
-                    int new_cursor_row = cursor_row - 1;
-                    if (is_cursor_position_valid(viewport, new_cursor_row, cursor_col, edit_area_start_row)) {
-                        cursor_row = new_cursor_row;
-                        needs_redraw = true;
-                    }
-                } else if (cursor_row == edit_area_start_row + 1) {
-                    // Cursor is at top edge, try to pan up
-                    // Pan up shifts viewport up (increases y_min and y_max)
-                    double old_y_max = viewport.data_y_max();
-                    viewport.pan_up();
-                    // If viewport actually panned, redraw
-                    if (viewport.data_y_max() != old_y_max) {
-                        needs_redraw = true;
+                if (view_mode == ViewMode::TABLE && table_view != nullptr) {
+                    // Table mode - navigate up
+                    table_view->move_up();
+                    needs_redraw = true;
+                } else {
+                    // Viewport mode - move cursor up (within edit area content, inside border)
+                    // Border is at edit_area_start_row, content starts at edit_area_start_row + 1
+                    if (cursor_row > edit_area_start_row + 1) {
+                        // Check if new position would be within valid ranges
+                        int new_cursor_row = cursor_row - 1;
+                        if (is_cursor_position_valid(viewport, new_cursor_row, cursor_col, edit_area_start_row)) {
+                            cursor_row = new_cursor_row;
+                            needs_redraw = true;
+                        }
+                    } else if (cursor_row == edit_area_start_row + 1) {
+                        // Cursor is at top edge, try to pan up
+                        // Pan up shifts viewport up (increases y_min and y_max)
+                        double old_y_max = viewport.data_y_max();
+                        viewport.pan_up();
+                        // If viewport actually panned, redraw
+                        if (viewport.data_y_max() != old_y_max) {
+                            needs_redraw = true;
+                        }
                     }
                 }
             }
             else if (key == Terminal::KEY_DOWN_ARROW) {
-                // Down arrow - move cursor down (within edit area content, inside border)
-                // Border is at edit_area_start_row + edit_area_height - 1
-                // Content ends at edit_area_start_row + edit_area_height - 2
-                int edit_area_end_row = edit_area_start_row + edit_area_height - 2;
-                if (cursor_row < edit_area_end_row) {
-                    // Check if new position would be within valid ranges
-                    int new_cursor_row = cursor_row + 1;
-                    if (is_cursor_position_valid(viewport, new_cursor_row, cursor_col, edit_area_start_row)) {
-                        cursor_row = new_cursor_row;
-                        needs_redraw = true;
-                    }
-                } else if (cursor_row == edit_area_end_row) {
-                    // Cursor is at bottom edge, try to pan down
-                    // Pan down shifts viewport down (decreases y_min and y_max)
-                    double old_y_min = viewport.data_y_min();
-                    viewport.pan_down();
-                    // If viewport actually panned, redraw
-                    if (viewport.data_y_min() != old_y_min) {
-                        needs_redraw = true;
+                if (view_mode == ViewMode::TABLE && table_view != nullptr) {
+                    // Table mode - navigate down
+                    table_view->move_down();
+                    needs_redraw = true;
+                } else {
+                    // Viewport mode - move cursor down (within edit area content, inside border)
+                    // Border is at edit_area_start_row + edit_area_height - 1
+                    // Content ends at edit_area_start_row + edit_area_height - 2
+                    int edit_area_end_row = edit_area_start_row + edit_area_height - 2;
+                    if (cursor_row < edit_area_end_row) {
+                        // Check if new position would be within valid ranges
+                        int new_cursor_row = cursor_row + 1;
+                        if (is_cursor_position_valid(viewport, new_cursor_row, cursor_col, edit_area_start_row)) {
+                            cursor_row = new_cursor_row;
+                            needs_redraw = true;
+                        }
+                    } else if (cursor_row == edit_area_end_row) {
+                        // Cursor is at bottom edge, try to pan down
+                        // Pan down shifts viewport down (decreases y_min and y_max)
+                        double old_y_min = viewport.data_y_min();
+                        viewport.pan_down();
+                        // If viewport actually panned, redraw
+                        if (viewport.data_y_min() != old_y_min) {
+                            needs_redraw = true;
+                        }
                     }
                 }
             }
@@ -1240,6 +1338,30 @@ int main(int argc, char** argv) {
                 focused_field = -1;
                 focused_button = 0;
                 needs_redraw = true;
+            }
+            else if (key == '#') {
+                // Toggle between viewport and table view
+                if (view_mode == ViewMode::VIEWPORT) {
+                    // Switch to table view
+                    view_mode = ViewMode::TABLE;
+
+                    // Initialize TableView with current viewport bounds as filter
+                    if (table_view == nullptr) {
+                        table_view = new TableView(db, table_name,
+                                                   viewport.data_x_min(), viewport.data_x_max(),
+                                                   viewport.data_y_min(), viewport.data_y_max());
+                    }
+
+                    needs_redraw = true;
+                } else {
+                    // Switch back to viewport
+                    view_mode = ViewMode::VIEWPORT;
+
+                    // Note: Could adjust viewport to fit filtered data here if needed
+                    // For now, just return to the viewport as-is
+
+                    needs_redraw = true;
+                }
             }
             // Handle point creation and editing
             else if (key == 'x' || key == 'o') {
@@ -1445,6 +1567,9 @@ int main(int argc, char** argv) {
 
     // Exit raw mode
     terminal.exit_raw_mode();
+
+    // Cleanup
+    delete table_view;
 
     // Clear screen and show exit message
     std::cout << "\033[2J\033[H";  // Clear screen
