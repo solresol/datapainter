@@ -58,6 +58,7 @@ struct Arguments {
     bool zoom_out = false;
     bool list_x_axis_marks = false;
     bool list_y_axis_marks = false;
+    std::optional<std::string> keystroke_file;
 
     // Study mode
     bool study = false;

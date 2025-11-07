@@ -127,6 +127,7 @@ Arguments ArgumentParser::parse(int argc, char** argv) {
     args.zoom_out = has_flag(argc, argv, "--zoom-out");
     args.list_x_axis_marks = has_flag(argc, argv, "--list-x-axis-marks");
     args.list_y_axis_marks = has_flag(argc, argv, "--list-y-axis-marks");
+    args.keystroke_file = get_value(argc, argv, "--keystroke-file");
 
     // Study mode
     args.study = has_flag(argc, argv, "--study");
@@ -429,7 +430,8 @@ void ArgumentParser::print_help(std::ostream& out) {
     out << "  --list-x-axis-marks     List X axis tick marks\n";
     out << "  --list-y-axis-marks     List Y axis tick marks\n";
     out << "  --zoom-in               Zoom in\n";
-    out << "  --zoom-out              Zoom out\n\n";
+    out << "  --zoom-out              Zoom out\n";
+    out << "  --keystroke-file <path> Replay keystrokes from file (for automated testing)\n\n";
 
     out << "EXAMPLES:\n";
     out << "  # Create a new table\n";
