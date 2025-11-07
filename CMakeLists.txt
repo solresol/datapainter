@@ -157,6 +157,7 @@ if(BUILD_TESTS)
         tests/test_cursor_boundary.cpp
         tests/test_study_mode.cpp
         tests/test_random_initializer.cpp
+        tests/test_input_source.cpp
         # Implementation files needed by tests
         src/database.cpp
         src/argument_parser.cpp
@@ -181,6 +182,7 @@ if(BUILD_TESTS)
         src/cursor_utils.cpp
         src/study_mode.cpp
         src/random_initializer.cpp
+        src/input_source.cpp
         # More test files will be added as we build
     )
 
