@@ -9,10 +9,6 @@ dependencies = [
     "pyte>=0.8.0",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [tool.pytest.ini_options]
 testpaths = ["tests/integration"]
 python_files = "test_*.py"
