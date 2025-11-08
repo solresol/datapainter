@@ -38,6 +38,8 @@ jobs:
         uv sync
 
     - name: Run integration tests
+      env:
+        TERM: xterm
       run: |
         uv run pytest tests/integration/ -v
 
