@@ -35,7 +35,7 @@ jobs:
     - name: Install Python dependencies for integration tests
       run: |
         pip install uv
-        uv add pytest pyte
+        uv sync
 
     - name: Run integration tests
       run: |
