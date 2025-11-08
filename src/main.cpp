@@ -10,6 +10,7 @@
 #include "footer_renderer.h"
 #include "edit_area_renderer.h"
 #include "table_selection_menu.h"
+#include "table_creation_dialog.h"
 #include "point_editor.h"
 #include "unsaved_changes.h"
 #include "save_manager.h"
@@ -803,16 +804,12 @@ int main(int argc, char** argv) {
         TableSelectionMenu menu(menu_terminal);
         MenuResult result = menu.run(tables);
 
-        // Exit raw mode before handling results
-        menu_terminal.exit_raw_mode();
-
-        // Clear screen
-        std::cout << "\033[2J\033[H";
-
         // Handle the menu result
         if (result.action == MenuAction::EXIT) {
+            menu_terminal.exit_raw_mode();
             return 0;
         } else if (result.action == MenuAction::OPEN_TABLE) {
+            menu_terminal.exit_raw_mode();
             // Open the selected table
             if (result.table_name.has_value()) {
                 args.table = result.table_name.value();
@@ -821,52 +818,28 @@ int main(int argc, char** argv) {
                 return 2;
             }
         } else if (result.action == MenuAction::CREATE_TABLE) {
-            // Prompt for table creation details
-            std::string table_name, target_col, x_axis, y_axis, x_meaning, o_meaning;
-            double min_x = -10.0, max_x = 10.0, min_y = -10.0, max_y = 10.0;
+            // Run the table creation dialog
+            TableCreationDialog dialog(menu_terminal);
+            TableCreationResult create_result = dialog.run();
 
-            std::cout << "Create New Table\n" << std::endl;
-            std::cout << "Table name: ";
-            std::getline(std::cin, table_name);
-            std::cout << "Target column name (e.g., 'label', 'class'): ";
-            std::getline(std::cin, target_col);
-            std::cout << "X-axis name (e.g., 'x', 'feature1'): ";
-            std::getline(std::cin, x_axis);
-            std::cout << "Y-axis name (e.g., 'y', 'feature2'): ";
-            std::getline(std::cin, y_axis);
-            std::cout << "X meaning (label for 'x' points): ";
-            std::getline(std::cin, x_meaning);
-            std::cout << "O meaning (label for 'o' points): ";
-            std::getline(std::cin, o_meaning);
-
-            std::cout << "Min X [" << min_x << "]: ";
-            std::string input;
-            std::getline(std::cin, input);
-            if (!input.empty()) min_x = std::stod(input);
-
-            std::cout << "Max X [" << max_x << "]: ";
-            std::getline(std::cin, input);
-            if (!input.empty()) max_x = std::stod(input);
-
-            std::cout << "Min Y [" << min_y << "]: ";
-            std::getline(std::cin, input);
-            if (!input.empty()) min_y = std::stod(input);
-
-            std::cout << "Max Y [" << max_y << "]: ";
-            std::getline(std::cin, input);
-            if (!input.empty()) max_y = std::stod(input);
-
-            // Create the table
-            if (table_mgr.create_table(table_name, target_col, x_axis, y_axis,
-                                      x_meaning, o_meaning, min_x, max_x, min_y, max_y, false)) {
-                std::cout << "\nTable '" << table_name << "' created successfully!" << std::endl;
-                std::cout << "Opening table in interactive mode...\n" << std::endl;
-                args.table = table_name;
-            } else {
-                std::cerr << "Error: Failed to create table" << std::endl;
-                return 66;
+            if (!create_result.cancelled) {
+                // Create the table
+                if (table_mgr.create_table(create_result.table_name, create_result.target_col,
+                                          create_result.x_axis, create_result.y_axis,
+                                          create_result.x_meaning, create_result.o_meaning,
+                                          create_result.min_x, create_result.max_x,
+                                          create_result.min_y, create_result.max_y, false)) {
+                    args.table = create_result.table_name;
+                } else {
+                    std::cerr << "Error: Failed to create table" << std::endl;
+                    return 66;
+                }
             }
+            // If cancelled, fall through to check if table is set
         } else if (result.action == MenuAction::DELETE_TABLE) {
+            // Exit raw mode for these operations
+            menu_terminal.exit_raw_mode();
+            std::cout << "\033[2J\033[H";  // Clear screen
             // Prompt for table name to delete
             std::string table_name;
             std::cout << "Enter table name to delete: ";
@@ -879,6 +852,9 @@ int main(int argc, char** argv) {
             }
             return 0;
         } else if (result.action == MenuAction::VIEW_METADATA) {
+            // Exit raw mode for these operations
+            menu_terminal.exit_raw_mode();
+            std::cout << "\033[2J\033[H";  // Clear screen
             // Prompt for table name to view
             std::string table_name;
             std::cout << "Enter table name: ";

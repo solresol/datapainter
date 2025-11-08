@@ -84,6 +84,7 @@ set(DATAPAINTER_SOURCES
     src/random_initializer.cpp
     src/random_dialog.cpp
     src/input_source.cpp
+    src/table_creation_dialog.cpp
     # More UI components will go here
 )
 
@@ -183,6 +184,7 @@ if(BUILD_TESTS)
         src/study_mode.cpp
         src/random_initializer.cpp
         src/input_source.cpp
+        src/table_creation_dialog.cpp
         # More test files will be added as we build
     )
 
