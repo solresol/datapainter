@@ -1,0 +1,32 @@
+Source: datapainter
+Section: utils
+Priority: optional
+Maintainer: Greg Baker <gregb@ifost.org.au>
+Build-Depends: debhelper (>= 10),
+               cmake (>= 3.14),
+               g++ (>= 7),
+               libsqlite3-dev,
+               libncurses-dev
+Standards-Version: 4.5.0
+Homepage: https://github.com/solresol/datapainter
+Vcs-Git: https://github.com/solresol/datapainter.git
+Vcs-Browser: https://github.com/solresol/datapainter
+
+Package: datapainter
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Interactive TUI for labeling 2D data points
+ DataPainter is a terminal-based interactive tool for creating and editing
+ labeled datasets for machine learning. It provides an ncurses-based interface
+ for placing and editing points on a 2D grid, with real-time visualization
+ and SQLite database storage.
+ .
+ Features:
+  - Interactive 2D point placement and editing
+  - Multiple label classes (x/o points)
+  - Zoom and pan navigation
+  - Undo/redo support
+  - Table view for bulk editing
+  - Study mode for reviewing datasets
+  - Export to CSV
+  - Command-line and interactive modes

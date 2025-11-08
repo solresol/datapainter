@@ -128,11 +128,78 @@ brew install cmake sqlite3
 ### Windows
 Uses vcpkg for dependency management (handled by CI).
 
+## APT Repository
+
+An APT repository is available at https://packages.industrial-linguistics.com/datapainter/
+
+### Repository Structure
+
+```
+/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
+├── pool/
+│   └── main/                    # .deb packages stored here
+│       └── datapainter_*.deb
+├── dists/
+│   └── stable/
+│       ├── Release              # Repository metadata
+│       └── main/
+│           └── binary-amd64/
+│               ├── Packages     # Package index
+│               └── Packages.gz
+└── *.tar.gz                     # Binary tarballs
+```
+
+### Updating the Repository
+
+After uploading new .deb packages, run:
+
+```bash
+ssh datapainter@merah.cassia.ifost.org.au
+/home/datapainter/update-apt-repo.sh
+```
+
+This script:
+1. Scans the pool/main/ directory for .deb packages
+2. Generates Packages and Packages.gz files
+3. Creates/updates the Release file with checksums
+
+The GitHub Actions workflow automatically runs this script after deploying packages.
+
+### Installing from the Repository
+
+Users can install DataPainter with:
+
+```bash
+echo "deb [trusted=yes] https://packages.industrial-linguistics.com/datapainter stable main" | \
+  sudo tee /etc/apt/sources.list.d/datapainter.list
+sudo apt-get update
+sudo apt-get install datapainter
+```
+
+## Debian Package Building
+
+Debian packages are built automatically by GitHub Actions on release.
+
+The `debian/` directory contains:
+- `control` - Package metadata and dependencies
+- `rules` - Build instructions
+- `changelog` - Version history
+- `compat` - Debhelper compatibility level
+- `copyright` - License information
+
+To build locally:
+
+```bash
+sudo apt-get install debhelper devscripts build-essential
+dpkg-buildpackage -us -uc -b
+```
+
 ## Future Improvements
 
-- [ ] Generate Debian/Ubuntu .deb packages
-- [ ] Generate RPM packages for Fedora/CentOS
-- [ ] Create an APT repository at packages.industrial-linguistics.com
+- [x] Generate Debian/Ubuntu .deb packages
+- [x] Create an APT repository at packages.industrial-linguistics.com
 - [ ] Add GPG signing for packages
+- [ ] Generate RPM packages for Fedora/CentOS
 - [ ] Create install scripts for each platform
 - [ ] Add checksums/signatures file for verification
+- [ ] Support multiple distributions (Ubuntu 20.04, 22.04, Debian 11, 12)

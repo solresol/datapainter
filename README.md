@@ -4,11 +4,30 @@ TUI for creating two-dimensional datasets and saving them into a SQLite database
 
 # Installation
 
+## APT Repository (Ubuntu/Debian)
+
+Add the DataPainter repository and install:
+
+```bash
+# Add the repository
+echo "deb [trusted=yes] https://packages.industrial-linguistics.com/datapainter stable main" | \
+  sudo tee /etc/apt/sources.list.d/datapainter.list
+
+# Update package list
+sudo apt-get update
+
+# Install DataPainter
+sudo apt-get install datapainter
+```
+
+**Note**: The repository is currently unsigned. A GPG-signed version will be available soon.
+
 ## Pre-built Binaries
 
 Download the latest release for your platform:
-- **Linux**: https://packages.industrial-linguistics.com/datapainter/datapainter-linux-latest.tar.gz
-- **GitHub Releases**: https://github.com/solresol/datapainter/releases
+- **Linux tarball**: https://packages.industrial-linguistics.com/datapainter/datapainter-linux-latest.tar.gz
+- **Debian package**: https://packages.industrial-linguistics.com/datapainter/pool/main/
+- **All releases**: https://github.com/solresol/datapainter/releases
 
 ## Building from Source
 

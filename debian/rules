@@ -1,0 +1,25 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	dh_auto_configure -- -DCMAKE_BUILD_TYPE=Release
+
+override_dh_auto_build:
+	dh_auto_build
+
+override_dh_auto_test:
+	# Run tests in build directory
+	cd obj-* && ctest --output-on-failure || true
+
+override_dh_auto_install:
+	dh_auto_install
+	# Install man page
+	mkdir -p debian/datapainter/usr/share/man/man1
+	cp docs/datapainter.1 debian/datapainter/usr/share/man/man1/
+	gzip -9 debian/datapainter/usr/share/man/man1/datapainter.1

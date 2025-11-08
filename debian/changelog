@@ -1,0 +1,13 @@
+datapainter (0.1.0-1) unstable; urgency=medium
+
+  * Initial release
+  * Interactive TUI for labeling 2D data points
+  * Support for multiple label classes
+  * SQLite database backend
+  * Zoom and pan navigation
+  * Undo/redo functionality
+  * Table view for bulk editing
+  * Study mode for dataset review
+  * CSV export capability
+
+ -- Greg Baker <gregb@ifost.org.au>  Fri, 08 Nov 2024 11:30:00 +1100
