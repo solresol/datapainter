@@ -77,8 +77,8 @@ jobs:
         # Build the package
         dpkg-buildpackage -us -uc -b
 
-        # Move .deb to current directory
-        mv ../*.deb ./ || true
+        # Move .deb to current directory and rename to include version
+        mv ../datapainter_*.deb ./ || true
         ls -la *.deb
 
     - name: Upload Debian package to release
@@ -88,8 +88,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./datapainter_${{ github.ref_name }}-1_amd64.deb
-        asset_name: datapainter_${{ github.ref_name }}-1_amd64.deb
+        asset_path: ./datapainter_0.1.0-1_amd64.deb
+        asset_name: datapainter_${{ github.ref_name }}_amd64.deb
         asset_content_type: application/vnd.debian.binary-package
 
     - name: Package binary (Linux/macOS)
