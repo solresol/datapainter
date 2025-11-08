@@ -131,6 +131,53 @@ jobs:
         asset_content_type: application/zip
 
     # Deploy to packages.industrial-linguistics.com if SSH key is configured
+    - name: Generate APT repository metadata (Linux only)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        # Import GPG key
+        echo "${{ secrets.GPG_SIGNING_KEY }}" | gpg --import
+
+        # Create repository structure locally
+        mkdir -p apt-repo/pool/main apt-repo/dists/stable/main/binary-amd64
+
+        # Copy .deb to pool
+        cp datapainter_*.deb apt-repo/pool/main/
+
+        # Generate Packages file
+        cd apt-repo
+        dpkg-scanpackages --multiversion pool/main > dists/stable/main/binary-amd64/Packages
+        gzip -9c dists/stable/main/binary-amd64/Packages > dists/stable/main/binary-amd64/Packages.gz
+
+        # Generate Release file
+        cd dists/stable
+        cat > Release <<EOF
+        Origin: Industrial Linguistics
+        Label: DataPainter
+        Suite: stable
+        Codename: stable
+        Version: 1.0
+        Architectures: amd64
+        Components: main
+        Description: DataPainter Package Repository
+        Date: $(date -Ru)
+        EOF
+
+        # Add checksums
+        {
+            echo "MD5Sum:"
+            find main -type f -exec md5sum {} \; | sed 's/\(.*\)  \(.*\)/ \1 $(stat -c%s "\2") \2/'
+            echo "SHA1:"
+            find main -type f -exec sha1sum {} \; | sed 's/\(.*\)  \(.*\)/ \1 $(stat -c%s "\2") \2/'
+            echo "SHA256:"
+            find main -type f -exec sha256sum {} \; | sed 's/\(.*\)  \(.*\)/ \1 $(stat -c%s "\2") \2/'
+        } >> Release
+
+        # Sign Release file
+        gpg --default-key packages@industrial-linguistics.com -abs -o Release.gpg Release
+        gpg --default-key packages@industrial-linguistics.com --clearsign -o InRelease Release
+
+        cd ../..
+
     - name: Deploy to package server (Linux only)
       if: matrix.os == 'ubuntu-latest'
       run: |
@@ -144,15 +191,9 @@ jobs:
           datapainter-${{ matrix.platform }}-${{ github.ref_name }}.tar.gz \
           datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
 
-        # Deploy .deb package
+        # Deploy entire APT repository
         scp -i ~/.ssh/deploy_key \
           -o StrictHostKeyChecking=no \
-          datapainter_*.deb \
-          datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/pool/main/
-
-        # Update APT repository metadata
-        ssh -i ~/.ssh/deploy_key \
-          -o StrictHostKeyChecking=no \
-          datapainter@merah.cassia.ifost.org.au \
-          "/home/datapainter/update-apt-repo.sh"
+          -r apt-repo/* \
+          datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
       continue-on-error: true

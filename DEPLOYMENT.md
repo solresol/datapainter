@@ -151,29 +151,82 @@ An APT repository is available at https://packages.industrial-linguistics.com/da
 
 ### Updating the Repository
 
-After uploading new .deb packages, run:
+The repository is automatically updated by GitHub Actions during releases:
 
-```bash
-ssh datapainter@merah.cassia.ifost.org.au
-/home/datapainter/update-apt-repo.sh
-```
+1. GitHub Actions builds the .deb package
+2. Generates repository metadata (Packages, Release files)
+3. Signs the Release file with GPG
+4. Deploys everything to merah
 
-This script:
-1. Scans the pool/main/ directory for .deb packages
-2. Generates Packages and Packages.gz files
-3. Creates/updates the Release file with checksums
-
-The GitHub Actions workflow automatically runs this script after deploying packages.
+No manual intervention is required - the repository updates automatically on each release.
 
 ### Installing from the Repository
 
 Users can install DataPainter with:
 
 ```bash
-echo "deb [trusted=yes] https://packages.industrial-linguistics.com/datapainter stable main" | \
+# Add the GPG key
+wget -qO- https://packages.industrial-linguistics.com/datapainter/PUBLIC.KEY | \
+  sudo gpg --dearmor -o /usr/share/keyrings/datapainter-archive-keyring.gpg
+
+# Add the repository
+echo "deb [signed-by=/usr/share/keyrings/datapainter-archive-keyring.gpg] https://packages.industrial-linguistics.com/datapainter stable main" | \
   sudo tee /etc/apt/sources.list.d/datapainter.list
+
+# Update and install
 sudo apt-get update
 sudo apt-get install datapainter
+```
+
+## GPG Package Signing
+
+The APT repository is signed with GPG for package authenticity and security.
+
+### Signing Key Details
+
+- **Key ID**: `FBB431EC`
+- **Fingerprint**: `FD98 F565 3C89 DD28 2173  E29D A22C 39A3 FBB4 31EC`
+- **Name**: DataPainter Package Signing
+- **Email**: packages@industrial-linguistics.com
+- **Public Key**: https://packages.industrial-linguistics.com/datapainter/PUBLIC.KEY
+
+### Key Location
+
+- **Server**: datapainter@merah.cassia.ifost.org.au
+- **Public key**: `/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/PUBLIC.KEY`
+- **Private key**: Stored in GPG keyring on merah and as GitHub secret `GPG_SIGNING_KEY`
+
+### How Signing Works
+
+1. GitHub Actions builds .deb package
+2. Package is deployed to `/var/www/.../datapainter/pool/main/`
+3. The `update-apt-repo.sh` script is run on merah, which:
+   - Scans packages and generates Packages file
+   - Creates Release file with checksums
+   - Signs Release file with GPG to create:
+     - `Release.gpg` - Detached signature
+     - `InRelease` - Clearsigned Release file
+
+### Rotating the GPG Key
+
+If the signing key needs to be rotated:
+
+```bash
+# On merah
+ssh datapainter@merah.cassia.ifost.org.au
+
+# Generate new key (or import existing)
+gpg --batch --gen-key /path/to/key-spec.batch
+
+# Export public key
+gpg --armor --export packages@industrial-linguistics.com > \
+  /var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/PUBLIC.KEY
+
+# Export private key for GitHub Actions
+gpg --armor --export-secret-keys packages@industrial-linguistics.com > /tmp/private.key
+
+# On local machine, update GitHub secret
+gh secret set GPG_SIGNING_KEY < /path/to/private.key
 ```
 
 ## Debian Package Building
@@ -198,8 +251,9 @@ dpkg-buildpackage -us -uc -b
 
 - [x] Generate Debian/Ubuntu .deb packages
 - [x] Create an APT repository at packages.industrial-linguistics.com
-- [ ] Add GPG signing for packages
+- [x] Add GPG signing for packages
 - [ ] Generate RPM packages for Fedora/CentOS
 - [ ] Create install scripts for each platform
-- [ ] Add checksums/signatures file for verification
 - [ ] Support multiple distributions (Ubuntu 20.04, 22.04, Debian 11, 12)
+- [ ] Add subkey for signing with different expiration
+- [ ] Publish key to public keyservers (keys.openpgp.org)
