@@ -11,11 +11,11 @@ override_dh_auto_configure:
 	dh_auto_configure -- -DCMAKE_BUILD_TYPE=Release
 
 override_dh_auto_build:
-	dh_auto_build
+	dh_auto_build --target datapainter
 
 override_dh_auto_test:
-	# Run tests in build directory
-	cd obj-* && ctest --output-on-failure || true
+	# Skip tests in Debian package build
+	# Tests are run in CI before packaging
 
 override_dh_auto_install:
 	dh_auto_install
