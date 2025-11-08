@@ -18,7 +18,9 @@ override_dh_auto_test:
 	# Tests are run in CI before packaging
 
 override_dh_auto_install:
-	dh_auto_install
+	# Install binary manually instead of running make install (which tries to build tests)
+	mkdir -p debian/datapainter/usr/bin
+	cp obj-x86_64-linux-gnu/datapainter debian/datapainter/usr/bin/
 	# Install man page
 	mkdir -p debian/datapainter/usr/share/man/man1
 	cp docs/datapainter.1 debian/datapainter/usr/share/man/man1/
