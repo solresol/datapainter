@@ -2,6 +2,41 @@
 
 TUI for creating two-dimensional datasets and saving them into a SQLite database
 
+# Installation
+
+## Pre-built Binaries
+
+Download the latest release for your platform:
+- **Linux**: https://packages.industrial-linguistics.com/datapainter/datapainter-linux-latest.tar.gz
+- **GitHub Releases**: https://github.com/solresol/datapainter/releases
+
+## Building from Source
+
+### Ubuntu/Debian
+```bash
+sudo apt-get update
+sudo apt-get install -y cmake g++ libsqlite3-dev libncurses-dev
+
+git clone https://github.com/solresol/datapainter.git
+cd datapainter
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+sudo cmake --install build
+```
+
+### macOS
+```bash
+brew install cmake sqlite3
+
+git clone https://github.com/solresol/datapainter.git
+cd datapainter
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+sudo cmake --install build
+```
+
+For more information about deployment infrastructure, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
 # UI Design
 
 You can cursor around and put an X or an O anywhere on a 2D grid which gets saved to a 

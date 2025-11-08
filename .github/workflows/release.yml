@@ -107,7 +107,7 @@ jobs:
 
     # Deploy to packages.industrial-linguistics.com if SSH key is configured
     - name: Deploy to package server (Linux only)
-      if: matrix.os == 'ubuntu-latest' && secrets.DEPLOYMENT_SSH_KEY != ''
+      if: matrix.os == 'ubuntu-latest'
       run: |
         mkdir -p ~/.ssh
         echo "${{ secrets.DEPLOYMENT_SSH_KEY }}" > ~/.ssh/deploy_key
@@ -115,5 +115,5 @@ jobs:
         scp -i ~/.ssh/deploy_key \
           -o StrictHostKeyChecking=no \
           datapainter-${{ matrix.platform }}-${{ github.ref_name }}.tar.gz \
-          deploy@packages.industrial-linguistics.com:/var/www/packages/datapainter/
+          datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
       continue-on-error: true
