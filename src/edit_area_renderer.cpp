@@ -63,22 +63,32 @@ void EditAreaRenderer::render_points(Terminal& terminal, const Viewport& viewpor
         }
     }
 
-    // First pass: Fill forbidden areas with '!' characters
-    // These are areas outside the valid range
-    for (int screen_row = 0; screen_row < content_height; ++screen_row) {
-        for (int screen_col = 0; screen_col < content_width; ++screen_col) {
-            ScreenCoord screen{screen_row, screen_col};
-            DataCoord data = viewport.screen_to_data(screen);
+    // Optimization: Check if viewport intersects valid range at all
+    // If viewport is entirely within valid range, skip forbidden area rendering
+    bool viewport_entirely_within_valid =
+        (viewport.data_x_min() >= viewport.valid_x_min() &&
+         viewport.data_x_max() <= viewport.valid_x_max() &&
+         viewport.data_y_min() >= viewport.valid_y_min() &&
+         viewport.data_y_max() <= viewport.valid_y_max());
 
-            // Check if this cell is outside the valid range
-            bool outside_valid_range = (data.x < viewport.valid_x_min() ||
-                                       data.x > viewport.valid_x_max() ||
-                                       data.y < viewport.valid_y_min() ||
-                                       data.y > viewport.valid_y_max());
+    if (!viewport_entirely_within_valid) {
+        // First pass: Fill forbidden areas with '!' characters
+        // These are areas outside the valid range
+        for (int screen_row = 0; screen_row < content_height; ++screen_row) {
+            for (int screen_col = 0; screen_col < content_width; ++screen_col) {
+                ScreenCoord screen{screen_row, screen_col};
+                DataCoord data = viewport.screen_to_data(screen);
 
-            if (outside_valid_range) {
-                // Mark forbidden area with '!'
-                terminal.write_char(start_row + 1 + screen_row, 1 + screen_col, '!');
+                // Check if this cell is outside the valid range
+                bool outside_valid_range = (data.x < viewport.valid_x_min() ||
+                                           data.x > viewport.valid_x_max() ||
+                                           data.y < viewport.valid_y_min() ||
+                                           data.y > viewport.valid_y_max());
+
+                if (outside_valid_range) {
+                    // Mark forbidden area with '!'
+                    terminal.write_char(start_row + 1 + screen_row, 1 + screen_col, '!');
+                }
             }
         }
     }
