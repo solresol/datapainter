@@ -585,7 +585,7 @@ This is a comprehensive implementation plan for the DataPainter TUI project. Tas
 - [x] Test: Viewport at extreme zoom levels - TestExtremeZoomLevels (6 tests)
 
 ### User Experience Polish
-- [ ] Optimize rendering performance
+- [x] Optimize rendering performance - Added optimization to skip forbidden area rendering when viewport is entirely within valid range
 - [ ] Add loading indicators for slow operations
 - [ ] Improve error messages clarity
 - [ ] Test all keyboard shortcuts work consistently
