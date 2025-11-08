@@ -9,6 +9,7 @@ import pytest
 import time
 import os
 import tempfile
+from pathlib import Path
 from tui_test_framework import DataPainterTest
 
 
@@ -663,7 +664,8 @@ class TestSaveWorkflow:
 
         try:
             # Initialize the database first
-            datapainter_path = '../../build/datapainter'
+            repo_root = Path(__file__).parent.parent.parent
+            datapainter_path = str(repo_root / 'build' / 'datapainter')
             subprocess.run([
                 datapainter_path,
                 '--database', temp_db,
@@ -736,7 +738,8 @@ class TestSaveWorkflow:
 
         try:
             # Initialize database
-            datapainter_path = '../../build/datapainter'
+            repo_root = Path(__file__).parent.parent.parent
+            datapainter_path = str(repo_root / 'build' / 'datapainter')
             subprocess.run([
                 datapainter_path,
                 '--database', temp_db,
@@ -803,7 +806,8 @@ class TestValidRangeEnforcement:
 
         try:
             # Initialize with narrow valid ranges: x[-5, 5], y[-3, 3]
-            datapainter_path = '../../build/datapainter'
+            repo_root = Path(__file__).parent.parent.parent
+            datapainter_path = str(repo_root / 'build' / 'datapainter')
             subprocess.run([
                 datapainter_path,
                 '--database', temp_db,
@@ -875,7 +879,8 @@ class TestValidRangeEnforcement:
 
         try:
             # Initialize with very tight valid ranges to ensure we see forbidden areas
-            datapainter_path = '../../build/datapainter'
+            repo_root = Path(__file__).parent.parent.parent
+            datapainter_path = str(repo_root / 'build' / 'datapainter')
             subprocess.run([
                 datapainter_path,
                 '--database', temp_db,
@@ -938,7 +943,8 @@ class TestComplexWorkflow:
 
         try:
             # Initialize database
-            datapainter_path = '../../build/datapainter'
+            repo_root = Path(__file__).parent.parent.parent
+            datapainter_path = str(repo_root / 'build' / 'datapainter')
             subprocess.run([
                 datapainter_path,
                 '--database', temp_db,
@@ -1260,7 +1266,8 @@ class TestSinglePointOperations:
 
         try:
             # Initialize the database
-            datapainter_path = '../../build/datapainter'
+            repo_root = Path(__file__).parent.parent.parent
+            datapainter_path = str(repo_root / 'build' / 'datapainter')
             subprocess.run([
                 datapainter_path,
                 '--database', temp_db,
@@ -1342,7 +1349,8 @@ class TestExtremeCoordinateValues:
 
         try:
             # Initialize with extremely large range
-            datapainter_path = '../../build/datapainter'
+            repo_root = Path(__file__).parent.parent.parent
+            datapainter_path = str(repo_root / 'build' / 'datapainter')
             subprocess.run([
                 datapainter_path,
                 '--database', temp_db,
@@ -1389,7 +1397,8 @@ class TestExtremeCoordinateValues:
 
         try:
             # Initialize with very small fractional range
-            datapainter_path = '../../build/datapainter'
+            repo_root = Path(__file__).parent.parent.parent
+            datapainter_path = str(repo_root / 'build' / 'datapainter')
             subprocess.run([
                 datapainter_path,
                 '--database', temp_db,
@@ -1435,7 +1444,8 @@ class TestExtremeCoordinateValues:
 
         try:
             # Initialize with entirely negative range
-            datapainter_path = '../../build/datapainter'
+            repo_root = Path(__file__).parent.parent.parent
+            datapainter_path = str(repo_root / 'build' / 'datapainter')
             subprocess.run([
                 datapainter_path,
                 '--database', temp_db,
@@ -1480,7 +1490,8 @@ class TestExtremeCoordinateValues:
 
         try:
             # Initialize with entirely positive range
-            datapainter_path = '../../build/datapainter'
+            repo_root = Path(__file__).parent.parent.parent
+            datapainter_path = str(repo_root / 'build' / 'datapainter')
             subprocess.run([
                 datapainter_path,
                 '--database', temp_db,
@@ -1525,7 +1536,8 @@ class TestExtremeCoordinateValues:
 
         try:
             # Initialize with very different x and y ranges
-            datapainter_path = '../../build/datapainter'
+            repo_root = Path(__file__).parent.parent.parent
+            datapainter_path = str(repo_root / 'build' / 'datapainter')
             subprocess.run([
                 datapainter_path,
                 '--database', temp_db,
@@ -1740,7 +1752,8 @@ class TestCorruptedDatabase:
             os.close(fd)
 
             # Try to open the corrupted database
-            datapainter_path = '../../build/datapainter'
+            repo_root = Path(__file__).parent.parent.parent
+            datapainter_path = str(repo_root / 'build' / 'datapainter')
             result = subprocess.run([
                 datapainter_path,
                 '--database', temp_db,
@@ -1767,7 +1780,8 @@ class TestCorruptedDatabase:
             os.unlink(nonexistent_db)
 
         # Try to list tables in a nonexistent database
-        datapainter_path = '../../build/datapainter'
+        repo_root = Path(__file__).parent.parent.parent
+        datapainter_path = str(repo_root / 'build' / 'datapainter')
         result = subprocess.run([
             datapainter_path,
             '--database', nonexistent_db,
@@ -1793,7 +1807,8 @@ class TestCorruptedDatabase:
 
         try:
             # Initialize a valid database
-            datapainter_path = '../../build/datapainter'
+            repo_root = Path(__file__).parent.parent.parent
+            datapainter_path = str(repo_root / 'build' / 'datapainter')
             subprocess.run([
                 datapainter_path,
                 '--database', temp_db,
