@@ -360,11 +360,13 @@ int Terminal::read_key() {
 #else
     // Unix: use ncurses getch()
     if (ncurses_initialized) {
-        int ch = getch();
-        // getch() returns ERR if no key (due to timeout)
-        if (ch == ERR) {
-            return -1;
-        }
+        int ch;
+        // Loop until we get an actual key (not timeout)
+        // This makes read_key() truly blocking, which is correct for terminal input
+        // Only FileInputSource should return -1 at EOF
+        do {
+            ch = getch();
+        } while (ch == ERR);
 
         // ncurses translates arrow keys and special events to codes
         // Map them to our public key codes

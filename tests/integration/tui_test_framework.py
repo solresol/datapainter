@@ -151,7 +151,9 @@ class DataPainterTest:
                 [
                     'datapainter',
                     '--database', self.database_path,
-                    '--table', self.table_name
+                    '--table', self.table_name,
+                    '--override-screen-height', str(self.height),
+                    '--override-screen-width', str(self.width)
                 ],
                 env
             )

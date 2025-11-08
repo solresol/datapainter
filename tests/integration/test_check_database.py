@@ -6,6 +6,7 @@ import sqlite3
 import time
 import tempfile
 import os
+from pathlib import Path
 from tui_test_framework import DataPainterTest
 
 
@@ -18,7 +19,8 @@ def test_check_unsaved_changes_table():
     try:
         # Initialize the database first (required when passing custom database_path)
         import subprocess
-        datapainter_path = '../../build/datapainter'
+        repo_root = Path(__file__).parent.parent.parent
+        datapainter_path = str(repo_root / 'build' / 'datapainter')
         subprocess.run([
             datapainter_path,
             '--database', temp_db,
