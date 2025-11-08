@@ -105,16 +105,24 @@ option(BUILD_TESTS "Build the tests" ON)
 if(BUILD_TESTS)
     enable_testing()
 
-    # Fetch Google Test
-    include(FetchContent)
-    FetchContent_Declare(
-        googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG v1.14.0
-    )
-    # For Windows: Prevent overriding the parent project's compiler/linker settings
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(googletest)
+    # Try to find system GTest first (for Debian packages)
+    find_package(GTest QUIET)
+
+    if(NOT GTest_FOUND)
+        # Fetch Google Test if not found on system
+        message(STATUS "System GTest not found, fetching from GitHub")
+        include(FetchContent)
+        FetchContent_Declare(
+            googletest
+            GIT_REPOSITORY https://github.com/google/googletest.git
+            GIT_TAG v1.14.0
+        )
+        # For Windows: Prevent overriding the parent project's compiler/linker settings
+        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+        FetchContent_MakeAvailable(googletest)
+    else()
+        message(STATUS "Using system GTest")
+    endif()
 
     # Test sources
     set(TEST_SOURCES
@@ -190,11 +198,13 @@ if(BUILD_TESTS)
 
     # Test executable
     add_executable(datapainter_tests ${TEST_SOURCES})
-    target_link_libraries(datapainter_tests PRIVATE
-        gtest_main
-        gmock
-        SQLite::SQLite3
-    )
+
+    # Link against GTest - use namespaced targets if available (system), otherwise plain targets (FetchContent)
+    if(TARGET GTest::gtest_main)
+        target_link_libraries(datapainter_tests PRIVATE GTest::gtest_main GTest::gmock SQLite::SQLite3)
+    else()
+        target_link_libraries(datapainter_tests PRIVATE gtest_main gmock SQLite::SQLite3)
+    endif()
     if(UNIX)
         target_link_libraries(datapainter_tests PRIVATE ${CURSES_LIBRARIES})
     endif()
