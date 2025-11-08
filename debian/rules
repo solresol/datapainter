@@ -8,19 +8,17 @@
 	dh $@
 
 override_dh_auto_configure:
-	dh_auto_configure -- -DCMAKE_BUILD_TYPE=Release
+	dh_auto_configure -- -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF
 
 override_dh_auto_build:
-	cmake --build obj-x86_64-linux-gnu --target datapainter
+	dh_auto_build
 
 override_dh_auto_test:
 	# Skip tests in Debian package build
 	# Tests are run in CI before packaging
 
 override_dh_auto_install:
-	# Install binary manually instead of running make install (which tries to build tests)
-	mkdir -p debian/datapainter/usr/bin
-	cp obj-x86_64-linux-gnu/datapainter debian/datapainter/usr/bin/
+	dh_auto_install
 	# Install man page
 	mkdir -p debian/datapainter/usr/share/man/man1
 	cp docs/datapainter.1 debian/datapainter/usr/share/man/man1/
