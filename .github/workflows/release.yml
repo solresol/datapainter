@@ -141,6 +141,9 @@ jobs:
         # Import GPG key
         echo "${{ secrets.GPG_SIGNING_KEY }}" | gpg --import
 
+        # Export public key for users to download
+        gpg --armor --export packages@industrial-linguistics.com > PUBLIC.KEY
+
         # Create repository structure locally
         mkdir -p apt-repo/pool/main apt-repo/dists/stable/main/binary-amd64
 
@@ -193,6 +196,12 @@ jobs:
         scp -i ~/.ssh/deploy_key \
           -o StrictHostKeyChecking=no \
           datapainter-${{ matrix.platform }}-${{ github.ref_name }}.tar.gz \
+          datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
+
+        # Deploy public key
+        scp -i ~/.ssh/deploy_key \
+          -o StrictHostKeyChecking=no \
+          PUBLIC.KEY \
           datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
 
         # Deploy entire APT repository

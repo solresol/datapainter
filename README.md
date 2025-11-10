@@ -9,7 +9,11 @@ TUI for creating two-dimensional datasets and saving them into a SQLite database
 Add the DataPainter repository and install:
 
 ```bash
-# Add the GPG key
+# Add the GPG key and verify the fingerprint
+wget -qO- https://packages.industrial-linguistics.com/datapainter/PUBLIC.KEY | \
+  gpg --import --import-options show-only
+
+# If the fingerprint looks correct, import it to your system
 wget -qO- https://packages.industrial-linguistics.com/datapainter/PUBLIC.KEY | \
   sudo gpg --dearmor -o /usr/share/keyrings/datapainter-archive-keyring.gpg
 
@@ -24,10 +28,7 @@ sudo apt-get update
 sudo apt-get install datapainter
 ```
 
-The repository is GPG-signed for security. The key fingerprint is:
-```
-FD98 F565 3C89 DD28 2173  E29D A22C 39A3 FBB4 31EC
-```
+The repository is GPG-signed for security. Verify the key fingerprint matches the official key for `packages@industrial-linguistics.com` before importing.
 
 ## Pre-built Binaries
 
