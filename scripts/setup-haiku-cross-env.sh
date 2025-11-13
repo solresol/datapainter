@@ -52,7 +52,7 @@ install_haiku_packages() {
         exit 1
     fi
     echo "Listing packages in repository"
-    "$HOSTTOOLS_DIR/package" list repo.hpkg | sed 's/^[[:space:]]*//' > repo.txt
+    "$HOSTTOOLS_DIR/package_repo" list -f repo.hpkg | sed 's/^[[:space:]]*//' > repo.txt
 
     for p in $PKGS; do
         FILE=$(grep -E "^${p}-.*-${ARCH}\.hpkg$" repo.txt | sort -V | tail -1)
