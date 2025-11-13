@@ -303,26 +303,55 @@ It automatically deploys to merah when building main or releases.
 
 ## Windows Packaging
 
-Currently deploys a simple ZIP file to merah:
+Deploys a ZIP file with PowerShell installer scripts to merah:
 - **File**: `datapainter-windows-{version}.zip`
-- **Contents**: `datapainter.exe`, `README.md`, `LICENSE`
+- **Contents**:
+  - `datapainter.exe` - Main binary
+  - `README.md`, `LICENSE` - Documentation
+  - `install.ps1` - PowerShell installer script
+  - `uninstall.ps1` - PowerShell uninstaller script
 - **Deployment**: Uploaded to GitHub releases and deployed to merah with 120s timeout
+
+**Installation:**
+```powershell
+# Extract the ZIP file, then run as Administrator:
+powershell -ExecutionPolicy Bypass -File install.ps1
+```
+
+The installer will:
+- Copy binary to `C:\Program Files\DataPainter\`
+- Add to system PATH automatically
+- Copy README and LICENSE
 
 **Future**: Create proper installer (see PACKAGING_TODO.md):
 - MSIX package (modern, Windows Store compatible)
 - Or MSI via WiX Toolset (traditional)
-- Or PowerShell install script (simplest)
+- Code signing with Windows certificate
 
 ## macOS Packaging
 
-Currently deploys a tarball to merah:
-- **File**: `datapainter-macos-{version}.tar.gz`
-- **Contents**: `datapainter` binary, `README.md`, `LICENSE`, `datapainter.1` man page
+Deploys a proper `.pkg` installer to merah:
+- **File**: `datapainter-macos-{version}.pkg`
+- **Contents**:
+  - Binary installed to `/usr/local/bin/datapainter`
+  - Man page installed to `/usr/local/share/man/man1/datapainter.1`
+- **Build script**: `scripts/build-macos-pkg.sh`
 - **Deployment**: Uploaded to GitHub releases and deployed to merah with 120s timeout
 
-**Future**: Create proper installer (see PACKAGING_TODO.md):
-- `.pkg` installer using pkgbuild/productbuild
-- Or `.dmg` with drag-to-Applications
+**Installation:**
+```bash
+# Download the .pkg file, then run:
+sudo installer -pkg datapainter-macos-{version}.pkg -target /
+```
+
+The installer will:
+- Install binary to `/usr/local/bin/` (already in PATH)
+- Install man page to `/usr/local/share/man/man1/`
+- No additional configuration needed
+
+**Future**: Consider additional options (see PACKAGING_TODO.md):
+- `.dmg` with drag-to-Applications for alternative distribution
+- Code signing with Apple Developer certificate
 
 ## Deployment Timeouts
 

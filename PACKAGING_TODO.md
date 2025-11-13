@@ -8,19 +8,26 @@
 - ✅ Deploys to merah with timeout protection
 - ✅ Properly integrated with system package manager
 
-### macOS ⚠️ BASIC
+### macOS ✅ COMPLETE
 - ✅ Builds binary successfully
-- ✅ Creates `.tar.gz` archive
+- ✅ Creates `.pkg` installer package
+- ✅ Includes binary in `/usr/local/bin/`
+- ✅ Includes man page in `/usr/local/share/man/man1/`
 - ✅ Deploys to merah with timeout protection
-- ❌ **TODO**: Create proper `.pkg` installer package
-- ❌ **TODO**: Consider `.dmg` with drag-to-Applications
+- ✅ Automated via `scripts/build-macos-pkg.sh`
+- ❌ **Future**: Consider `.dmg` with drag-to-Applications for alternative distribution
+- ❌ **Future**: Code signing with Apple Developer certificate
 
-### Windows ⚠️ BASIC
+### Windows ✅ IMPROVED
 - ✅ Builds binary successfully (after recent vcpkg fix)
-- ✅ Creates `.zip` archive
+- ✅ Creates `.zip` archive with installer scripts
+- ✅ Includes `install.ps1` - PowerShell installer script
+- ✅ Includes `uninstall.ps1` - PowerShell uninstaller script
+- ✅ Installer copies to `C:\Program Files\DataPainter\`
+- ✅ Installer adds to system PATH automatically
 - ✅ Deploys to merah with timeout protection
-- ❌ **TODO**: Create proper installer package (MSIX, MSI, or setup.exe)
-- ❌ **TODO**: Consider PowerShell install script for PATH integration
+- ❌ **Future**: Create proper installer package (MSIX or MSI)
+- ❌ **Future**: Code signing with Windows certificate
 
 ### Haiku 🚧 IN PROGRESS
 - ✅ Creates `.hpkg` package format
@@ -31,48 +38,35 @@
 
 ## Recommended Next Steps
 
-### Priority 1: macOS Installer
-Create a proper `.pkg` installer using `pkgbuild` and `productbuild`:
-- Package the binary to `/usr/local/bin/`
-- Include man page installation
-- Optionally create `.dmg` with drag-to-Applications for user installs
+### Priority 1: macOS Installer ✅ COMPLETE
+~~Create a proper `.pkg` installer using `pkgbuild` and `productbuild`~~
 
-**Implementation approach:**
-```bash
-# Build component package
-pkgbuild --root release/ \
-         --identifier com.industrial-linguistics.datapainter \
-         --version ${VERSION} \
-         --install-location /usr/local/bin \
-         datapainter.pkg
+**IMPLEMENTED:**
+- ✅ Created `scripts/build-macos-pkg.sh` - Automated .pkg builder
+- ✅ Packages binary to `/usr/local/bin/`
+- ✅ Includes man page in `/usr/local/share/man/man1/`
+- ✅ Integrated into release workflow
+- ✅ Deploys to merah automatically
 
-# Optional: Create distributable product
-productbuild --distribution distribution.xml \
-             --package-path . \
-             datapainter-installer.pkg
-```
+**Future enhancements:**
+- Consider `.dmg` with drag-to-Applications for alternative distribution
+- Add code signing with Apple Developer certificate
 
-### Priority 2: Windows Installer
-Choose between MSIX (modern, Store-compatible) or traditional installer:
+### Priority 2: Windows Installer ✅ IMPROVED
+~~Choose between MSIX (modern, Store-compatible) or traditional installer~~
 
-**Option A: MSIX** (recommended for modern Windows)
-- Requires Windows SDK (available in GitHub Actions)
-- Can be unsigned for development distribution
-- Requires users to enable sideloading or sign for wide distribution
-- Best long-term solution for Windows Store
+**IMPLEMENTED: PowerShell Install Script (Option C)**
+- ✅ Created `scripts/install.ps1` - Simple PowerShell installer
+- ✅ Created `scripts/uninstall.ps1` - Uninstaller script
+- ✅ Copies binary to `C:\Program Files\DataPainter\`
+- ✅ Adds to system PATH automatically
+- ✅ Includes admin privilege checks
+- ✅ Integrated into release workflow
+- ✅ Deploys to merah automatically
 
-**Option B: MSI via WiX Toolset**
-- More traditional, works on older Windows
-- Requires WiX Toolset installation
-- Can integrate with PATH, create shortcuts, etc.
-
-**Option C: Simple PowerShell Install Script** (easiest short-term)
-- Create `install.ps1` that:
-  - Copies binary to `C:\Program Files\DataPainter\`
-  - Adds to system PATH
-  - Creates shortcuts
-- No code signing required
-- Users run: `powershell -ExecutionPolicy Bypass -File install.ps1`
+**Future enhancements:**
+- Create proper MSIX or MSI installer package
+- Add code signing with Windows certificate
 
 ### Priority 3: Package Manager Integration
 
@@ -128,4 +122,6 @@ Choose between MSIX (modern, Store-compatible) or traditional installer:
 - All deployments now have timeout protection (120s for single files, 180s for APT repo)
 - SCP has connection health checks (ServerAliveInterval=10, ServerAliveCountMax=3)
 - Deployment failures don't block release (continue-on-error: true)
-- Windows and macOS currently deploy simple archives - sufficient for now but not ideal UX
+- macOS now deploys proper .pkg installer with automated installation to `/usr/local/bin/`
+- Windows now includes PowerShell installer scripts for easy PATH integration
+- Installation is significantly improved on all platforms (as of 2025-11-13)

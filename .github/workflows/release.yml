@@ -99,8 +99,8 @@ jobs:
         asset_name: datapainter_${{ github.ref_name }}_amd64.deb
         asset_content_type: application/vnd.debian.binary-package
 
-    - name: Package binary (Linux/macOS)
-      if: matrix.os != 'windows-latest'
+    - name: Package binary (Linux)
+      if: matrix.os == 'ubuntu-latest'
       run: |
         mkdir -p release
         cp build/${{ matrix.artifact }} release/
@@ -109,6 +109,20 @@ jobs:
         cp docs/datapainter.1 release/
         tar -czf datapainter-${{ matrix.platform }}-${{ github.ref_name }}.tar.gz -C release .
 
+    - name: Package macOS installer
+      if: matrix.os == 'macos-latest'
+      run: |
+        # Extract version from github.ref_name (remove 'v' prefix if present)
+        VERSION="${{ github.ref_name }}"
+        VERSION="${VERSION#v}"
+
+        # Build .pkg installer
+        chmod +x scripts/build-macos-pkg.sh
+        ./scripts/build-macos-pkg.sh "$VERSION" build/${{ matrix.artifact }} docs/datapainter.1
+
+        # Rename to include platform
+        mv "datapainter-${VERSION}.pkg" "datapainter-${{ matrix.platform }}-${{ github.ref_name }}.pkg"
+
     - name: Package binary (Windows)
       if: matrix.os == 'windows-latest'
       run: |
@@ -116,11 +130,13 @@ jobs:
         cp build/Release/${{ matrix.artifact }} release/
         cp README.md release/
         cp LICENSE release/
+        cp scripts/install.ps1 release/
+        cp scripts/uninstall.ps1 release/
         Compress-Archive -Path release/* -DestinationPath datapainter-${{ matrix.platform }}-${{ github.ref_name }}.zip
       shell: pwsh
 
-    - name: Upload release artifacts (Linux/macOS)
-      if: matrix.os != 'windows-latest'
+    - name: Upload release artifacts (Linux tarball)
+      if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -129,6 +145,17 @@ jobs:
         asset_path: ./datapainter-${{ matrix.platform }}-${{ github.ref_name }}.tar.gz
         asset_name: datapainter-${{ matrix.platform }}-${{ github.ref_name }}.tar.gz
         asset_content_type: application/gzip
+
+    - name: Upload release artifacts (macOS .pkg)
+      if: matrix.os == 'macos-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./datapainter-${{ matrix.platform }}-${{ github.ref_name }}.pkg
+        asset_name: datapainter-${{ matrix.platform }}-${{ github.ref_name }}.pkg
+        asset_content_type: application/octet-stream
 
     - name: Upload release artifacts (Windows)
       if: matrix.os == 'windows-latest'
@@ -218,9 +245,9 @@ jobs:
             datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
 
         elif [ "${{ matrix.os }}" == "macos-latest" ]; then
-          # Deploy macOS tarball
+          # Deploy macOS .pkg installer
           timeout 120 scp $SCP_OPTS \
-            datapainter-${{ matrix.platform }}-${{ github.ref_name }}.tar.gz \
+            datapainter-${{ matrix.platform }}-${{ github.ref_name }}.pkg \
             datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
 
         elif [ "${{ matrix.os }}" == "windows-latest" ]; then
