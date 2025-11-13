@@ -34,33 +34,28 @@ fetch_tools() {
 }
 
 install_haiku_packages() {
-    # Install necessary Haiku packages (haiku system, sqlite3, ncurses)
-    # The haiku package contains system libraries and startup objects
-    PKGS="haiku sqlite ncurses6"
-    BASE="https://eu.hpkg.haiku-os.org/haikuports/master/${ARCH}/current"
-
-    if ! curl -sfI "$BASE/repo" >/dev/null; then
-        echo "Unable to access HaikuPorts repository at $BASE" >&2
-        exit 1
-    fi
+    # Install necessary Haiku packages (haiku system, sqlite_devel, ncurses6_devel)
+    # Using _devel packages to get headers and libraries for cross-compilation
+    BASE="https://eu.hpkg.haiku-os.org/haikuports/master/${ARCH}/current/packages"
 
     mkdir -p "$SYSROOT/boot/system"
-    echo "Downloading repository index from $BASE/repo"
-    curl -sSL "$BASE/repo" -o repo.hpkg
-    if [ ! -s repo.hpkg ]; then
-        echo "Failed to download repository index from $BASE" >&2
-        exit 1
-    fi
-    echo "Listing packages in repository"
-    "$HOSTTOOLS_DIR/package_repo" list -f repo.hpkg | sed 's/^[[:space:]]*//' > repo.txt
 
-    for p in $PKGS; do
-        FILE=$(grep -E "^${p}-.*-${ARCH}\.hpkg$" repo.txt | sort -V | tail -1)
-        if [ ! -f "$FILE" ]; then
-            echo "Fetching $FILE"
-            curl -sSL -o "$FILE" "$BASE/packages/$FILE"
+    # Hardcoded package versions (update periodically as needed)
+    # curl follows redirects to CDN automatically
+    PACKAGES=(
+        "haiku-r1~beta5_hrev57937+129-1-x86_64.hpkg"
+        "sqlite_devel-3.47.0-1-x86_64.hpkg"
+        "ncurses6_devel-6.5-1-x86_64.hpkg"
+    )
+
+    for PKG in "${PACKAGES[@]}"; do
+        echo "Downloading $PKG..."
+        if curl -sLf -o "$PKG" "$BASE/$PKG"; then
+            echo "Extracting $PKG to sysroot..."
+            "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$PKG"
+        else
+            echo "Warning: Failed to download $PKG" >&2
         fi
-        "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$FILE"
     done
 }
 
