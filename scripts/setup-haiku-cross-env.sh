@@ -60,25 +60,30 @@ install_haiku_packages() {
 
         # Get redirect location explicitly and download from CDN directly
         # This avoids issues with GitHub Actions not following 303 redirects properly
-        redirect_url=$(curl -fsSI --max-time 30 "$url" | grep -i '^location:' | sed 's/^location: //i' | tr -d '\r\n')
+        redirect_url=$(curl -fsSI --max-time 30 -A "Mozilla/5.0 (compatible; Haiku-Packager/1.0)" "$url" | grep -i '^location:' | sed 's/^location: //i' | tr -d '\r\n')
 
         if [ -n "$redirect_url" ]; then
             echo "Following redirect to: ${redirect_url}"
-            curl -fsSL --retry 3 --retry-delay 2 --max-time 60 -o "$filename" "$redirect_url" || {
+            # Use custom User-Agent and longer delay to avoid CDN rate limiting
+            curl -fsSL --retry 3 --retry-delay 5 --max-time 90 \
+                -A "Mozilla/5.0 (compatible; Haiku-Packager/1.0)" \
+                -o "$filename" "$redirect_url" || {
                 echo "oops: failed to download $filename from CDN" >&2
                 exit 1
             }
         else
             # No redirect, try direct download (shouldn't happen, but handle it)
             echo "No redirect found, trying direct download..."
-            curl -fsSL --retry 3 --retry-delay 2 --max-time 60 -o "$filename" "$url" || {
+            curl -fsSL --retry 3 --retry-delay 5 --max-time 90 \
+                -A "Mozilla/5.0 (compatible; Haiku-Packager/1.0)" \
+                -o "$filename" "$url" || {
                 echo "oops: failed to download $filename" >&2
                 exit 1
             }
         fi
 
         "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$filename"
-        sleep 2  # Pause between downloads to avoid rate limiting
+        sleep 5  # Longer pause between downloads to avoid CDN rate limiting
     done
 
     # Helper to get "latest" port package by name from HaikuPorts
