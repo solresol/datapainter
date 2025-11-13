@@ -92,26 +92,33 @@ install_haiku_packages() {
         "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$filename"
     done
 
-    # Helper to get "latest" port package by name from HaikuPorts
-    fetch_port_pkg() {
-        local name="$1"
-        # Grab directory index and pick the highest version for our arch
-        local latest
-        latest=$(curl -fsSL "$HAIKUPORTS_BASE/" \
-            | grep -Eo "${name}-[^\"']+-${ARCH}\\.hpkg" \
-            | sort -V | tail -1)
-        if [ -z "${latest:-}" ]; then
-            echo "oops: couldn't find ${name} in HaikuPorts at $HAIKUPORTS_BASE" >&2
-            return 1
-        fi
-        echo "Downloading ${HAIKUPORTS_BASE}/${latest}…"
-        curl -fsSLO "${HAIKUPORTS_BASE}/${latest}"
-        "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$latest"
-    }
+    # Download HaikuPorts packages from GitHub releases (to avoid CDN rate limiting)
+    # These packages are pinned versions hosted in the haiku-deps-r1beta5 release
+    for pkg_filename in "sqlite_devel-3.47.2.0-1-x86_64.hpkg" "ncurses6_devel-6.5-3-x86_64.hpkg"; do
+        # Check if package is in cache
+        if [ -n "$PKG_CACHE" ] && [ -f "$PKG_CACHE/$pkg_filename" ]; then
+            echo "Using cached $pkg_filename"
+            cp "$PKG_CACHE/$pkg_filename" "$pkg_filename"
+        else
+            echo "Downloading $pkg_filename from GitHub releases..."
+            url="${GITHUB_RELEASE}/${pkg_filename}"
 
-    # Ports needed for datapainter build
-    fetch_port_pkg sqlite_devel
-    fetch_port_pkg ncurses6_devel
+            curl -fsSL --retry 3 --retry-delay 2 --max-time 120 \
+                -o "$pkg_filename" "$url" || {
+                echo "oops: failed to download $pkg_filename from GitHub releases" >&2
+                echo "URL: $url" >&2
+                exit 1
+            }
+
+            # Save to cache for future use
+            if [ -n "$PKG_CACHE" ]; then
+                cp "$pkg_filename" "$PKG_CACHE/$pkg_filename"
+                echo "Cached $pkg_filename for future builds"
+            fi
+        fi
+
+        "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$pkg_filename"
+    done
 
     echo "All packages installed successfully to sysroot"
 }
