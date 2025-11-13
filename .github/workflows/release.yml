@@ -3,6 +3,12 @@ name: Release
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v0.1.0)'
+        required: true
+        default: 'v0.1.0-test'
 
 permissions:
   contents: write
@@ -28,6 +34,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Set version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "VERSION=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
 
     - name: Install dependencies (Linux)
       if: matrix.os == 'ubuntu-latest'
@@ -89,14 +105,14 @@ jobs:
         ls -la *.deb
 
     - name: Upload Debian package to release
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.os == 'ubuntu-latest' && github.event_name == 'release'
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
         asset_path: ./datapainter_0.1.0-1_amd64.deb
-        asset_name: datapainter_${{ github.ref_name }}_amd64.deb
+        asset_name: datapainter_${{ steps.version.outputs.VERSION }}_amd64.deb
         asset_content_type: application/vnd.debian.binary-package
 
     - name: Package binary (Linux)
@@ -107,13 +123,13 @@ jobs:
         cp README.md release/
         cp LICENSE release/
         cp docs/datapainter.1 release/
-        tar -czf datapainter-${{ matrix.platform }}-${{ github.ref_name }}.tar.gz -C release .
+        tar -czf datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.tar.gz -C release .
 
     - name: Package macOS installer
       if: matrix.os == 'macos-latest'
       run: |
         # Extract version from github.ref_name (remove 'v' prefix if present)
-        VERSION="${{ github.ref_name }}"
+        VERSION="${{ steps.version.outputs.VERSION }}"
         VERSION="${VERSION#v}"
 
         # Build .pkg installer
@@ -121,7 +137,7 @@ jobs:
         ./scripts/build-macos-pkg.sh "$VERSION" build/${{ matrix.artifact }} docs/datapainter.1
 
         # Rename to include platform
-        mv "datapainter-${VERSION}.pkg" "datapainter-${{ matrix.platform }}-${{ github.ref_name }}.pkg"
+        mv "datapainter-${VERSION}.pkg" "datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.pkg"
 
     - name: Package binary (Windows)
       if: matrix.os == 'windows-latest'
@@ -132,40 +148,40 @@ jobs:
         cp LICENSE release/
         cp scripts/install.ps1 release/
         cp scripts/uninstall.ps1 release/
-        Compress-Archive -Path release/* -DestinationPath datapainter-${{ matrix.platform }}-${{ github.ref_name }}.zip
+        Compress-Archive -Path release/* -DestinationPath datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.zip
       shell: pwsh
 
     - name: Upload release artifacts (Linux tarball)
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.os == 'ubuntu-latest' && github.event_name == 'release'
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./datapainter-${{ matrix.platform }}-${{ github.ref_name }}.tar.gz
-        asset_name: datapainter-${{ matrix.platform }}-${{ github.ref_name }}.tar.gz
+        asset_path: ./datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.tar.gz
+        asset_name: datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.tar.gz
         asset_content_type: application/gzip
 
     - name: Upload release artifacts (macOS .pkg)
-      if: matrix.os == 'macos-latest'
+      if: matrix.os == 'macos-latest' && github.event_name == 'release'
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./datapainter-${{ matrix.platform }}-${{ github.ref_name }}.pkg
-        asset_name: datapainter-${{ matrix.platform }}-${{ github.ref_name }}.pkg
+        asset_path: ./datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.pkg
+        asset_name: datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.pkg
         asset_content_type: application/octet-stream
 
     - name: Upload release artifacts (Windows)
-      if: matrix.os == 'windows-latest'
+      if: matrix.os == 'windows-latest' && github.event_name == 'release'
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./datapainter-${{ matrix.platform }}-${{ github.ref_name }}.zip
-        asset_name: datapainter-${{ matrix.platform }}-${{ github.ref_name }}.zip
+        asset_path: ./datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.zip
+        asset_name: datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.zip
         asset_content_type: application/zip
 
     # Deploy to packages.industrial-linguistics.com if SSH key is configured
@@ -231,7 +247,7 @@ jobs:
         if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
           # Deploy Linux tarball
           timeout 120 scp $SCP_OPTS \
-            datapainter-${{ matrix.platform }}-${{ github.ref_name }}.tar.gz \
+            datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.tar.gz \
             datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
 
           # Deploy public key
@@ -247,14 +263,38 @@ jobs:
         elif [ "${{ matrix.os }}" == "macos-latest" ]; then
           # Deploy macOS .pkg installer
           timeout 120 scp $SCP_OPTS \
-            datapainter-${{ matrix.platform }}-${{ github.ref_name }}.pkg \
+            datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.pkg \
             datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
 
         elif [ "${{ matrix.os }}" == "windows-latest" ]; then
           # Deploy Windows ZIP
           timeout 120 scp $SCP_OPTS \
-            datapainter-${{ matrix.platform }}-${{ github.ref_name }}.zip \
+            datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.zip \
             datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
         fi
       shell: bash
       continue-on-error: true
+
+    # Upload artifacts for manual workflow runs (for testing)
+    - name: Upload build artifacts (Linux)
+      if: matrix.os == 'ubuntu-latest' && github.event_name == 'workflow_dispatch'
+      uses: actions/upload-artifact@v4
+      with:
+        name: datapainter-linux-${{ steps.version.outputs.VERSION }}
+        path: |
+          datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.tar.gz
+          datapainter_*.deb
+
+    - name: Upload build artifacts (macOS)
+      if: matrix.os == 'macos-latest' && github.event_name == 'workflow_dispatch'
+      uses: actions/upload-artifact@v4
+      with:
+        name: datapainter-macos-${{ steps.version.outputs.VERSION }}
+        path: datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.pkg
+
+    - name: Upload build artifacts (Windows)
+      if: matrix.os == 'windows-latest' && github.event_name == 'workflow_dispatch'
+      uses: actions/upload-artifact@v4
+      with:
+        name: datapainter-windows-${{ steps.version.outputs.VERSION }}
+        path: datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.zip
