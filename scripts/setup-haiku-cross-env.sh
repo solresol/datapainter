@@ -53,7 +53,8 @@ install_haiku_packages() {
     echo "Found Haiku version: $version"
 
     # Fetch and extract core OS packages from the Haiku repo
-    for pkg in haiku haiku_devel; do
+    # Try haiku_devel first to see if the CDN blocks the second download regardless of order
+    for pkg in haiku_devel haiku; do
         url="${HAIKU_BASE}/packages/${pkg}-${version}-1-${ARCH}.hpkg"
         filename="${pkg}-${version}-1-${ARCH}.hpkg"
         echo "Downloading ${pkg}..."
