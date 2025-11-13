@@ -301,14 +301,49 @@ The `ci-haiku.yml` workflow runs on:
 
 It automatically deploys to merah when building main or releases.
 
+## Windows Packaging
+
+Currently deploys a simple ZIP file to merah:
+- **File**: `datapainter-windows-{version}.zip`
+- **Contents**: `datapainter.exe`, `README.md`, `LICENSE`
+- **Deployment**: Uploaded to GitHub releases and deployed to merah with 120s timeout
+
+**Future**: Create proper installer (see PACKAGING_TODO.md):
+- MSIX package (modern, Windows Store compatible)
+- Or MSI via WiX Toolset (traditional)
+- Or PowerShell install script (simplest)
+
+## macOS Packaging
+
+Currently deploys a tarball to merah:
+- **File**: `datapainter-macos-{version}.tar.gz`
+- **Contents**: `datapainter` binary, `README.md`, `LICENSE`, `datapainter.1` man page
+- **Deployment**: Uploaded to GitHub releases and deployed to merah with 120s timeout
+
+**Future**: Create proper installer (see PACKAGING_TODO.md):
+- `.pkg` installer using pkgbuild/productbuild
+- Or `.dmg` with drag-to-Applications
+
+## Deployment Timeouts
+
+All SCP operations now have timeout protection:
+- Single file uploads: 120 seconds timeout
+- APT repository (multiple files): 180 seconds timeout
+- Connection health checks: ServerAliveInterval=10, ServerAliveCountMax=3
+- Deployment failures don't block release (continue-on-error: true)
+
 ## Future Improvements
 
 - [x] Generate Debian/Ubuntu .deb packages
 - [x] Create an APT repository at packages.industrial-linguistics.com
 - [x] Add GPG signing for packages
 - [x] Add Haiku cross-compilation and repository
+- [x] Deploy Windows and macOS packages to merah
+- [x] Add deployment timeout protection
+- [ ] Create proper Windows installer (MSIX/MSI/PowerShell)
+- [ ] Create proper macOS installer (.pkg or .dmg)
 - [ ] Generate RPM packages for Fedora/CentOS
-- [ ] Create install scripts for each platform
 - [ ] Support multiple distributions (Ubuntu 20.04, 22.04, Debian 11, 12)
 - [ ] Add subkey for signing with different expiration
 - [ ] Publish key to public keyservers (keys.openpgp.org)
+- [ ] Submit to package managers (Chocolatey, Scoop, Homebrew, etc.)
