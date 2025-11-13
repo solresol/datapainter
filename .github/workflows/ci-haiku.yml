@@ -1,0 +1,50 @@
+name: ci-haiku
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Haiku cross environment
+        run: |
+          source ./scripts/setup-haiku-cross-env.sh
+          echo "PATH=$PATH" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> "$GITHUB_ENV"
+
+      - name: Build application
+        run: ./scripts/build-haiku-cross.sh
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: datapainter-haiku
+          path: datapainter_*.hpkg
+
+      - name: Setup deployment SSH key
+        if: (github.ref == 'refs/heads/main') || (github.event_name == 'release')
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOYMENT_SSH_KEY }}
+
+      - name: Add deployment host to known_hosts
+        if: (github.ref == 'refs/heads/main') || (github.event_name == 'release')
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan merah.cassia.ifost.org.au >> ~/.ssh/known_hosts
+
+      - name: Deploy package to Haiku repository
+        if: (github.ref == 'refs/heads/main') || (github.event_name == 'release')
+        run: |
+          ./scripts/update-haiku-repo.sh repo
+          scp -r repo datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter-haiku/

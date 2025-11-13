@@ -108,11 +108,4 @@ jobs:
         name: datapainter-windows
         path: build/Release/datapainter.exe
 
-  # Note: Haiku build will need a custom runner or cross-compilation setup
-  # This is a placeholder for future implementation
-  # build-haiku:
-  #   name: Build on Haiku
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - name: Cross-compile for Haiku
-  #     run: echo "Haiku cross-compilation not yet implemented"
+  # Note: Haiku build is now implemented in ci-haiku.yml as a separate workflow
