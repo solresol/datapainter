@@ -55,9 +55,20 @@ install_haiku_packages() {
     # Fetch and extract core OS packages from the Haiku repo
     for pkg in haiku haiku_devel; do
         url="${HAIKU_BASE}/packages/${pkg}-${version}-1-${ARCH}.hpkg"
+        filename="${pkg}-${version}-1-${ARCH}.hpkg"
         echo "Downloading ${url}…"
-        curl -fsSLO "$url"
-        "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "${pkg}-${version}-1-${ARCH}.hpkg"
+        # Add retry and be explicit about following redirects
+        if ! curl -fsSL --retry 3 --retry-delay 2 -o "$filename" "$url"; then
+            echo "Failed to download $filename, trying CDN directly..." >&2
+            # Fallback: try the CDN URL directly
+            cdn_url="https://haiku-repository.cdn.haiku-os.org/${HAIKU_BRANCH}/${ARCH}/${version}/packages/${filename}"
+            curl -fsSL -o "$filename" "$cdn_url" || {
+                echo "oops: failed to download $filename from both URLs" >&2
+                exit 1
+            }
+        fi
+        "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$filename"
+        sleep 1  # Brief pause between downloads
     done
 
     # Helper to get "latest" port package by name from HaikuPorts
