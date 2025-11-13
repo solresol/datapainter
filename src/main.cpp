@@ -544,7 +544,7 @@ int main(int argc, char** argv) {
         );
 
         // Count points
-        int total_count = all_points.size();
+        int total_count = static_cast<int>(all_points.size());
         int x_count = 0;
         int o_count = 0;
         for (const auto& pt : all_points) {
@@ -796,8 +796,7 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        // List available tables
-        TableManager table_mgr(db);
+        // List available tables (reuse table_mgr from outer scope)
         auto tables = table_mgr.list_tables();
 
         // Run the interactive TUI menu
