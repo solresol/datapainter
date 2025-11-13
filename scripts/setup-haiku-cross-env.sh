@@ -56,25 +56,29 @@ install_haiku_packages() {
     for pkg in haiku haiku_devel; do
         url="${HAIKU_BASE}/packages/${pkg}-${version}-1-${ARCH}.hpkg"
         filename="${pkg}-${version}-1-${ARCH}.hpkg"
-        echo "Downloading ${url}…"
+        echo "Downloading ${pkg}..."
 
-        # First try: check what redirect we get with verbose output
-        echo "Testing redirect behavior..."
-        curl -vsSLI --max-time 30 "$url" 2>&1 | head -20 || true
+        # Get redirect location explicitly and download from CDN directly
+        # This avoids issues with GitHub Actions not following 303 redirects properly
+        redirect_url=$(curl -fsSI --max-time 30 "$url" | grep -i '^location:' | sed 's/^location: //i' | tr -d '\r\n')
 
-        # Add retry and be explicit about following redirects
-        if ! curl -fsSL --retry 3 --retry-delay 2 --max-time 60 -o "$filename" "$url"; then
-            echo "Failed to download $filename, trying CDN directly..." >&2
-            # Fallback: try the CDN URL directly
-            cdn_url="https://haiku-repository.cdn.haiku-os.org/${HAIKU_BRANCH}/${ARCH}/${version}/packages/${filename}"
-            echo "Attempting CDN URL: ${cdn_url}"
-            curl -vsSL --max-time 60 -o "$filename" "$cdn_url" 2>&1 | head -20 || {
-                echo "oops: failed to download $filename from both URLs" >&2
+        if [ -n "$redirect_url" ]; then
+            echo "Following redirect to: ${redirect_url}"
+            curl -fsSL --retry 3 --retry-delay 2 --max-time 60 -o "$filename" "$redirect_url" || {
+                echo "oops: failed to download $filename from CDN" >&2
+                exit 1
+            }
+        else
+            # No redirect, try direct download (shouldn't happen, but handle it)
+            echo "No redirect found, trying direct download..."
+            curl -fsSL --retry 3 --retry-delay 2 --max-time 60 -o "$filename" "$url" || {
+                echo "oops: failed to download $filename" >&2
                 exit 1
             }
         fi
+
         "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$filename"
-        sleep 2  # Longer pause between downloads to avoid rate limiting
+        sleep 2  # Pause between downloads to avoid rate limiting
     done
 
     # Helper to get "latest" port package by name from HaikuPorts
