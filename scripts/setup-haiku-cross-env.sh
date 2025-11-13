@@ -39,8 +39,13 @@ install_haiku_packages() {
     HAIKU_BRANCH=${HAIKU_BRANCH:-r1beta5}   # use 'master' if you want nightly
     HAIKU_BASE="https://eu.hpkg.haiku-os.org/haiku/${HAIKU_BRANCH}/${ARCH}/current"
     HAIKUPORTS_BASE="https://eu.hpkg.haiku-os.org/haikuports/master/${ARCH}/current/packages"
+    PKG_CACHE="${HAIKU_PKG_CACHE:-}"  # Optional cache directory from environment
 
     mkdir -p "$SYSROOT/boot/system"
+    if [ -n "$PKG_CACHE" ]; then
+        mkdir -p "$PKG_CACHE"
+        echo "Using package cache: $PKG_CACHE"
+    fi
 
     # Discover the current Haiku version string (e.g. r1~beta5_hrev57937_129)
     echo "Querying Haiku repo for current version..."
@@ -52,39 +57,37 @@ install_haiku_packages() {
     fi
     echo "Found Haiku version: $version"
 
-    # Fetch and extract core OS packages from the Haiku repo
-    # Try haiku_devel first to see if the CDN blocks the second download regardless of order
-    for pkg in haiku_devel haiku; do
-        url="${HAIKU_BASE}/packages/${pkg}-${version}-1-${ARCH}.hpkg"
+    # Fetch and extract core OS packages
+    # Download from GitHub releases to avoid Haiku CDN rate limiting
+    # See: https://github.com/solresol/datapainter/releases/tag/haiku-deps-r1beta5
+    GITHUB_RELEASE="https://github.com/solresol/datapainter/releases/download/haiku-deps-r1beta5"
+
+    for pkg in haiku haiku_devel; do
         filename="${pkg}-${version}-1-${ARCH}.hpkg"
-        echo "Downloading ${pkg}..."
 
-        # Get redirect location explicitly and download from CDN directly
-        # This avoids issues with GitHub Actions not following 303 redirects properly
-        redirect_url=$(curl -fsSI --max-time 30 -A "Mozilla/5.0 (compatible; Haiku-Packager/1.0)" "$url" | grep -i '^location:' | sed 's/^location: //i' | tr -d '\r\n')
-
-        if [ -n "$redirect_url" ]; then
-            echo "Following redirect to: ${redirect_url}"
-            # Use custom User-Agent and longer delay to avoid CDN rate limiting
-            curl -fsSL --retry 3 --retry-delay 5 --max-time 90 \
-                -A "Mozilla/5.0 (compatible; Haiku-Packager/1.0)" \
-                -o "$filename" "$redirect_url" || {
-                echo "oops: failed to download $filename from CDN" >&2
-                exit 1
-            }
+        # Check if package is in cache
+        if [ -n "$PKG_CACHE" ] && [ -f "$PKG_CACHE/$filename" ]; then
+            echo "Using cached $filename"
+            cp "$PKG_CACHE/$filename" "$filename"
         else
-            # No redirect, try direct download (shouldn't happen, but handle it)
-            echo "No redirect found, trying direct download..."
-            curl -fsSL --retry 3 --retry-delay 5 --max-time 90 \
-                -A "Mozilla/5.0 (compatible; Haiku-Packager/1.0)" \
+            echo "Downloading ${pkg} from GitHub releases..."
+            url="${GITHUB_RELEASE}/${filename}"
+
+            curl -fsSL --retry 3 --retry-delay 2 --max-time 120 \
                 -o "$filename" "$url" || {
-                echo "oops: failed to download $filename" >&2
+                echo "oops: failed to download $filename from GitHub releases" >&2
+                echo "URL: $url" >&2
                 exit 1
             }
+
+            # Save to cache for future use
+            if [ -n "$PKG_CACHE" ]; then
+                cp "$filename" "$PKG_CACHE/$filename"
+                echo "Cached $filename for future builds"
+            fi
         fi
 
         "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$filename"
-        sleep 5  # Longer pause between downloads to avoid CDN rate limiting
     done
 
     # Helper to get "latest" port package by name from HaikuPorts

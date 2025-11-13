@@ -16,7 +16,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache Haiku packages
+        id: cache-haiku-pkgs
+        uses: actions/cache@v4
+        with:
+          path: |
+            /tmp/haiku-packages
+          key: haiku-packages-r1beta5-${{ hashFiles('scripts/setup-haiku-cross-env.sh') }}
+          restore-keys: |
+            haiku-packages-r1beta5-
+
       - name: Setup Haiku cross environment
+        env:
+          HAIKU_PKG_CACHE: /tmp/haiku-packages
         run: |
           source ./scripts/setup-haiku-cross-env.sh
           echo "PATH=$PATH" >> "$GITHUB_ENV"
