@@ -618,8 +618,18 @@ man pages are in ....
 
 # Packages
 
-Github actions compile this for Windows, MacOS, Linux and Haiku. Packaging scripts are in scripts/
-MacOS is only built on releases. 
-After being built, they are copied into 
-  datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter
+Github actions compile this for Windows, MacOS, Linux and Haiku:
+- **Linux**: Built on every push, releases deployed to APT repository
+- **macOS**: Only built on releases (to save CI time)
+- **Windows**: Only built on releases
+- **Haiku**: Built on every push to main, releases deployed to Haiku repository
+
+Packaging scripts are in scripts/:
+- Linux/macOS/Windows: Standard build scripts
+- Haiku: Cross-compilation scripts (setup-haiku-cross-env.sh, build-haiku-cross.sh, update-haiku-repo.sh)
+
+After being built, packages are copied to:
+- Linux/APT: datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
+- Haiku: datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter-haiku/
+
 The SSH key DEPLOYMENT_SSH_KEY allows access as that user.

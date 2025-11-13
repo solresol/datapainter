@@ -34,8 +34,9 @@ fetch_tools() {
 }
 
 install_haiku_packages() {
-    # Install necessary Haiku packages (sqlite3, ncurses)
-    PKGS="sqlite ncurses6"
+    # Install necessary Haiku packages (haiku system, sqlite3, ncurses)
+    # The haiku package contains system libraries and startup objects
+    PKGS="haiku sqlite ncurses6"
     BASE="https://eu.hpkg.haiku-os.org/haikuports/master/${ARCH}/current"
 
     if ! curl -sfI "$BASE/repo" >/dev/null; then
