@@ -247,11 +247,66 @@ sudo apt-get install debhelper devscripts build-essential
 dpkg-buildpackage -us -uc -b
 ```
 
+## Haiku Package Repository
+
+DataPainter is cross-compiled for Haiku OS using GitHub Actions.
+
+### Repository Structure
+
+```
+/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter-haiku/
+├── repo/
+│   ├── repo             # Repository index (created by package_repo)
+│   └── packages/
+│       └── datapainter_*.hpkg
+```
+
+### Cross-Compilation Process
+
+The Haiku build uses cross-compilation from Ubuntu:
+
+1. **setup-haiku-cross-env.sh**: Downloads Haiku cross-compiler toolchain and dependencies
+   - Fetches toolchain from haiku-toolchains-ubuntu
+   - Downloads haiku system package (contains libroot, startup objects)
+   - Downloads sqlite and ncurses packages from HaikuPorts
+
+2. **build-haiku-cross.sh**: Cross-compiles datapainter and creates .hpkg
+   - Uses CMake with custom toolchain file
+   - Cross-compiler: x86_64-unknown-haiku-g++
+   - Creates .hpkg with proper metadata
+
+3. **update-haiku-repo.sh**: Creates Haiku repository index
+   - Uses package_repo command from Haiku hosttools
+   - Creates repo.info with repository metadata
+   - Generates repository index file
+
+### Installing from Haiku Repository
+
+On Haiku, users can add the repository and install:
+
+```bash
+# Add the repository
+pkgman add https://packages.industrial-linguistics.com/datapainter-haiku/repo
+
+# Install datapainter
+pkgman install datapainter
+```
+
+### Build Workflow
+
+The `ci-haiku.yml` workflow runs on:
+- Every push to main
+- Every release
+- Pull requests
+
+It automatically deploys to merah when building main or releases.
+
 ## Future Improvements
 
 - [x] Generate Debian/Ubuntu .deb packages
 - [x] Create an APT repository at packages.industrial-linguistics.com
 - [x] Add GPG signing for packages
+- [x] Add Haiku cross-compilation and repository
 - [ ] Generate RPM packages for Fedora/CentOS
 - [ ] Create install scripts for each platform
 - [ ] Support multiple distributions (Ubuntu 20.04, 22.04, Debian 11, 12)

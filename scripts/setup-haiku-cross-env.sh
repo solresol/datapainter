@@ -52,7 +52,7 @@ install_haiku_packages() {
         exit 1
     fi
     echo "Listing packages in repository"
-    package list -f repo.hpkg | sed 's/^[[:space:]]*//' > repo.txt
+    "$HOSTTOOLS_DIR/package" list repo.hpkg | sed 's/^[[:space:]]*//' > repo.txt
 
     for p in $PKGS; do
         FILE=$(grep -E "^${p}-.*-${ARCH}\.hpkg$" repo.txt | sort -V | tail -1)
@@ -60,7 +60,7 @@ install_haiku_packages() {
             echo "Fetching $FILE"
             curl -sSL -o "$FILE" "$BASE/packages/$FILE"
         fi
-        package extract -C "$SYSROOT/boot/system" "$FILE"
+        "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$FILE"
     done
 }
 
