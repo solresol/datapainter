@@ -71,7 +71,9 @@ install_haiku_packages() {
             cp "$PKG_CACHE/$filename" "$filename"
         else
             echo "Downloading ${pkg} from GitHub releases..."
-            url="${GITHUB_RELEASE}/${filename}"
+            # GitHub converts ~ to . in release filenames, so we need to URL-encode
+            url_encoded_filename=$(printf "%s" "$filename" | sed 's/~/%7E/g')
+            url="${GITHUB_RELEASE}/${url_encoded_filename}"
 
             curl -fsSL --retry 3 --retry-delay 2 --max-time 120 \
                 -o "$filename" "$url" || {
