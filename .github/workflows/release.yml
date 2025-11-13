@@ -192,28 +192,42 @@ jobs:
 
         cd ../..
 
-    - name: Deploy to package server (Linux only)
-      if: matrix.os == 'ubuntu-latest'
+    - name: Deploy to package server
       run: |
         mkdir -p ~/.ssh
         echo "${{ secrets.DEPLOYMENT_SSH_KEY }}" > ~/.ssh/deploy_key
         chmod 600 ~/.ssh/deploy_key
 
-        # Deploy tarball
-        scp -i ~/.ssh/deploy_key \
-          -o StrictHostKeyChecking=no \
-          datapainter-${{ matrix.platform }}-${{ github.ref_name }}.tar.gz \
-          datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
+        # Common SCP options with timeout
+        SCP_OPTS="-i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=10 -o ServerAliveCountMax=3"
 
-        # Deploy public key
-        scp -i ~/.ssh/deploy_key \
-          -o StrictHostKeyChecking=no \
-          PUBLIC.KEY \
-          datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
+        if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+          # Deploy Linux tarball
+          timeout 120 scp $SCP_OPTS \
+            datapainter-${{ matrix.platform }}-${{ github.ref_name }}.tar.gz \
+            datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
 
-        # Deploy entire APT repository
-        scp -i ~/.ssh/deploy_key \
-          -o StrictHostKeyChecking=no \
-          -r apt-repo/* \
-          datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
+          # Deploy public key
+          timeout 120 scp $SCP_OPTS \
+            PUBLIC.KEY \
+            datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
+
+          # Deploy entire APT repository
+          timeout 180 scp $SCP_OPTS \
+            -r apt-repo/* \
+            datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
+
+        elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+          # Deploy macOS tarball
+          timeout 120 scp $SCP_OPTS \
+            datapainter-${{ matrix.platform }}-${{ github.ref_name }}.tar.gz \
+            datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
+
+        elif [ "${{ matrix.os }}" == "windows-latest" ]; then
+          # Deploy Windows ZIP
+          timeout 120 scp $SCP_OPTS \
+            datapainter-${{ matrix.platform }}-${{ github.ref_name }}.zip \
+            datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
+        fi
+      shell: bash
       continue-on-error: true
