@@ -1,8 +1,16 @@
 # Haiku Build Status
 
-## Current Status: WORKAROUND IMPLEMENTED - Testing GitHub Releases Solution
+## Current Status: PACKAGE CDN WORKAROUND COMPLETE - Blocked on Upstream Toolchain Issue
 
-Successfully identified and worked around Haiku CDN rate limiting by hosting packages in GitHub Releases. Core OS packages (haiku, haiku_devel) now download from GitHub instead of Haiku CDN.
+Successfully worked around Haiku CDN rate limiting by hosting ALL packages in GitHub Releases. All 4 packages (haiku, haiku_devel, sqlite_devel, ncurses6_devel) now download from GitHub instead of Haiku CDN. Build currently blocked by haiku-toolchains-ubuntu fetch.sh script failure (upstream issue).
+
+### Current Blocker (as of 2025-11-13):
+**haiku-toolchains-ubuntu fetch.sh failure**:
+- The `fetch_tools()` function clones haiku-toolchains-ubuntu successfully
+- But `./fetch.sh --hosttools` exits with code 2 immediately after `pushd toolchain`
+- This appears to be an upstream issue with the haiku-toolchains-ubuntu repository
+- The package CDN workaround is complete and ready to work once toolchain fetching succeeds
+- Latest workflow run: `19322043400` (failed at toolchain fetch, not package download)
 
 ### Completed:
 1. ✅ Created `scripts/setup-haiku-cross-env.sh` - Downloads Haiku toolchain
@@ -20,15 +28,20 @@ Successfully identified and worked around Haiku CDN rate limiting by hosting pac
 - Conclusion: First package always succeeds, second always fails = rate limiting
 
 ### Solution Implemented:
-**Host packages in GitHub Releases** to bypass Haiku CDN entirely:
-1. Downloaded both packages locally (where CDN works)
+**Host ALL packages in GitHub Releases** to bypass Haiku CDN entirely:
+1. Downloaded all 4 required packages (haiku, haiku_devel, sqlite_devel, ncurses6_devel)
 2. Created GitHub release: `haiku-deps-r1beta5`
-3. Uploaded packages to release
-4. Modified script to download from GitHub releases instead of Haiku CDN
-5. Added URL encoding for tilde (~) character: `r1~beta5` → `r1%7Ebeta5`
+3. Uploaded all packages to release
+4. Modified script to download ALL packages from GitHub releases instead of Haiku CDN
+5. Fixed filename handling: GitHub converts `~` to `.` in uploaded filenames
 6. Added GitHub Actions caching for faster subsequent builds
+7. Pinned versions: sqlite_devel-3.47.2.0-1, ncurses6_devel-6.5-3
 
 **GitHub Release**: https://github.com/solresol/datapainter/releases/tag/haiku-deps-r1beta5
+
+**Latest Commits**:
+- `3487e6f` - Download all Haiku packages from GitHub releases (COMPLETE FIX)
+- `b778102` - Match GitHub's filename mangling for Haiku packages
 
 **Verified working locally:**
 - `curl -I https://eu.hpkg.haiku-os.org/haiku/r1beta5/x86_64/current/packages/haiku_devel-r1~beta5_hrev57937_129-1-x86_64.hpkg`
