@@ -45,12 +45,14 @@ install_haiku_packages() {
     fi
 
     mkdir -p "$SYSROOT/boot/system"
+    echo "Downloading repository index from $BASE/repo"
     curl -sSL "$BASE/repo" -o repo.hpkg
     if [ ! -s repo.hpkg ]; then
         echo "Failed to download repository index from $BASE" >&2
         exit 1
     fi
-    package_repo list -f repo.hpkg | sed 's/^[[:space:]]*//' > repo.txt
+    echo "Listing packages in repository"
+    package list -f repo.hpkg | sed 's/^[[:space:]]*//' > repo.txt
 
     for p in $PKGS; do
         FILE=$(grep -E "^${p}-.*-${ARCH}\.hpkg$" repo.txt | sort -V | tail -1)
