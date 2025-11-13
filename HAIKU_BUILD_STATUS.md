@@ -1,8 +1,8 @@
 # Haiku Build Status
 
-## Current Status: NEARLY COMPLETE - GitHub Actions Issue
+## Current Status: WORKAROUND IMPLEMENTED - Testing GitHub Releases Solution
 
-The Haiku cross-compilation infrastructure is complete and correct. Downloads work locally but fail in GitHub Actions with 404 errors despite valid 303 redirects.
+Successfully identified and worked around Haiku CDN rate limiting by hosting packages in GitHub Releases. Core OS packages (haiku, haiku_devel) now download from GitHub instead of Haiku CDN.
 
 ### Completed:
 1. ✅ Created `scripts/setup-haiku-cross-env.sh` - Downloads Haiku toolchain
@@ -11,8 +11,24 @@ The Haiku cross-compilation infrastructure is complete and correct. Downloads wo
 4. ✅ Added `.github/workflows/ci-haiku.yml` - GitHub Actions workflow
 5. ✅ Updated README.md and DEPLOYMENT.md with Haiku documentation
 
-### Current Issue:
-The `haiku_devel` package download fails with 404 in GitHub Actions, but succeeds locally.
+### Root Cause Identified:
+**Haiku CDN Rate Limiting**: The Haiku CDN blocks ANY second download from the same IP, regardless of package.
+
+**Evidence**:
+- Test 1: Download `haiku` first → ✓ SUCCESS, then `haiku_devel` → ✗ 404 FAILURE
+- Test 2: Download `haiku_devel` first → ✓ SUCCESS, then `haiku` → ✗ 404 FAILURE
+- Conclusion: First package always succeeds, second always fails = rate limiting
+
+### Solution Implemented:
+**Host packages in GitHub Releases** to bypass Haiku CDN entirely:
+1. Downloaded both packages locally (where CDN works)
+2. Created GitHub release: `haiku-deps-r1beta5`
+3. Uploaded packages to release
+4. Modified script to download from GitHub releases instead of Haiku CDN
+5. Added URL encoding for tilde (~) character: `r1~beta5` → `r1%7Ebeta5`
+6. Added GitHub Actions caching for faster subsequent builds
+
+**GitHub Release**: https://github.com/solresol/datapainter/releases/tag/haiku-deps-r1beta5
 
 **Verified working locally:**
 - `curl -I https://eu.hpkg.haiku-os.org/haiku/r1beta5/x86_64/current/packages/haiku_devel-r1~beta5_hrev57937_129-1-x86_64.hpkg`
