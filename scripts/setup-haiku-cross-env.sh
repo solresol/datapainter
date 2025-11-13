@@ -34,7 +34,7 @@ fetch_tools() {
 }
 
 install_haiku_packages() {
-    set -euo pipefail
+    set -uo pipefail  # Don't use -e, we handle errors explicitly
 
     HAIKU_BRANCH=${HAIKU_BRANCH:-r1beta5}   # use 'master' if you want nightly
     HAIKU_BASE="https://eu.hpkg.haiku-os.org/haiku/${HAIKU_BRANCH}/${ARCH}/current"
