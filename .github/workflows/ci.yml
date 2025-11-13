@@ -87,12 +87,19 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'f7423ee180c4b7f40d43402c2feb3859161ef625'  # Latest stable
+
     - name: Install dependencies with vcpkg
       run: |
         vcpkg install sqlite3:x64-windows
+      shell: bash
 
     - name: Configure CMake
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+      shell: bash
 
     - name: Build
       run: cmake --build build --config Release
