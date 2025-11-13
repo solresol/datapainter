@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "argument_parser.h"
 #include "metadata.h"
+#include <algorithm>
 #include <vector>
 #include <cstring>
 

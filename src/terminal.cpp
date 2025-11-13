@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #ifdef _WIN32
+#define NOMINMAX  // Prevent windows.h from defining min/max macros
 #include <windows.h>
 #include <conio.h>
 #else
@@ -22,10 +23,12 @@ Terminal::Terminal() : rows_(24), cols_(80), actual_rows_(24), actual_cols_(80) 
 
 Terminal::~Terminal() {
     // Clean up ncurses if we initialized it
+#ifndef _WIN32
     if (ncurses_initialized) {
         endwin();
         ncurses_initialized = false;
     }
+#endif
 }
 
 void Terminal::set_dimensions(int rows, int cols) {
