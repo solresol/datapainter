@@ -34,57 +34,52 @@ fetch_tools() {
 }
 
 install_haiku_packages() {
-    # Install necessary Haiku packages (haiku, haiku_devel, sqlite_devel, ncurses6_devel)
-    # Using _devel packages to get headers and libraries for cross-compilation
+    set -euo pipefail
+
+    HAIKU_BRANCH=${HAIKU_BRANCH:-r1beta5}   # use 'master' if you want nightly
+    HAIKU_BASE="https://eu.hpkg.haiku-os.org/haiku/${HAIKU_BRANCH}/${ARCH}/current"
+    HAIKUPORTS_BASE="https://eu.hpkg.haiku-os.org/haikuports/master/${ARCH}/current/packages"
 
     mkdir -p "$SYSROOT/boot/system"
 
-    # Query the Haiku repo for the current stable version
-    HAIKU_REPO="https://eu.hpkg.haiku-os.org/haiku/r1beta5/${ARCH}/current"
+    # Discover the current Haiku version string (e.g. r1~beta5_hrev57937_129)
     echo "Querying Haiku repo for current version..."
-    VERSION=$(curl -sL "$HAIKU_REPO" | grep -o 'r1~beta[0-9]*_hrev[0-9]*_[0-9]*' | head -1)
-
-    if [ -z "$VERSION" ]; then
-        echo "Error: Could not determine current Haiku version" >&2
+    route=$(curl -fsSL "$HAIKU_BASE")
+    version=$(printf "%s\n" "$route" | sed -n 's/.*version: "\([^"]*\)".*/\1/p')
+    if [ -z "${version:-}" ]; then
+        echo "oops: couldn't extract Haiku version from $HAIKU_BASE" >&2
         exit 1
     fi
-    echo "Found Haiku version: $VERSION"
+    echo "Found Haiku version: $version"
 
-    # Download haiku and haiku_devel from Haiku repo (core OS packages)
-    HAIKU_PKG_BASE="$HAIKU_REPO/packages"
-    for pkg in "haiku" "haiku_devel"; do
-        FILE="${pkg}-${VERSION}-1-${ARCH}.hpkg"
-        echo "Downloading $FILE from Haiku repo..."
-        if curl -sLf -o "$FILE" "$HAIKU_PKG_BASE/$FILE"; then
-            echo "Extracting $FILE to sysroot..."
-            "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$FILE"
-        else
-            echo "Error: Failed to download $FILE" >&2
-            exit 1
-        fi
+    # Fetch and extract core OS packages from the Haiku repo
+    for pkg in haiku haiku_devel; do
+        url="${HAIKU_BASE}/packages/${pkg}-${version}-1-${ARCH}.hpkg"
+        echo "Downloading ${url}…"
+        curl -fsSLO "$url"
+        "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "${pkg}-${version}-1-${ARCH}.hpkg"
     done
 
-    # Download ports (sqlite_devel, ncurses6_devel) from HaikuPorts
-    PORTS_BASE="https://eu.hpkg.haiku-os.org/haikuports/master/${ARCH}/current/packages"
-    for port in "sqlite_devel" "ncurses6_devel"; do
-        echo "Finding latest $port in HaikuPorts..."
-        # Scrape directory listing for latest version
-        FILE=$(curl -sL "$PORTS_BASE/" | grep -o "href=\"${port}-[^\"]*-${ARCH}\.hpkg\"" | sed 's/href="//;s/"//' | sort -V | tail -1)
-
-        if [ -z "$FILE" ]; then
-            echo "Error: Could not find $port package" >&2
-            exit 1
+    # Helper to get "latest" port package by name from HaikuPorts
+    fetch_port_pkg() {
+        local name="$1"
+        # Grab directory index and pick the highest version for our arch
+        local latest
+        latest=$(curl -fsSL "$HAIKUPORTS_BASE/" \
+            | grep -Eo "${name}-[^\"']+-${ARCH}\\.hpkg" \
+            | sort -V | tail -1)
+        if [ -z "${latest:-}" ]; then
+            echo "oops: couldn't find ${name} in HaikuPorts at $HAIKUPORTS_BASE" >&2
+            return 1
         fi
+        echo "Downloading ${HAIKUPORTS_BASE}/${latest}…"
+        curl -fsSLO "${HAIKUPORTS_BASE}/${latest}"
+        "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$latest"
+    }
 
-        echo "Downloading $FILE from HaikuPorts..."
-        if curl -sLf -o "$FILE" "$PORTS_BASE/$FILE"; then
-            echo "Extracting $FILE to sysroot..."
-            "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$FILE"
-        else
-            echo "Error: Failed to download $FILE" >&2
-            exit 1
-        fi
-    done
+    # Ports needed for datapainter build
+    fetch_port_pkg sqlite_devel
+    fetch_port_pkg ncurses6_devel
 
     echo "All packages installed successfully to sysroot"
 }
