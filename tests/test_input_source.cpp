@@ -4,6 +4,15 @@
 #include <fstream>
 #include <cstdio>
 
+#ifdef _WIN32
+#include <io.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#define close _close
+#else
+#include <unistd.h>
+#endif
+
 using namespace datapainter;
 
 class InputSourceTest : public ::testing::Test {
@@ -17,14 +26,23 @@ protected:
 
     // Helper to create a temporary keystroke file
     std::string create_temp_file(const std::string& content) {
+#ifdef _WIN32
+        // Windows: use tmpnam_s for temporary file name
+        char temp_name[L_tmpnam_s];
+        if (tmpnam_s(temp_name, L_tmpnam_s) != 0) {
+            return "";
+        }
+        std::string filename(temp_name);
+#else
+        // Unix/Linux/macOS: use mkstemp
         char temp_name[] = "/tmp/datapainter_test_XXXXXX";
         int fd = mkstemp(temp_name);
         if (fd == -1) {
             return "";
         }
-
         std::string filename(temp_name);
         close(fd);
+#endif
 
         std::ofstream file(filename);
         file << content;

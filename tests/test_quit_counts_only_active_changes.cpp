@@ -153,7 +153,7 @@ TEST_F(QuitCountsOnlyActiveChangesTest, SavedChangesAreDeleted) {
     auto all_changes_after = uc.get_all_changes();
 
     // Count total changes vs active changes
-    int total_changes = all_changes_after.size();
+    int total_changes = static_cast<int>(all_changes_after.size());
     int active_changes = 0;
     for (const auto& change : all_changes_after) {
         if (change.is_active) {

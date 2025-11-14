@@ -94,7 +94,7 @@ TEST_F(QuitAfterSaveScenarioTest, ReproduceUserComplaint) {
     // Check unsaved changes count again (like quit dialog does)
     all_changes = uc.get_all_changes();
     int active_after_save = 0;
-    int total_after_save = all_changes.size();
+    int total_after_save = static_cast<int>(all_changes.size());
 
     for (const auto& change : all_changes) {
         if (change.is_active) {
