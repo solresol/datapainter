@@ -111,11 +111,11 @@ void TableCreationDialog::render() {
 
     // Title
     std::string title = "CREATE NEW TABLE";
-    int title_col = (screen_width - title.length()) / 2;
+    int title_col = (screen_width - static_cast<int>(title.length())) / 2;
     if (title_col < 0) title_col = 0;
 
-    for (size_t i = 0; i < title.length() && title_col + i < static_cast<size_t>(screen_width); ++i) {
-        terminal_.write_char(0, title_col + i, title[i]);
+    for (size_t i = 0; i < title.length() && title_col + static_cast<int>(i) < screen_width; ++i) {
+        terminal_.write_char(0, title_col + static_cast<int>(i), title[i]);
     }
 
     // Draw separator
@@ -140,8 +140,8 @@ void TableCreationDialog::render() {
 
         std::string help = "Up/Down: Navigate | Ctrl+O: OK | ESC: Cancel";
         int help_col = 2;
-        for (size_t i = 0; i < help.length() && help_col + i < static_cast<size_t>(screen_width); ++i) {
-            terminal_.write_char(y, help_col + i, help[i]);
+        for (size_t i = 0; i < help.length() && help_col + static_cast<int>(i) < screen_width; ++i) {
+            terminal_.write_char(y, help_col + static_cast<int>(i), help[i]);
         }
         y++;
     }
@@ -149,8 +149,8 @@ void TableCreationDialog::render() {
     // Error message
     if (!error_message_.empty() && y < screen_height) {
         std::string err = "ERROR: " + error_message_;
-        for (size_t i = 0; i < err.length() && i < static_cast<size_t>(screen_width); ++i) {
-            terminal_.write_char(y, i, err[i]);
+        for (size_t i = 0; i < err.length() && static_cast<int>(i) < screen_width; ++i) {
+            terminal_.write_char(y, static_cast<int>(i), err[i]);
         }
     }
 
@@ -169,8 +169,8 @@ void TableCreationDialog::render_field(int y, const Field& field, bool /*is_acti
 
     // Label
     std::string label = field.label + ":";
-    for (size_t i = 0; i < label.length() && i < static_cast<size_t>(screen_width); ++i) {
-        terminal_.write_char(y, i, label[i]);
+    for (size_t i = 0; i < label.length() && static_cast<int>(i) < screen_width; ++i) {
+        terminal_.write_char(y, static_cast<int>(i), label[i]);
     }
 
     // Value field
@@ -185,13 +185,13 @@ void TableCreationDialog::render_field(int y, const Field& field, bool /*is_acti
     terminal_.write_char(y + 1, 2, '[');
 
     // Write value
-    for (size_t i = 0; i < value_display.length() && 3 + i < static_cast<size_t>(screen_width - 1); ++i) {
-        terminal_.write_char(y + 1, 3 + i, value_display[i]);
+    for (size_t i = 0; i < value_display.length() && 3 + static_cast<int>(i) < screen_width - 1; ++i) {
+        terminal_.write_char(y + 1, 3 + static_cast<int>(i), value_display[i]);
     }
 
     // Pad with spaces
-    for (size_t i = value_display.length(); i < 60 && 3 + i < static_cast<size_t>(screen_width - 1); ++i) {
-        terminal_.write_char(y + 1, 3 + i, ' ');
+    for (size_t i = value_display.length(); i < 60 && 3 + static_cast<int>(i) < screen_width - 1; ++i) {
+        terminal_.write_char(y + 1, 3 + static_cast<int>(i), ' ');
     }
 
     // Closing bracket

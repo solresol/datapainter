@@ -228,11 +228,11 @@ void AxisRenderer::render_x_axis(Terminal& terminal, const Viewport& viewport,
 
                 // Draw label (centered on tick)
                 // Place label characters around the tick position
-                int label_len = tick.label.length();
+                int label_len = static_cast<int>(tick.label.length());
                 int label_start = tick_col - label_len / 2;
 
                 for (size_t i = 0; i < tick.label.length(); ++i) {
-                    int label_col = label_start + i;
+                    int label_col = label_start + static_cast<int>(i);
                     if (label_col >= start_col && label_col < start_col + width &&
                         label_col != tick_col) {  // Don't overwrite tick mark
                         terminal.write_char(axis_row, label_col, tick.label[i]);
@@ -279,12 +279,12 @@ void AxisRenderer::render_y_axis(Terminal& terminal, const Viewport& viewport,
 
                 // Draw label (to the left of the axis)
                 // Place label characters to the left of the tick
-                int label_len = tick.label.length();
+                int label_len = static_cast<int>(tick.label.length());
                 int label_start = axis_col - label_len - 1;
 
                 if (label_start >= 0) {
                     for (size_t i = 0; i < tick.label.length(); ++i) {
-                        int label_col = label_start + i;
+                        int label_col = label_start + static_cast<int>(i);
                         if (label_col >= 0) {
                             terminal.write_char(tick_row, label_col, tick.label[i]);
                         }

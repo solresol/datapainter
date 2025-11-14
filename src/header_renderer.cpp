@@ -50,10 +50,10 @@ void HeaderRenderer::render(Terminal& terminal, const std::string& db_path,
 
     // Write right side (right-aligned) if there are unsaved changes
     if (!row0_right_str.empty()) {
-        int right_start = cols - row0_right_str.length();
+        int right_start = cols - static_cast<int>(row0_right_str.length());
         if (right_start > left_len) {
             for (size_t i = 0; i < row0_right_str.length(); ++i) {
-                terminal.write_char(0, right_start + i, row0_right_str[i]);
+                terminal.write_char(0, right_start + static_cast<int>(i), row0_right_str[i]);
             }
         }
     }
@@ -83,7 +83,7 @@ void HeaderRenderer::render(Terminal& terminal, const std::string& db_path,
         row1_str = row1_str.substr(0, cols);
     }
     for (size_t i = 0; i < row1_str.length(); ++i) {
-        terminal.write_char(1, i, row1_str[i]);
+        terminal.write_char(1, static_cast<int>(i), row1_str[i]);
     }
 
     // Row 2: Counts on left, viewport range and zoom on right
@@ -119,10 +119,10 @@ void HeaderRenderer::render(Terminal& terminal, const std::string& db_path,
     }
 
     // Write right side (right-aligned)
-    int right_start = cols - right_str.length();
+    int right_start = cols - static_cast<int>(right_str.length());
     if (right_start > row2_left_len) {
         for (size_t i = 0; i < right_str.length(); ++i) {
-            terminal.write_char(2, right_start + i, right_str[i]);
+            terminal.write_char(2, right_start + static_cast<int>(i), right_str[i]);
         }
     }
 }

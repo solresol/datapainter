@@ -267,8 +267,8 @@ void Terminal::resize_buffer() {
     // Save old buffers
     auto old_buffer = buffer_;
     auto old_acs_buffer = acs_buffer_;
-    int old_rows = old_buffer.size();
-    int old_cols = old_rows > 0 ? old_buffer[0].size() : 0;
+    int old_rows = static_cast<int>(old_buffer.size());
+    int old_cols = old_rows > 0 ? static_cast<int>(old_buffer[0].size()) : 0;
 
     // Create new char buffer
     buffer_.clear();

@@ -879,7 +879,6 @@ int main(int argc, char** argv) {
     auto meta_opt = metadata_mgr.read(table_name);
     if (!meta_opt.has_value()) {
         // Table not found - show available tables
-        TableManager table_mgr(db);
         auto tables = table_mgr.list_tables();
 
         std::cerr << "Error: Table not found: " << table_name << std::endl;
@@ -1025,7 +1024,7 @@ int main(int argc, char** argv) {
                 );
 
                 // Count points
-                int total_count = all_points.size();
+                int total_count = static_cast<int>(all_points.size());
                 int x_count = 0;
                 int o_count = 0;
                 for (const auto& pt : all_points) {
@@ -1497,8 +1496,8 @@ int main(int argc, char** argv) {
 
                 // Get metadata for meanings
                 MetadataManager mgr(db);
-                auto meta = mgr.read(table_name);
-                if (!meta.has_value()) {
+                auto random_meta = mgr.read(table_name);
+                if (!random_meta.has_value()) {
                     std::cerr << "Error: Could not read metadata" << std::endl;
                     std::cerr << "Press Enter to continue..." << std::endl;
                     std::cin.get();
@@ -1508,7 +1507,7 @@ int main(int argc, char** argv) {
                 }
 
                 // Show dialog
-                auto dialog_result = RandomDialog::show(meta->x_meaning, meta->o_meaning);
+                auto dialog_result = RandomDialog::show(random_meta->x_meaning, random_meta->o_meaning);
 
                 if (dialog_result.has_value() && !dialog_result->cancelled) {
                     // Generate random points

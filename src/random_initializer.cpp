@@ -10,7 +10,7 @@ RandomInitializer::RandomInitializer(Database& db, const std::string& table_name
     : db_(db), table_name_(table_name) {
     // Seed with current time
     auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    rng_.seed(seed);
+    rng_.seed(static_cast<unsigned int>(seed));
 }
 
 bool RandomInitializer::validate_target(const std::string& target) {
