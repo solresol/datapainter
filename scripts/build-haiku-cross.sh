@@ -87,6 +87,11 @@ list(APPEND CMAKE_INCLUDE_PATH
 )
 EOF
 
+# Debug: List library files in sysroot
+echo "=== Checking sysroot library structure ==="
+find "$SYSROOT/boot/system/develop/lib" -name "libsqlite3*" -o -name "libncurses*" 2>/dev/null | head -20 || true
+echo "=========================================="
+
 # Build with CMake
 mkdir -p build-haiku
 cd build-haiku
