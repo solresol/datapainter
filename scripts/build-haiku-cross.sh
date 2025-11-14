@@ -87,16 +87,14 @@ list(APPEND CMAKE_INCLUDE_PATH
 )
 EOF
 
-# Debug: List library files in sysroot
-echo "=== Checking sysroot library structure ==="
-find "$SYSROOT/boot/system/develop/lib" -name "libsqlite3*" -o -name "libncurses*" 2>/dev/null | head -20 || true
-echo "=== Checking if libraries are readable ==="
-ls -la "$SYSROOT/boot/system/develop/lib/libsqlite3.so" || echo "libsqlite3.so NOT FOUND"
-ls -la "$SYSROOT/boot/system/develop/lib/libsqlite3.so.0.8.6" || echo "libsqlite3.so.0.8.6 NOT FOUND"
-ls -la "$SYSROOT/boot/system/develop/lib/libncurses.so" || echo "libncurses.so NOT FOUND"
-ls -la "$SYSROOT/boot/system/develop/lib/libncursesw.so" || echo "libncursesw.so NOT FOUND"
-test -f "$SYSROOT/boot/system/develop/lib/libsqlite3.so.0.8.6" && echo "libsqlite3.so.0.8.6 is readable" || echo "libsqlite3.so.0.8.6 is NOT readable"
-test -f "$SYSROOT/boot/system/develop/lib/libncursesw.so" && echo "libncursesw.so is readable" || echo "libncursesw.so is NOT readable"
+# Debug: Check what's actually in /boot/system/lib
+echo "=== Listing all files in /boot/system/lib ==="
+find "$SYSROOT/boot/system/lib" -name "libsqlite*" -o -name "libncurses*" | head -20
+echo "=========================================="
+
+# Debug: Check for static libraries
+echo "=== Checking for static libraries in /boot/system/develop/lib ==="
+find "$SYSROOT/boot/system/develop/lib" -name "*.a" | grep -E "(sqlite|ncurses)" | head -10
 echo "=========================================="
 
 # Build with CMake
