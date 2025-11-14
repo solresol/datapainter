@@ -12,6 +12,11 @@
 #include "unsaved_changes.h"
 #include "undo_manager.h"
 
+#ifdef _WIN32
+#define popen _popen
+#define pclose _pclose
+#endif
+
 namespace {
 struct PipeCloser {
     void operator()(FILE* pipe) const {
@@ -49,7 +54,7 @@ std::string exec_command(const std::string& cmd) {
     if (!pipe) {
         throw std::runtime_error("popen() failed!");
     }
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+    while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe.get()) != nullptr) {
         result += buffer.data();
     }
     return result;
@@ -331,7 +336,7 @@ TEST_F(IntegrationTest, ToCsvEmpty) {
     // Should have header but no data rows
     EXPECT_NE(output.find("x,y,target"), std::string::npos);
     // Count lines (header only = 1 line)
-    int line_count = std::count(output.begin(), output.end(), '\n');
+    int line_count = static_cast<int>(std::count(output.begin(), output.end(), '\n'));
     EXPECT_EQ(line_count, 1);
 }
 
@@ -363,7 +368,7 @@ TEST_F(IntegrationTest, ToCsvWithData) {
     EXPECT_NE(output.find("3.5,4.5,o_val"), std::string::npos);
 
     // Count lines (header + 2 data = 3 lines)
-    int line_count = std::count(output.begin(), output.end(), '\n');
+    int line_count = static_cast<int>(std::count(output.begin(), output.end(), '\n'));
     EXPECT_EQ(line_count, 3);
 }
 
@@ -546,7 +551,7 @@ TEST_F(IntegrationTest, EndToEndWorkflow) {
     EXPECT_NE(csv_output.find("6.3,3.3,virginica"), std::string::npos);
 
     // Verify we have 4 lines (header + 3 data rows)
-    int line_count = std::count(csv_output.begin(), csv_output.end(), '\n');
+    int line_count = static_cast<int>(std::count(csv_output.begin(), csv_output.end(), '\n'));
     EXPECT_EQ(line_count, 4);
 
     // Show metadata

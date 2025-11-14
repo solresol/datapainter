@@ -14,7 +14,7 @@ public:
         argv_ = new char*[args.size()];
         for (size_t i = 0; i < args.size(); i++) {
             argv_[i] = new char[args[i].size() + 1];
-            std::strcpy(argv_[i], args[i].c_str());
+            std::memcpy(argv_[i], args[i].c_str(), args[i].size() + 1);
         }
         argc_ = static_cast<int>(args.size());
     }

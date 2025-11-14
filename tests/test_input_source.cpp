@@ -8,7 +8,6 @@
 #include <io.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#define close _close
 #else
 #include <unistd.h>
 #endif
