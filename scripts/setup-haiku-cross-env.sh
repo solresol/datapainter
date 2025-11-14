@@ -125,12 +125,18 @@ install_haiku_packages() {
         "$HOSTTOOLS_DIR/package" list "$pkg_filename" | grep -E "(libsqlite|libncurses)" | head -20 || true
     done
 
-    # Check if runtime libraries exist in base haiku package
-    echo "=== Checking for runtime libraries in base haiku packages ==="
-    for pkg in haiku-*.hpkg haiku_devel-*.hpkg; do
-        if [ -f "$pkg" ]; then
-            echo "Checking $pkg for runtime libraries:"
-            "$HOSTTOOLS_DIR/package" list "$pkg" 2>/dev/null | grep -E "lib/(libsqlite|libncurses)" | head -10 || echo "  No matching libraries found"
+    # The devel packages create symlinks in /boot/system/develop/lib that point to ../../lib/,
+    # but the runtime packages are not available for download. We need to manually resolve
+    # these symlinks by copying library files from the devel packages or creating stubs.
+
+    echo "=== Resolving library symlinks ==="
+
+    # For each devel package, check if it contains actual .so files we can extract
+    for pkg_filename in sqlite_devel-*.hpkg ncurses6_devel-*.hpkg; do
+        if [ -f "$pkg_filename" ]; then
+            echo "Checking $pkg_filename for library files..."
+            # List all files in the package
+            "$HOSTTOOLS_DIR/package" list "$pkg_filename" 2>/dev/null | grep -E "\.so\." | grep -v "lrwxrwxrwx" | head -20 || echo "  No regular .so files found in $pkg_filename"
         fi
     done
 
