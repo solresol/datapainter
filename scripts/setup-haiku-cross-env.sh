@@ -120,34 +120,6 @@ install_haiku_packages() {
         "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$pkg_filename"
     done
 
-    # Download runtime packages directly from HaikuPorts (needed for .so files)
-    HAIKUPORTS_PACKAGES="https://eu.hpkg.haiku-os.org/haikuports/master/${ARCH}/current/packages"
-    for pkg_filename in "sqlite-3.47.2.0-1-${ARCH}.hpkg" "ncurses6-6.5-3-${ARCH}.hpkg"; do
-        # Check if package is in cache
-        if [ -n "$PKG_CACHE" ] && [ -f "$PKG_CACHE/$pkg_filename" ]; then
-            echo "Using cached $pkg_filename"
-            cp "$PKG_CACHE/$pkg_filename" "$pkg_filename"
-        else
-            echo "Downloading $pkg_filename from HaikuPorts..."
-            url="${HAIKUPORTS_PACKAGES}/${pkg_filename}"
-
-            curl -sSL --retry 3 --retry-delay 2 --max-time 120 \
-                -o "$pkg_filename" "$url" || {
-                echo "oops: failed to download $pkg_filename from HaikuPorts" >&2
-                echo "URL: $url" >&2
-                exit 1
-            }
-
-            # Save to cache for future use
-            if [ -n "$PKG_CACHE" ]; then
-                cp "$pkg_filename" "$PKG_CACHE/$pkg_filename"
-                echo "Cached $pkg_filename for future builds"
-            fi
-        fi
-
-        "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$pkg_filename"
-    done
-
     echo "All packages installed successfully to sysroot"
 }
 

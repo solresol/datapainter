@@ -95,10 +95,10 @@ cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_PREFIX_PATH="$SYSROOT/boot/system/develop" \
     -DSQLite3_INCLUDE_DIR="$SYSROOT/boot/system/develop/headers" \
-    -DSQLite3_LIBRARY="$SYSROOT/boot/system/lib/libsqlite3.so" \
+    -DSQLite3_LIBRARY="$SYSROOT/boot/system/develop/lib/x86_64/libsqlite3.a" \
     -DCURSES_INCLUDE_PATH="$SYSROOT/boot/system/develop/headers" \
-    -DCURSES_LIBRARY="$SYSROOT/boot/system/lib/libncurses.so" \
-    -DCURSES_NCURSES_LIBRARY="$SYSROOT/boot/system/lib/libncurses.so"
+    -DCURSES_LIBRARY="$SYSROOT/boot/system/develop/lib/x86_64/libncurses.a" \
+    -DCURSES_NCURSES_LIBRARY="$SYSROOT/boot/system/develop/lib/x86_64/libncurses.a"
 make -j"$(nproc)"
 cd ..
 
