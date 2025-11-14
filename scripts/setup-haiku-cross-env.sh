@@ -95,7 +95,7 @@ install_haiku_packages() {
     # Download HaikuPorts packages from GitHub releases (to avoid CDN rate limiting)
     # These packages are pinned versions hosted in the haiku-deps-r1beta5 release
     # We need both runtime and devel packages: runtime provides the .so files, devel provides headers/symlinks
-    for pkg_filename in "sqlite-3.47.2.0-1-x86_64.hpkg" "sqlite_devel-3.47.2.0-1-x86_64.hpkg" "ncurses6-6.5-3-x86_64.hpkg" "ncurses6_devel-6.5-3-x86_64.hpkg"; do
+    for pkg_filename in "gcc_syslibs-13.3.0_2023_08_10-4-x86_64.hpkg" "gcc_syslibs_devel-13.3.0_2023_08_10-4-x86_64.hpkg" "sqlite-3.47.2.0-1-x86_64.hpkg" "sqlite_devel-3.47.2.0-1-x86_64.hpkg" "ncurses6-6.5-3-x86_64.hpkg" "ncurses6_devel-6.5-3-x86_64.hpkg"; do
         # Check if package is in cache
         if [ -n "$PKG_CACHE" ] && [ -f "$PKG_CACHE/$pkg_filename" ]; then
             echo "Using cached $pkg_filename"
