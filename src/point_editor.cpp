@@ -69,7 +69,7 @@ int PointEditor::delete_points_at_cursor(double cursor_x, double cursor_y, doubl
         }
     }
 
-    return points.size();
+    return static_cast<int>(points.size());
 }
 
 int PointEditor::convert_points_at_cursor(double cursor_x, double cursor_y,
@@ -136,7 +136,7 @@ int PointEditor::flip_points_at_cursor(double cursor_x, double cursor_y, double 
         }
     }
 
-    return points.size();
+    return static_cast<int>(points.size());
 }
 
 std::vector<DataPoint> PointEditor::get_points_at_cursor(double cursor_x, double cursor_y,

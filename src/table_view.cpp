@@ -138,7 +138,7 @@ std::vector<TableRow> TableView::get_visible_rows() const {
 
 int TableView::row_count() const {
     // Count visible rows including unsaved changes
-    return get_visible_rows().size();
+    return static_cast<int>(get_visible_rows().size());
 }
 
 std::optional<TableRow> TableView::get_row(int index) const {

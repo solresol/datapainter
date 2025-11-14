@@ -90,7 +90,7 @@ void FooterRenderer::render(Terminal& terminal, double cursor_x, double cursor_y
                 footer_str.resize(cols, ' ');
             }
             int start = std::max(0, cols - static_cast<int>(label.length()));
-            footer_str.replace(start, std::min<int>(label.length(), cols - start), label);
+            footer_str.replace(start, std::min<int>(static_cast<int>(label.length()), cols - start), label);
         }
     };
 
@@ -105,7 +105,7 @@ void FooterRenderer::render(Terminal& terminal, double cursor_x, double cursor_y
     }
 
     for (size_t i = 0; i < footer_str.length(); ++i) {
-        terminal.write_char(footer_row, i, footer_str[i]);
+        terminal.write_char(footer_row, static_cast<int>(i), footer_str[i]);
     }
 }
 

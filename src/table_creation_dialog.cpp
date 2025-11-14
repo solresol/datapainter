@@ -155,8 +155,8 @@ void TableCreationDialog::render() {
     }
 
     // Render to screen with cursor positioned in current field
-    int cursor_row = 4 + current_field_ * 3;  // Field value row
-    int cursor_col = 3 + cursor_pos_;  // After "  ["
+    int cursor_row = 4 + static_cast<int>(current_field_) * 3;  // Field value row
+    int cursor_col = 3 + static_cast<int>(cursor_pos_);  // After "  ["
     if (cursor_row < screen_height && cursor_col < screen_width) {
         terminal_.render_with_cursor(cursor_row, cursor_col);
     } else {

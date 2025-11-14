@@ -19,18 +19,18 @@ void TableSelectionMenu::render(const std::vector<std::string>& tables, int sele
         std::string size_msg = "(minimum: 5 rows x 40 columns)";
 
         int msg_row = screen_height / 2;
-        int msg_col = (screen_width - msg.length()) / 2;
+        int msg_col = (screen_width - static_cast<int>(msg.length())) / 2;
         if (msg_col < 0) msg_col = 0;
 
-        for (size_t i = 0; i < msg.length() && msg_col + i < static_cast<size_t>(screen_width); ++i) {
-            terminal_.write_char(msg_row, msg_col + i, msg[i]);
+        for (size_t i = 0; i < msg.length() && msg_col + static_cast<int>(i) < screen_width; ++i) {
+            terminal_.write_char(msg_row, msg_col + static_cast<int>(i), msg[i]);
         }
 
         if (msg_row + 1 < screen_height) {
-            int size_col = (screen_width - size_msg.length()) / 2;
+            int size_col = (screen_width - static_cast<int>(size_msg.length())) / 2;
             if (size_col < 0) size_col = 0;
-            for (size_t i = 0; i < size_msg.length() && size_col + i < static_cast<size_t>(screen_width); ++i) {
-                terminal_.write_char(msg_row + 1, size_col + i, size_msg[i]);
+            for (size_t i = 0; i < size_msg.length() && size_col + static_cast<int>(i) < screen_width; ++i) {
+                terminal_.write_char(msg_row + 1, size_col + static_cast<int>(i), size_msg[i]);
             }
         }
         return;  // Don't render normal menu
@@ -41,11 +41,11 @@ void TableSelectionMenu::render(const std::vector<std::string>& tables, int sele
     std::string size_info = " [" + std::to_string(screen_height) + "x" + std::to_string(screen_width) + "]";
     std::string full_title = title + size_info;
 
-    int title_col = (screen_width - full_title.length()) / 2;
+    int title_col = (screen_width - static_cast<int>(full_title.length())) / 2;
     if (title_col < 0) title_col = 0;
 
-    for (size_t i = 0; i < full_title.length() && title_col + i < static_cast<size_t>(screen_width); ++i) {
-        terminal_.write_char(0, title_col + i, full_title[i]);
+    for (size_t i = 0; i < full_title.length() && title_col + static_cast<int>(i) < screen_width; ++i) {
+        terminal_.write_char(0, title_col + static_cast<int>(i), full_title[i]);
     }
 
     // Draw border for menu area (starting at row 2)
@@ -60,9 +60,9 @@ void TableSelectionMenu::render(const std::vector<std::string>& tables, int sele
         // Show "No tables" message
         std::string msg = "No tables found in database";
         int msg_row = menu_start_row + 3;
-        int msg_col = (screen_width - msg.length()) / 2;
+        int msg_col = (screen_width - static_cast<int>(msg.length())) / 2;
         for (size_t i = 0; i < msg.length(); ++i) {
-            terminal_.write_char(msg_row, msg_col + i, msg[i]);
+            terminal_.write_char(msg_row, msg_col + static_cast<int>(i), msg[i]);
         }
     }
 
@@ -113,7 +113,7 @@ void TableSelectionMenu::render_table_list(const std::vector<std::string>& table
         // Table name
         std::string display = std::to_string(i + 1) + ". " + tables[i];
         for (size_t j = 0; j < display.length(); ++j) {
-            terminal_.write_char(row, 8 + j, display[j]);
+            terminal_.write_char(row, 8 + static_cast<int>(j), display[j]);
         }
 
         row++;
@@ -124,11 +124,11 @@ void TableSelectionMenu::render_actions(const std::vector<std::string>& tables,
                                        int selected_index, int start_row) {
     std::string header = "Actions:";
     for (size_t i = 0; i < header.length(); ++i) {
-        terminal_.write_char(start_row, 4 + i, header[i]);
+        terminal_.write_char(start_row, 4 + static_cast<int>(i), header[i]);
     }
 
     int row = start_row + 2;
-    int action_start_index = tables.size();
+    int action_start_index = static_cast<int>(tables.size());
 
     // Build action list based on available tables
     std::vector<std::string> actions;
@@ -151,7 +151,7 @@ void TableSelectionMenu::render_actions(const std::vector<std::string>& tables,
 
         std::string display = actions[i];
         for (size_t j = 0; j < display.length(); ++j) {
-            terminal_.write_char(row, 8 + j, display[j]);
+            terminal_.write_char(row, 8 + static_cast<int>(j), display[j]);
         }
 
         row++;
@@ -160,9 +160,9 @@ void TableSelectionMenu::render_actions(const std::vector<std::string>& tables,
     // Instructions
     int instr_row = row + 2;
     std::string instr = "Use arrow keys to navigate, Enter to select, Q to quit";
-    int instr_col = (terminal_.cols() - instr.length()) / 2;
+    int instr_col = (terminal_.cols() - static_cast<int>(instr.length())) / 2;
     for (size_t i = 0; i < instr.length(); ++i) {
-        terminal_.write_char(instr_row, instr_col + i, instr[i]);
+        terminal_.write_char(instr_row, instr_col + static_cast<int>(i), instr[i]);
     }
 }
 
@@ -187,12 +187,12 @@ int TableSelectionMenu::get_item_count(const std::vector<std::string>& tables) c
         return 2;
     } else {
         // Tables + actions (Open, Create, Delete, View Metadata, Exit)
-        return tables.size() + 5;
+        return static_cast<int>(tables.size()) + 5;
     }
 }
 
 MenuAction TableSelectionMenu::index_to_action(int index, const std::vector<std::string>& tables) const {
-    int action_start = tables.size();
+    int action_start = static_cast<int>(tables.size());
 
     if (index < action_start) {
         // Table selected - default action is to open it
