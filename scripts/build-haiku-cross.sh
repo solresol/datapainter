@@ -90,6 +90,14 @@ EOF
 # Debug: List library files in sysroot
 echo "=== Checking sysroot library structure ==="
 find "$SYSROOT/boot/system/develop/lib" -name "libsqlite3*" -o -name "libncurses*" 2>/dev/null | head -20 || true
+echo "=== Checking if libraries are readable ==="
+ls -la "$SYSROOT/boot/system/develop/lib/libsqlite3.so" || echo "libsqlite3.so NOT FOUND"
+ls -la "$SYSROOT/boot/system/develop/lib/libncurses.so" || echo "libncurses.so NOT FOUND"
+if [ -f "$SYSROOT/boot/system/develop/lib/libsqlite3.so" ]; then
+    echo "libsqlite3.so exists and is a file"
+elif [ -L "$SYSROOT/boot/system/develop/lib/libsqlite3.so" ]; then
+    echo "libsqlite3.so is a symlink to: $(readlink $SYSROOT/boot/system/develop/lib/libsqlite3.so)"
+fi
 echo "=========================================="
 
 # Build with CMake
