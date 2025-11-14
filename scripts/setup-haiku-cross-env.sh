@@ -92,9 +92,10 @@ install_haiku_packages() {
         "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$filename"
     done
 
-    # Download HaikuPorts devel packages from GitHub releases (to avoid CDN rate limiting)
+    # Download HaikuPorts packages from GitHub releases (to avoid CDN rate limiting)
     # These packages are pinned versions hosted in the haiku-deps-r1beta5 release
-    for pkg_filename in "sqlite_devel-3.47.2.0-1-x86_64.hpkg" "ncurses6_devel-6.5-3-x86_64.hpkg"; do
+    # We need both runtime and devel packages: runtime provides the .so files, devel provides headers/symlinks
+    for pkg_filename in "sqlite-3.47.2.0-1-x86_64.hpkg" "sqlite_devel-3.47.2.0-1-x86_64.hpkg" "ncurses6-6.5-3-x86_64.hpkg" "ncurses6_devel-6.5-3-x86_64.hpkg"; do
         # Check if package is in cache
         if [ -n "$PKG_CACHE" ] && [ -f "$PKG_CACHE/$pkg_filename" ]; then
             echo "Using cached $pkg_filename"
@@ -117,27 +118,7 @@ install_haiku_packages() {
             fi
         fi
 
-        echo "Extracting $pkg_filename..."
         "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$pkg_filename"
-
-        # List what was extracted
-        echo "Files extracted from $pkg_filename:"
-        "$HOSTTOOLS_DIR/package" list "$pkg_filename" | grep -E "(libsqlite|libncurses)" | head -20 || true
-    done
-
-    # The devel packages create symlinks in /boot/system/develop/lib that point to ../../lib/,
-    # but the runtime packages are not available for download. We need to manually resolve
-    # these symlinks by copying library files from the devel packages or creating stubs.
-
-    echo "=== Resolving library symlinks ==="
-
-    # For each devel package, check if it contains actual .so files we can extract
-    for pkg_filename in sqlite_devel-*.hpkg ncurses6_devel-*.hpkg; do
-        if [ -f "$pkg_filename" ]; then
-            echo "Checking $pkg_filename for library files..."
-            # List all files in the package
-            "$HOSTTOOLS_DIR/package" list "$pkg_filename" 2>/dev/null | grep -E "\.so\." | grep -v "lrwxrwxrwx" | head -20 || echo "  No regular .so files found in $pkg_filename"
-        fi
     done
 
     echo "All packages installed successfully to sysroot"

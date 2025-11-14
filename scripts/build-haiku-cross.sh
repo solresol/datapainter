@@ -87,16 +87,6 @@ list(APPEND CMAKE_INCLUDE_PATH
 )
 EOF
 
-# Debug: Check what's actually in /boot/system/lib
-echo "=== Listing all files in /boot/system/lib ==="
-find "$SYSROOT/boot/system/lib" -name "libsqlite*" -o -name "libncurses*" | head -20
-echo "=========================================="
-
-# Debug: Check for static libraries
-echo "=== Checking for static libraries in /boot/system/develop/lib ==="
-find "$SYSROOT/boot/system/develop/lib" -name "*.a" | grep -E "(sqlite|ncurses)" | head -10
-echo "=========================================="
-
 # Build with CMake
 mkdir -p build-haiku
 cd build-haiku
