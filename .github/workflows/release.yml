@@ -236,6 +236,7 @@ jobs:
         cd ../..
 
     - name: Deploy to package server
+      timeout-minutes: 5
       run: |
         mkdir -p ~/.ssh
         echo "${{ secrets.DEPLOYMENT_SSH_KEY }}" > ~/.ssh/deploy_key
@@ -246,29 +247,29 @@ jobs:
 
         if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
           # Deploy Linux tarball
-          timeout 120 scp $SCP_OPTS \
+          scp $SCP_OPTS \
             datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.tar.gz \
             datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
 
           # Deploy public key
-          timeout 120 scp $SCP_OPTS \
+          scp $SCP_OPTS \
             PUBLIC.KEY \
             datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
 
           # Deploy entire APT repository
-          timeout 180 scp $SCP_OPTS \
+          scp $SCP_OPTS \
             -r apt-repo/* \
             datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
 
         elif [ "${{ matrix.os }}" == "macos-latest" ]; then
           # Deploy macOS .pkg installer
-          timeout 120 scp $SCP_OPTS \
+          scp $SCP_OPTS \
             datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.pkg \
             datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
 
         elif [ "${{ matrix.os }}" == "windows-latest" ]; then
           # Deploy Windows ZIP
-          timeout 120 scp $SCP_OPTS \
+          scp $SCP_OPTS \
             datapainter-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}.zip \
             datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter/
         fi

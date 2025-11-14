@@ -120,6 +120,38 @@ install_haiku_packages() {
         "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$pkg_filename"
     done
 
+    # Download gcc_syslibs_devel from HaikuPorts (not in GitHub release)
+    # This package contains libstdc++ which is needed for linking
+    echo "Downloading gcc_syslibs_devel from HaikuPorts..."
+    # Query the repo for available gcc_syslibs_devel packages
+    gcc_pkg=$(curl -fsSL "${HAIKUPORTS_BASE}/" | grep -o 'gcc_syslibs_devel-[^"]*-x86_64\.hpkg' | head -1)
+
+    if [ -z "$gcc_pkg" ]; then
+        echo "oops: could not find gcc_syslibs_devel package in HaikuPorts" >&2
+        exit 1
+    fi
+
+    # Check if package is in cache
+    if [ -n "$PKG_CACHE" ] && [ -f "$PKG_CACHE/$gcc_pkg" ]; then
+        echo "Using cached $gcc_pkg"
+        cp "$PKG_CACHE/$gcc_pkg" "$gcc_pkg"
+    else
+        echo "Downloading $gcc_pkg from HaikuPorts..."
+        curl -fsSL --retry 3 --retry-delay 2 --max-time 120 \
+            -o "$gcc_pkg" "${HAIKUPORTS_BASE}/${gcc_pkg}" || {
+            echo "oops: failed to download $gcc_pkg from HaikuPorts" >&2
+            exit 1
+        }
+
+        # Save to cache for future use
+        if [ -n "$PKG_CACHE" ]; then
+            cp "$gcc_pkg" "$PKG_CACHE/$gcc_pkg"
+            echo "Cached $gcc_pkg for future builds"
+        fi
+    fi
+
+    "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$gcc_pkg"
+
     echo "All packages installed successfully to sysroot"
 }
 
