@@ -76,6 +76,15 @@ set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
 set(CMAKE_SYSROOT $SYSROOT)
+
+# Add library search paths for cross-compilation
+list(APPEND CMAKE_LIBRARY_PATH
+    "$SYSROOT/boot/system/develop/lib"
+    "$SYSROOT/boot/system/lib"
+)
+list(APPEND CMAKE_INCLUDE_PATH
+    "$SYSROOT/boot/system/develop/headers"
+)
 EOF
 
 # Build with CMake
