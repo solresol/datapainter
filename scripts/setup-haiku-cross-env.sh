@@ -131,7 +131,7 @@ install_haiku_packages() {
             echo "Downloading $pkg_filename from HaikuPorts..."
             url="${HAIKUPORTS_PACKAGES}/${pkg_filename}"
 
-            curl -fsSL --retry 3 --retry-delay 2 --max-time 120 \
+            curl -sSL --retry 3 --retry-delay 2 --max-time 120 \
                 -o "$pkg_filename" "$url" || {
                 echo "oops: failed to download $pkg_filename from HaikuPorts" >&2
                 echo "URL: $url" >&2
