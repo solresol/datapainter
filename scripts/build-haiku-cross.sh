@@ -67,6 +67,9 @@ set(CMAKE_SYSTEM_PROCESSOR x86_64)
 set(CMAKE_C_COMPILER x86_64-unknown-haiku-gcc)
 set(CMAKE_CXX_COMPILER x86_64-unknown-haiku-g++)
 
+# Skip compiler tests that require linking (for cross-compilation)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+
 set(CMAKE_FIND_ROOT_PATH $SYSROOT/boot/system)
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)

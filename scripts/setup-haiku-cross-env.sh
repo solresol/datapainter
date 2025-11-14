@@ -120,33 +120,6 @@ install_haiku_packages() {
         "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$pkg_filename"
     done
 
-    # Download gcc_syslibs_devel package (contains libstdc++ needed for linking)
-    # This package is in the build-packages repository, not in GitHub releases
-    echo "Downloading gcc_syslibs_devel package..."
-    gcc_pkg="gcc_syslibs_devel-13.3.0_2023_08_10-1-${ARCH}.hpkg"
-    gcc_url="https://eu.hpkg.haiku-os.org/haikuports/master/${ARCH}/build-packages/${gcc_pkg}"
-
-    # Check if package is in cache
-    if [ -n "$PKG_CACHE" ] && [ -f "$PKG_CACHE/$gcc_pkg" ]; then
-        echo "Using cached $gcc_pkg"
-        cp "$PKG_CACHE/$gcc_pkg" "$gcc_pkg"
-    else
-        echo "Downloading $gcc_pkg from HaikuPorts..."
-        curl -fsSL --retry 3 --retry-delay 2 --max-time 120 \
-            -o "$gcc_pkg" "$gcc_url" || {
-            echo "oops: failed to download $gcc_pkg from $gcc_url" >&2
-            exit 1
-        }
-
-        # Save to cache for future use
-        if [ -n "$PKG_CACHE" ]; then
-            cp "$gcc_pkg" "$PKG_CACHE/$gcc_pkg"
-            echo "Cached $gcc_pkg for future builds"
-        fi
-    fi
-
-    "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$gcc_pkg"
-
     echo "All packages installed successfully to sysroot"
 }
 
