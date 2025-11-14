@@ -93,6 +93,7 @@ cd build-haiku
 cmake .. \
     -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE" \
     -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_TESTING=OFF \
     -DCMAKE_PREFIX_PATH="$SYSROOT/boot/system/develop" \
     -DSQLite3_INCLUDE_DIR="$SYSROOT/boot/system/develop/headers" \
     -DSQLite3_LIBRARY="$SYSROOT/boot/system/lib/libsqlite3.so.0.8.6" \
