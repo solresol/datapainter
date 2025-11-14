@@ -117,7 +117,21 @@ install_haiku_packages() {
             fi
         fi
 
+        echo "Extracting $pkg_filename..."
         "$HOSTTOOLS_DIR/package" extract -C "$SYSROOT/boot/system" "$pkg_filename"
+
+        # List what was extracted
+        echo "Files extracted from $pkg_filename:"
+        "$HOSTTOOLS_DIR/package" list "$pkg_filename" | grep -E "(libsqlite|libncurses)" | head -20 || true
+    done
+
+    # Check if runtime libraries exist in base haiku package
+    echo "=== Checking for runtime libraries in base haiku packages ==="
+    for pkg in haiku-*.hpkg haiku_devel-*.hpkg; do
+        if [ -f "$pkg" ]; then
+            echo "Checking $pkg for runtime libraries:"
+            "$HOSTTOOLS_DIR/package" list "$pkg" 2>/dev/null | grep -E "lib/(libsqlite|libncurses)" | head -10 || echo "  No matching libraries found"
+        fi
     done
 
     echo "All packages installed successfully to sysroot"
