@@ -28,7 +28,7 @@ name DataPainter
 vendor "Industrial Linguistics"
 summary "DataPainter repository"
 priority 1
-baseurl https://packages.industrial-linguistics.com/datapainter-haiku/repo
+baseurl https://packages.industrial-linguistics.com/datapainter/haiku/repo
 identifier tag:industrial-linguistics.com,2024:datapainter
 architecture x86_64
 EOF
