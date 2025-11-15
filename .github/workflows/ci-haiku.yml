@@ -59,5 +59,5 @@ jobs:
         if: (github.ref == 'refs/heads/main') || (github.event_name == 'release')
         run: |
           ./scripts/update-haiku-repo.sh repo
-          ssh datapainter@merah.cassia.ifost.org.au "mkdir -p /var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter-haiku"
+          ssh datapainter@merah.cassia.ifost.org.au "sudo mkdir -p /var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter-haiku && sudo chown datapainter:datapainter /var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter-haiku"
           scp -r repo datapainter@merah.cassia.ifost.org.au:/var/www/vhosts/packages.industrial-linguistics.com/htdocs/datapainter-haiku/
