@@ -1,6 +1,6 @@
 # DataPainter — Improvements & Recommendations
 
-*Analysis date: 2026-07-11*
+*Analysis date: 2026-07-11 (refreshed; adds source-level TODO findings in `src/main.cpp` and `src/table_view.cpp`)*
 
 DataPainter is a mature C++17 ncurses TUI for painting two-dimensional labelled datasets into SQLite, with solid packaging (signed APT repo, macOS .pkg, GitHub Actions CI) and a comprehensive TDD-driven test suite. The core feature set is essentially complete (Phases 0–onwards in TODO.md are nearly all ticked). The last ~15 commits are entirely Haiku cross-compilation debugging, and that effort is stalled on an upstream toolchain issue — the project's real remaining work is the small set of unfinished features in TODO.md and some repo hygiene.
 
@@ -9,6 +9,7 @@ DataPainter is a mature C++17 ncurses TUI for painting two-dimensional labelled 
 - **Automatic terminal resize is broken** (last item in TODO.md; Ctrl-L is the documented workaround). SIGWINCH handling in `src/terminal.cpp` / main loop in `src/main.cpp` should trigger a re-layout automatically. This is the most user-visible defect.
 - **Database lock timeout (exit code 66) is documented but not implemented** — TODO.md flags "Feature not yet implemented". Either implement it (SQLite `busy_timeout` + WAL, see below) or remove it from docs/help so behaviour matches documentation.
 - **Crash recovery prompt on startup** for unapplied `unsaved_changes` rows is unimplemented; the `unsaved_changes` table exists (`include/unsaved_changes.h`) but orphaned changes are silently ignored on restart.
+- **Dangling code paths flagged by in-source TODOs**: `src/main.cpp:290` and `:297` note missing `--new-table` and `--destination-table` CLI arguments (the code paths that need them already exist), and `src/table_view.cpp:131` has an unapplied filter on inserted rows — newly inserted rows will appear in a filtered table view even when they don't match the filter.
 
 ## Unfinished Work (from TODO.md, 14 open items)
 
