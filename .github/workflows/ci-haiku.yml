@@ -3,7 +3,11 @@ name: ci-haiku
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "**/*.md"
   pull_request:
+    paths-ignore:
+      - "**/*.md"
   release:
     types: [published]
 
@@ -29,6 +33,7 @@ jobs:
       - name: Setup Haiku cross environment
         env:
           HAIKU_PKG_CACHE: /tmp/haiku-packages
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           source ./scripts/setup-haiku-cross-env.sh
           echo "PATH=$PATH" >> "$GITHUB_ENV"

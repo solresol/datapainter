@@ -16,6 +16,11 @@ fetch_tools() {
     then
         git clone --depth=1 https://github.com/haiku/haiku-toolchains-ubuntu.git toolchain
     fi
+    if [ -n "${GITHUB_TOKEN:-}" ]; then
+        # fetch.sh otherwise uses the unauthenticated GitHub API and can exhaust
+        # its shared runner rate limit before finding the current toolchain.
+        sed -i 's#curl -s https://api.github.com#curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" https://api.github.com#' toolchain/fetch.sh
+    fi
     echo "Cloned"
     pushd toolchain >/dev/null
     echo "pushed"

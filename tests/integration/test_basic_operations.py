@@ -287,14 +287,21 @@ class TestPointConversion:
 
             # Create 'x' point
             test.send_keys('x')
-            time.sleep(0.1)
+            assert test.wait_for_text('x', timeout=2.0), \
+                "Point should be visible before flipping"
 
             # Flip with 'g'
             test.send_keys('g')
-            time.sleep(0.1)
 
-            # Should now be 'o'
-            content_after = '\n'.join(test.get_display_lines()[4:23])
+            # Rendering is asynchronous under a loaded CI runner. Poll the edit
+            # area instead of reading it after a fixed 100 ms delay.
+            deadline = time.time() + 2.0
+            content_after = ''
+            while time.time() < deadline:
+                content_after = '\n'.join(test.get_display_lines()[4:23])
+                if 'o' in content_after or 'O' in content_after:
+                    break
+                time.sleep(0.05)
 
             assert 'o' in content_after or 'O' in content_after, \
                 "Point should flip to opposite type"
